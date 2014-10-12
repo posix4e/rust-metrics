@@ -1,0 +1,16 @@
+[package]
+name = "metrics"
+version = "0.0.1"
+authors = ["Endre Karlson <endre.karlson@gmail.com>"]
+
+#[dependencies.dns]
+#version = "0.0.1"
+#path = "../dns"
+
+[[lib]]
+name = "metrics"
+path = "src/lib.rs"
+
+[[bin]]
+name = "metrics"
+path = "src/main.rs"
