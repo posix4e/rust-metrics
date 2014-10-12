@@ -10,7 +10,3 @@ authors = ["Endre Karlson <endre.karlson@gmail.com>"]
 [[lib]]
 name = "metrics"
 path = "src/lib.rs"
-
-[[bin]]
-name = "metrics"
-path = "src/main.rs"
