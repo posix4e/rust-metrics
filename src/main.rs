@@ -21,8 +21,8 @@ fn main() {
 
     println!("{}", g1.value);
 
-    let mut c1 = counter::Counter{count: 0};
+    let mut c1 = counter::Counter{value: 0};
     c1.inc(1);
     c1.inc(5);
-    println!("{}", c1.count)
+    println!("{}", c1.value)
 }
