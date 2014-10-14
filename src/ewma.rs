@@ -52,32 +52,32 @@ impl EWMA {
     pub fn update(&self, n: uint) {
         self.uncounted.fetch_add(n, SeqCst);
     }
-}
 
-// Construct a new EWMA with a mutex etc.
-pub fn new(alpha: f64) -> EWMA {
-    return EWMA{
-        uncounted: AtomicUint::new(0u),
-        alpha: alpha,
-        rate: Mutex::new(0f64),
-        init: false,
+    pub fn new(alpha: f64) -> EWMA {
+        return EWMA{
+            uncounted: AtomicUint::new(0u),
+            alpha: alpha,
+            rate: Mutex::new(0f64),
+            init: false,
+        }
     }
+
 }
 
 #[cfg(test)]
 mod test {
-    use ewma;
+    use ewma::EWMA;
     use std::num::Float;
 
     // Tick a minute
-    fn elapse_minute(e: &mut ewma::EWMA) {
+    fn elapse_minute(e: &mut EWMA) {
         for i in range(0i, 12i) {
             e.tick();
         }
     }
 
     // Returns whether the rate() is within 0.0001 of expected after ticking a minute
-    fn within(e: &mut ewma::EWMA, expected: f64) -> bool {
+    fn within(e: &mut EWMA, expected: f64) -> bool {
         elapse_minute(e);
         let r: f64 = e.rate();
         (r - expected).abs() < 0.0001
@@ -86,7 +86,7 @@ mod test {
     #[test]
     fn ewma1() {
         let i = -5.0f64/60.0f64/1f64;
-        let mut e = ewma::new(1f64 - i.exp());
+        let mut e = EWMA::new(1f64 - i.exp());
         e.update(3u);
         e.tick();
 
@@ -145,7 +145,7 @@ mod test {
     #[test]
     fn ewma5() {
         let i = -5.0f64/60.0f64/5f64;
-        let mut e = ewma::new(1f64 - i.exp());
+        let mut e = EWMA::new(1f64 - i.exp());
         e.update(3u);
         e.tick();
 
@@ -201,7 +201,7 @@ mod test {
         #[test]
     fn ewma15() {
         let i = -5.0f64/60.0f64/15f64;
-        let mut e = ewma::new(1f64 - i.exp());
+        let mut e = EWMA::new(1f64 - i.exp());
         e.update(3u);
         e.tick();
 
