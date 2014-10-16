@@ -1,5 +1,7 @@
 #![crate_name = "metrics"]
 
+extern crate time;
+
 #[cfg(test)] extern crate test;
 pub mod counter;
 pub mod gauge;

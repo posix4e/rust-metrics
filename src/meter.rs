@@ -1,7 +1,5 @@
-extern crate time;
-
-use self::time::get_time;
-use self::time::Timespec;
+use time::get_time;
+use time::Timespec;
 
 use std::sync::Mutex;
 
