@@ -16,7 +16,7 @@ pub struct EWMASnapshot {
 
 
 impl EWMASnapshot {
-    fn rate(&self) -> f64 {
+    pub fn rate(&self) -> f64 {
         return self.value;
     }
 }
