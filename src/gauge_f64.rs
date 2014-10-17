@@ -8,7 +8,7 @@ impl GaugeF64 {
     }
 
     pub fn snapshot(self) -> GaugeF64 {
-        return GaugeF64{ value: self.value };
+        GaugeF64{ value: self.value }
     }
 }
 

@@ -74,7 +74,7 @@ impl Meter {
         Meter {
             data: Mutex::new(data),
             ewma: ewma,
-            start: get_time(),
+            start: get_time()
         }
     }
 }
