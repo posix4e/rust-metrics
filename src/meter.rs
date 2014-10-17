@@ -5,19 +5,19 @@ use std::sync::Mutex;
 
 use ewma::EWMA;
 
+
+const WINDOW: [f64, ..3] = [1f64, 5f64, 15f64];
+
+
 pub struct MeterSnapshot{
     count: i64,
-    rate1: f64,
-    rate5: f64,
-    rate15: f64,
+    rates: [f64, ..3],
     rate_mean: f64
 }
 
 pub struct Meter {
     data: Mutex<MeterSnapshot>,
-    a1: EWMA,
-    a5: EWMA,
-    a15: EWMA,
+    ewma: [EWMA, ..3],
     start: Timespec
 }
 
@@ -25,27 +25,28 @@ impl Meter {
     pub fn mark(&self, n: i64) {
         let mut s = self.data.lock();
         s.count += n;
-        self.a1.update(n as uint);
-        self.a5.update(n as uint);
-        self.a15.update(n as uint);
+
+        for i in range(0, WINDOW.len()) {
+            self.ewma[i].update(n as uint);
+        }
     }
 
     pub fn snapshot(&self) -> MeterSnapshot{
         let s = self.data.lock();
+
         MeterSnapshot {
             count: s.count,
-            rate1: s.rate1,
-            rate5: s.rate5,
-            rate15: s.rate15,
+            rates: s.rates,
             rate_mean: s.rate_mean
         }
     }
 
     fn update_snapshot(&self) {
         let mut s = self.data.lock();
-        s.rate1 = self.a1.rate();
-        s.rate5 = self.a5.rate();
-        s.rate15 = self.a15.rate();
+
+        for i in range(0, WINDOW.len()) {
+            s.rates[i] = self.ewma[i].rate();
+        }
 
         let diff = get_time() - self.start;
         s.rate_mean = s.count as f64 / diff.num_seconds() as f64;
@@ -53,29 +54,27 @@ impl Meter {
 
     pub fn tick(&mut self) {
         self.data.lock();
-        self.a1.tick();
-        self.a5.tick();
-        self.a15.tick();
+
+        for i in range(0, WINDOW.len()) {
+            self.ewma[i].tick();
+        }
+
         self.update_snapshot()
     }
 
     pub fn new() -> Meter {
-        let i = -5.0f64/60.0f64/1f64;
-
         let data = MeterSnapshot{
             count: 0i64,
-            rate1: 0f64,
-            rate5: 0f64,
-            rate15: 0f64,
+            rates: [0f64, 0f64, 0f64],
             rate_mean: 0f64
         };
 
+        let ewma: [EWMA, ..3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
+
         Meter {
             data: Mutex::new(data),
-            a1: EWMA::new(1f64 - i),
-            a5: EWMA::new(5f64 - i),
-            a15: EWMA::new(15f64 - i),
-            start: get_time()
+            ewma: ewma,
+            start: get_time(),
         }
     }
 }
