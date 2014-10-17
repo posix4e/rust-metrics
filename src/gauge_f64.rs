@@ -4,7 +4,7 @@ pub struct GaugeF64 {
 
 impl GaugeF64 {
     pub fn update(&mut self, value: f64) {
-        self.value += value;
+        self.value = value;
     }
 
     pub fn snapshot(self) -> GaugeF64 {
