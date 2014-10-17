@@ -14,7 +14,7 @@ const WINDOW: [f64, ..3] = [1f64, 5f64, 15f64];
 pub struct MeterSnapshot {
     count: i64,
     rates: [f64, ..3],
-    rate_mean: f64
+    mean: f64
 }
 
 
@@ -34,7 +34,9 @@ pub trait Meter : Metric {
 
     fn tick(&mut self);
 
-    fn rate(&self, rate: uint) -> f64;
+    fn rate(&self, rate: f64) -> f64;
+
+    fn mean(&self) -> f64;
 
     fn count(&self) -> i64;
 }
@@ -47,7 +49,7 @@ impl Meter for StdMeter {
         MeterSnapshot {
             count: s.count,
             rates: s.rates,
-            rate_mean: s.rate_mean
+            mean: s.mean
         }
     }
 
@@ -64,7 +66,7 @@ impl Meter for StdMeter {
     }
 
     fn tick(&mut self) {
-        let mut s = self.data.lock();
+        let s = self.data.lock();
 
         for i in range(0, WINDOW.len()) {
             self.ewma[i].tick();
@@ -73,9 +75,22 @@ impl Meter for StdMeter {
         self.update_snapshot(*s);
     }
 
-    fn rate(&self, rate: uint) -> f64 {
+    // Return the given EWMA for a rate like 1, 5, 15 minutes
+    fn rate(&self, rate: f64) -> f64 {
         let mut s = self.data.lock();
-        s.rates[rate]
+
+        let pos = WINDOW.position_elem(&rate);
+
+        if pos.is_some() {
+            let r: f64 = s.rates[pos.unwrap()];
+            return r;
+        }
+    }
+
+    // Return the mean rate
+    fn mean(&self) -> f64 {
+        let s = self.data.lock();
+        s.mean
     }
 
     fn count(&self) -> i64 {
@@ -96,14 +111,14 @@ impl StdMeter {
         }
 
         let diff = get_time() - self.start;
-        s.rate_mean = s.count as f64 / diff.num_seconds() as f64;
+        s.mean = s.count as f64 / diff.num_seconds() as f64;
     }
 
     pub fn new() -> StdMeter {
-        let data = MeterSnapshot{
+        let data: MeterSnapshot = MeterSnapshot{
             count: 0i64,
             rates: [0f64, 0f64, 0f64],
-            rate_mean: 0f64
+            mean: 0f64
         };
 
         let ewma: [EWMA, ..3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
@@ -149,5 +164,13 @@ mod test {
 
         assert_eq!(s.count, 2);
         assert_eq!(m.snapshot().count, 3);
+    }
+
+    // Test that decay works correctly
+    #[test]
+    fn decay() {
+        let mut m: StdMeter = StdMeter::new();
+
+        m.tick();
     }
 }
