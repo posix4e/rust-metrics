@@ -1,26 +1,32 @@
-pub struct Gauge<T> {
+pub struct StdGauge<T> {
     pub value: T
 }
 
 
-impl<T> Gauge<T> {
-    pub fn update(&mut self, value: T) {
+pub trait Gauge<T> {
+    fn update(&mut self, value: T);
+    fn snapshot(self) -> Self;
+}
+
+
+impl<T> Gauge<T> for StdGauge<T> {
+    fn update(&mut self, value: T) {
         self.value = value
     }
 
-    pub fn snapshot(self) -> Gauge<T> {
-        Gauge { value: self.value }
+    fn snapshot(self) -> StdGauge<T> {
+        StdGauge { value: self.value }
     }
 }
 
 
 #[cfg(test)]
 mod test {
-    use gauge::Gauge;
+    use gauge::{Gauge,StdGauge};
 
     #[test]
     fn create_and_snapshot() {
-        let g: Gauge<f64> = Gauge {value: 0f64 };
+        let g: StdGauge<f64> = StdGauge {value: 0f64 };
         let mut g_snapshot = g.snapshot();
 
         g_snapshot.update(10f64);
