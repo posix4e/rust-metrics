@@ -1,40 +1,48 @@
-pub struct Counter {
+pub struct StdCounter {
     pub value: i64
 }
 
-impl Counter {
-    pub fn clear(&mut self) {
+pub trait Counter {
+    fn clear(&mut self);
+    fn dec(&mut self, value: i64);
+    fn inc(&mut self, value: i64);
+    fn snapshot(&self) -> Self;
+}
+
+impl Counter for StdCounter {
+    fn clear(&mut self) {
         self.value = 0;
     }
 
-    pub fn dec(&mut self, value: i64) {
+    fn dec(&mut self, value: i64) {
         self.value -= value;
     }
 
-    pub fn inc(&mut self, value: i64) {
+    fn inc(&mut self, value: i64) {
         self.value += value;
     }
 
-    pub fn snapshot(&self) -> Counter {
-        Counter { value: self.value }
+    fn snapshot(&self) ->  StdCounter {
+        return StdCounter { value: self.value }
     }
 }
 
 
 #[cfg(test)]
 mod test {
+    use counter::StdCounter;
     use counter::Counter;
 
     #[test]
     fn increment_by_1() {
-        let mut c = Counter{ value: 0 };
+        let mut c = StdCounter{ value: 0 };
         c.inc(1);
         assert!(c.value == 1);
     }
 
     #[test]
     fn snapshot() {
-        let c = Counter{value: 0};
+        let c = StdCounter{value: 0};
         let mut c_snapshot = c.snapshot();
 
         c_snapshot.inc(1);
