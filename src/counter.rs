@@ -1,13 +1,22 @@
+use metric::Metric;
+
 pub struct StdCounter {
     pub value: i64
 }
 
-pub trait Counter {
+
+pub trait Counter : Metric {
     fn clear(&mut self);
+
     fn dec(&mut self, value: i64);
+
     fn inc(&mut self, value: i64);
+
     fn snapshot(&self) -> Self;
+
+    fn new() -> Self;
 }
+
 
 impl Counter for StdCounter {
     fn clear(&mut self) {
@@ -23,8 +32,16 @@ impl Counter for StdCounter {
     }
 
     fn snapshot(&self) ->  StdCounter {
-        return StdCounter { value: self.value }
+        StdCounter { value: self.value }
     }
+
+    fn new() -> StdCounter {
+        StdCounter{ value: 0i64 }
+    }
+}
+
+
+impl Metric for StdCounter {
 }
 
 
