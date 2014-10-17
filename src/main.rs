@@ -3,8 +3,10 @@
 extern crate metrics;
 
 use metrics::gauge;
-use metrics::counter::StdCounter;
-use metrics::counter::Counter;
+use metrics::counter::{Counter,StdCounter};
+
+use metrics::meter::{Meter,StdMeter};
+use metrics::metric::Metric;
 
 
 fn main() {
@@ -23,8 +25,14 @@ fn main() {
 
     println!("{}", g1.value);
 
-    let mut c1 = StdCounter{value: 0};
+    let mut c1 = StdCounter::new();
     c1.inc(1);
     c1.inc(5);
-    println!("{}", c1.value)
+    println!("{}", c1.value);
+
+    let mut meter = StdMeter::new();
+    meter.mark(3i64);
+    meter.tick();
+    println!("Meter count: {}", meter.count());
+    println!("Meter rate: {}", meter.rate(1));
 }
