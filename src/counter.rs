@@ -13,8 +13,6 @@ pub trait Counter : Metric {
     fn inc(&mut self, value: i64);
 
     fn snapshot(&self) -> Self;
-
-    fn new() -> Self;
 }
 
 
@@ -35,13 +33,16 @@ impl Counter for StdCounter {
         StdCounter { value: self.value }
     }
 
-    fn new() -> StdCounter {
-        StdCounter{ value: 0i64 }
-    }
 }
 
 
 impl Metric for StdCounter {
+}
+
+impl StdCounter {
+    pub fn new() -> StdCounter {
+        StdCounter{ value: 0i64 }
+    }
 }
 
 
