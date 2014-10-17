@@ -17,18 +17,21 @@ pub struct EWMASnapshot {
 
 impl EWMASnapshot {
     pub fn rate(&self) -> f64 {
-        return self.value;
+        self.value
     }
 }
 
 impl EWMA {
     pub fn rate(&self) -> f64 {
         let r = self.rate.lock();
+
         *r * (1e9 as f64)
     }
 
     pub fn snapshot(&self) -> EWMASnapshot {
-        return EWMASnapshot{ value: self.rate() };
+        EWMASnapshot{
+            value: self.rate()
+        }
     }
 
     pub fn tick(&mut self) {
@@ -54,19 +57,20 @@ impl EWMA {
     }
 
     // construct new by alpha
-    pub fn new(alpha: f64) -> EWMA {
+    pub fn new_by_alpha(alpha: f64) -> EWMA {
         EWMA{
             uncounted: AtomicUint::new(0u),
             alpha: alpha,
             rate: Mutex::new(0f64),
-            init: false,
+            init: false
         }
     }
 
     // constructs a new EWMA for a n-minute moving average.
-    pub fn new_by_minute(rate: f64) -> EWMA {
+    pub fn new(rate: f64) -> EWMA {
         let i: f64 = -5.0f64 / 60.0f64 / rate;
-        return EWMA::new(1f64 - i.exp())
+
+        EWMA::new_by_alpha(1f64 - i.exp())
     }
 }
 
@@ -91,7 +95,7 @@ mod test {
 
     #[test]
     fn ewma1() {
-        let mut e = EWMA::new_by_minute(1f64);
+        let mut e = EWMA::new(1f64);
         e.update(3u);
         e.tick();
 
@@ -149,7 +153,7 @@ mod test {
 
     #[test]
     fn ewma5() {
-        let mut e = EWMA::new_by_minute(5f64);
+        let mut e = EWMA::new(5f64);
         e.update(3u);
         e.tick();
 
@@ -204,7 +208,7 @@ mod test {
 
         #[test]
     fn ewma15() {
-        let mut e = EWMA::new_by_minute(15f64);
+        let mut e = EWMA::new(15f64);
         e.update(3u);
         e.tick();
 
