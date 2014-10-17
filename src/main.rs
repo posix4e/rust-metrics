@@ -34,5 +34,5 @@ fn main() {
     meter.mark(3i64);
     meter.tick();
     println!("Meter count: {}", meter.count());
-    println!("Meter rate: {}", meter.rate(1));
+    println!("Meter rate: {}", meter.rate(1f64));
 }
