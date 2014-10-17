@@ -53,8 +53,9 @@ impl EWMA {
         self.uncounted.fetch_add(n, SeqCst);
     }
 
+    // construct new by alpha
     pub fn new(alpha: f64) -> EWMA {
-        return EWMA{
+        EWMA{
             uncounted: AtomicUint::new(0u),
             alpha: alpha,
             rate: Mutex::new(0f64),
@@ -62,6 +63,11 @@ impl EWMA {
         }
     }
 
+    // constructs a new EWMA for a n-minute moving average.
+    pub fn new_by_minute(rate: f64) -> EWMA {
+        let i: f64 = -5.0f64 / 60.0f64 / rate;
+        return EWMA::new(1f64 - i.exp())
+    }
 }
 
 #[cfg(test)]
@@ -85,8 +91,7 @@ mod test {
 
     #[test]
     fn ewma1() {
-        let i = -5.0f64/60.0f64/1f64;
-        let mut e = EWMA::new(1f64 - i.exp());
+        let mut e = EWMA::new_by_minute(1f64);
         e.update(3u);
         e.tick();
 
@@ -144,8 +149,7 @@ mod test {
 
     #[test]
     fn ewma5() {
-        let i = -5.0f64/60.0f64/5f64;
-        let mut e = EWMA::new(1f64 - i.exp());
+        let mut e = EWMA::new_by_minute(5f64);
         e.update(3u);
         e.tick();
 
@@ -200,8 +204,7 @@ mod test {
 
         #[test]
     fn ewma15() {
-        let i = -5.0f64/60.0f64/15f64;
-        let mut e = EWMA::new(1f64 - i.exp());
+        let mut e = EWMA::new_by_minute(15f64);
         e.update(3u);
         e.tick();
 
