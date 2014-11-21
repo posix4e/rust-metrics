@@ -1,5 +1,3 @@
-#![feature(if_let)]
-
 use time::get_time;
 use time::Timespec;
 
