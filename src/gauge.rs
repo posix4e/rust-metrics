@@ -4,12 +4,11 @@ pub struct StdGauge<T: Num> {
     pub value: T
 }
 
-
 pub trait Gauge<T: Num> {
     fn update(&mut self, value: T);
+
     fn snapshot(self) -> Self;
 }
-
 
 impl<T: Num> Gauge<T> for StdGauge<T> {
     fn update(&mut self, value: T) {
@@ -20,7 +19,6 @@ impl<T: Num> Gauge<T> for StdGauge<T> {
         StdGauge { value: self.value }
     }
 }
-
 
 #[cfg(test)]
 mod test {

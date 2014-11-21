@@ -2,7 +2,6 @@ use std::num::Float;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUint, SeqCst};
 
-
 pub struct EWMA {
     pub uncounted: AtomicUint, // This tracks uncounted events
     alpha: f64,
@@ -10,11 +9,9 @@ pub struct EWMA {
     init: bool,
 }
 
-
 pub struct EWMASnapshot {
-    value: f64
+    value: f64,
 }
-
 
 impl EWMASnapshot {
     pub fn rate(&self) -> f64 {
@@ -57,17 +54,17 @@ impl EWMA {
         self.uncounted.fetch_add(n, SeqCst);
     }
 
-    // construct new by alpha
+    /// construct new by alpha
     pub fn new_by_alpha(alpha: f64) -> EWMA {
         EWMA{
             uncounted: AtomicUint::new(0u),
             alpha: alpha,
             rate: Mutex::new(0f64),
-            init: false
+            init: false,
         }
     }
 
-    // constructs a new EWMA for a n-minute moving average.
+    /// constructs a new EWMA for a n-minute moving average.
     pub fn new(rate: f64) -> EWMA {
         let i: f64 = -5.0f64 / 60.0f64 / rate;
         EWMA::new_by_alpha(1f64 - i.exp())
@@ -206,7 +203,7 @@ mod test {
         assert_eq!(within(&mut e, 0.0298722410207183831020718428f64), true);
     }
 
-        #[test]
+    #[test]
     fn ewma15() {
         let mut e = EWMA::new(15f64);
         e.update(3u);

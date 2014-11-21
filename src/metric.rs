@@ -1,3 +1,2 @@
-// a Metric
-pub trait Metric {
-}
+/// a Metric
+pub trait Metric { }
