@@ -1,5 +1,6 @@
+use std::num::Float;
 use std::sync::{Mutex, Arc};
-use std::sync::atomics::{AtomicUint, SeqCst};
+use std::sync::atomic::{AtomicUint, SeqCst};
 
 
 pub struct EWMA {
@@ -69,7 +70,6 @@ impl EWMA {
     // constructs a new EWMA for a n-minute moving average.
     pub fn new(rate: f64) -> EWMA {
         let i: f64 = -5.0f64 / 60.0f64 / rate;
-
         EWMA::new_by_alpha(1f64 - i.exp())
     }
 }
