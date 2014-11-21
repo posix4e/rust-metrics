@@ -1,5 +1,5 @@
 use std::num::Float;
-use std::sync::{Mutex, Arc};
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicUint, SeqCst};
 
 

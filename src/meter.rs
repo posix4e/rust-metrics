@@ -1,5 +1,3 @@
-#![feature(if_let)]
-
 use time::get_time;
 use time::Timespec;
 
@@ -80,7 +78,7 @@ impl Meter for StdMeter {
     // Return the given EWMA for a rate like 1, 5, 15 minutes
     #[experimental]
     fn rate(&self, rate: f64) -> f64 {
-        let mut s = self.data.lock();
+        let s = self.data.lock();
 
         if let Some(pos) = WINDOW.position_elem(&rate) {
             let r: f64 = s.rates[pos];
