@@ -6,25 +6,21 @@ use std::sync::Mutex;
 use ewma::EWMA;
 use metric::Metric;
 
-
 const WINDOW: [f64, ..3] = [1f64, 5f64, 15f64];
-
 
 // A MeterSnapshot
 pub struct MeterSnapshot {
     count: i64,
     rates: [f64, ..3],
-    mean: f64
+    mean: f64,
 }
-
 
 // A StdMeter struct
 pub struct StdMeter {
     data: Mutex<MeterSnapshot>,
     ewma: [EWMA, ..3],
-    start: Timespec
+    start: Timespec,
 }
-
 
 // A Meter trait
 pub trait Meter : Metric {
@@ -40,7 +36,6 @@ pub trait Meter : Metric {
 
     fn count(&self) -> i64;
 }
-
 
 impl Meter for StdMeter {
     fn snapshot(&self) -> MeterSnapshot {
@@ -75,7 +70,7 @@ impl Meter for StdMeter {
         self.update_snapshot(*s);
     }
 
-    // Return the given EWMA for a rate like 1, 5, 15 minutes
+    /// Return the given EWMA for a rate like 1, 5, 15 minutes
     #[experimental]
     fn rate(&self, rate: f64) -> f64 {
         let s = self.data.lock();
@@ -87,22 +82,21 @@ impl Meter for StdMeter {
         0f64
     }
 
-    // Return the mean rate
+    /// Return the mean rate
     fn mean(&self) -> f64 {
         let s = self.data.lock();
+
         s.mean
     }
 
     fn count(&self) -> i64 {
         let s = self.data.lock();
+
         s.count
     }
 }
 
-
-impl Metric for StdMeter {
-}
-
+impl Metric for StdMeter { }
 
 impl StdMeter {
     fn update_snapshot(&self, mut s: MeterSnapshot) {
@@ -118,7 +112,7 @@ impl StdMeter {
         let data: MeterSnapshot = MeterSnapshot{
             count: 0i64,
             rates: [0f64, 0f64, 0f64],
-            mean: 0f64
+            mean: 0f64,
         };
 
         let ewma: [EWMA, ..3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
@@ -126,12 +120,10 @@ impl StdMeter {
         StdMeter {
             data: Mutex::new(data),
             ewma: ewma,
-            start: get_time()
+            start: get_time(),
         }
     }
-
 }
-
 
 #[cfg(test)]
 mod test {
@@ -141,6 +133,7 @@ mod test {
     fn zero() {
         let m: StdMeter = StdMeter::new();
         let s: MeterSnapshot = m.snapshot();
+
         assert_eq!(s.count, 0);
     }
 
@@ -148,7 +141,9 @@ mod test {
     fn non_zero() {
         let m: StdMeter = StdMeter::new();
         m.mark(3);
+
         let s: MeterSnapshot = m.snapshot();
+
         assert_eq!(s.count, 3);
     }
 
