@@ -9,7 +9,3 @@ authors = ["Endre Karlson <endre.karlson@gmail.com>"]
 
 [dependencies]
 time = "*"
-
-[lib]
-name = "metrics"
-path = "src/lib.rs"
