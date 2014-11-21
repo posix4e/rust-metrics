@@ -1,3 +1,5 @@
+use std::num::Num;
+
 pub struct StdGauge<T: Num> {
     pub value: T
 }
