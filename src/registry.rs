@@ -19,7 +19,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
     }
 
     fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T) {
-        let boxed: Box<Metric> = (box metric) as Box<Metric>;
+        let boxed = Box::new(metric);
 
         self.metrics.insert(name, boxed);
     }

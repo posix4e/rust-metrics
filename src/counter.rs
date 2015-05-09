@@ -1,12 +1,12 @@
-use std::num::Int;
-
+use std::num::Zero;
+use std::ops::{Add,Sub};
 use metric::Metric;
 
-pub struct StdCounter<T: Int> {
+pub struct StdCounter<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> {
     pub value: T,
 }
 
-pub trait Counter<T: Int>: Metric {
+pub trait Counter<T>: Metric {
     fn clear(&mut self);
 
     fn dec(&mut self, value: T);
@@ -16,9 +16,9 @@ pub trait Counter<T: Int>: Metric {
     fn snapshot(self) -> Self;
 }
 
-impl<T: Int> Counter<T> for StdCounter<T> {
+impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> Counter<T> for StdCounter<T> {
     fn clear(&mut self) {
-        self.value = Int::zero();
+        self.value = T::zero();
     }
 
     fn dec(&mut self, value: T) {
@@ -34,22 +34,21 @@ impl<T: Int> Counter<T> for StdCounter<T> {
     }
 }
 
-impl<T: Int> Metric for StdCounter<T> { }
+impl<T> Metric for StdCounter<T> { }
 
-impl<T: Int> StdCounter<T> {
+impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> StdCounter<T> {
     pub fn new() -> StdCounter<T> {
-        StdCounter{ value: Int::zero() }
+        StdCounter{ value: T::zero() }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use counter::StdCounter;
-    use counter::Counter;
+    use super::*;
 
     #[test]
     fn increment_by_1() {
-        let mut c: StdCounter<int> = StdCounter{ value: 0i };
+        let mut c: StdCounter<i32> = StdCounter::new();
         c.inc(1);
 
         assert!(c.value == 1);
@@ -57,7 +56,7 @@ mod test {
 
     #[test]
     fn snapshot() {
-        let c: StdCounter<int> = StdCounter{value: 0i };
+        let c: StdCounter<i32> = StdCounter::new();
         let mut c_snapshot = c.snapshot();
 
         c_snapshot.inc(1);

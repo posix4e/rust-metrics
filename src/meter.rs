@@ -1,24 +1,24 @@
 use time::get_time;
 use time::Timespec;
 
-use std::sync::Mutex;
+use std::sync::{Mutex,MutexGuard};
 
 use ewma::EWMA;
 use metric::Metric;
 
-const WINDOW: [f64, ..3] = [1f64, 5f64, 15f64];
+const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 
 // A MeterSnapshot
 pub struct MeterSnapshot {
     count: i64,
-    rates: [f64, ..3],
+    rates: [f64; 3],
     mean: f64,
 }
 
 // A StdMeter struct
 pub struct StdMeter {
     data: Mutex<MeterSnapshot>,
-    ewma: [EWMA, ..3],
+    ewma: [EWMA; 3],
     start: Timespec,
 }
 
@@ -39,7 +39,7 @@ pub trait Meter : Metric {
 
 impl Meter for StdMeter {
     fn snapshot(&self) -> MeterSnapshot {
-        let s = self.data.lock();
+        let s = self.data.lock().unwrap();
 
         MeterSnapshot {
             count: s.count,
@@ -49,31 +49,30 @@ impl Meter for StdMeter {
     }
 
     fn mark(&self, n: i64) {
-        let mut s = self.data.lock();
+        let mut s = self.data.lock().unwrap();
 
         s.count += n;
 
-        for i in range(0, WINDOW.len()) {
-            self.ewma[i].update(n as uint);
+        for i in (0..WINDOW.len()) {
+            self.ewma[i].update(n as usize);
         }
 
-        self.update_snapshot(*s);
+        self.update_snapshot(s);
     }
 
     fn tick(&mut self) {
-        let s = self.data.lock();
+        let s = self.data.lock().unwrap();
 
-        for i in range(0, WINDOW.len()) {
+        for i in (0..WINDOW.len()) {
             self.ewma[i].tick();
         }
 
-        self.update_snapshot(*s);
+        self.update_snapshot(s);
     }
 
     /// Return the given EWMA for a rate like 1, 5, 15 minutes
-    #[experimental]
     fn rate(&self, rate: f64) -> f64 {
-        let s = self.data.lock();
+        let s = self.data.lock().unwrap();
 
         if let Some(pos) = WINDOW.position_elem(&rate) {
             let r: f64 = s.rates[pos];
@@ -84,13 +83,13 @@ impl Meter for StdMeter {
 
     /// Return the mean rate
     fn mean(&self) -> f64 {
-        let s = self.data.lock();
+        let s = self.data.lock().unwrap();
 
         s.mean
     }
 
     fn count(&self) -> i64 {
-        let s = self.data.lock();
+        let s = self.data.lock().unwrap();
 
         s.count
     }
@@ -99,8 +98,8 @@ impl Meter for StdMeter {
 impl Metric for StdMeter { }
 
 impl StdMeter {
-    fn update_snapshot(&self, mut s: MeterSnapshot) {
-        for i in range(0, WINDOW.len()) {
+    fn update_snapshot(&self, mut s: MutexGuard<MeterSnapshot>) {
+        for i in (0..WINDOW.len()) {
             s.rates[i] = self.ewma[i].rate();
         }
 
@@ -115,7 +114,7 @@ impl StdMeter {
             mean: 0f64,
         };
 
-        let ewma: [EWMA, ..3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
+        let ewma: [EWMA; 3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
 
         StdMeter {
             data: Mutex::new(data),
@@ -127,7 +126,7 @@ impl StdMeter {
 
 #[cfg(test)]
 mod test {
-    use meter::{Meter,MeterSnapshot,StdMeter};
+    use super::*;
 
     #[test]
     fn zero() {

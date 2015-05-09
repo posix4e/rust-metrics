@@ -1,16 +1,14 @@
-use std::num::Num;
-
-pub struct StdGauge<T: Num> {
+pub struct StdGauge<T> {
     pub value: T
 }
 
-pub trait Gauge<T: Num> {
+pub trait Gauge<T> {
     fn update(&mut self, value: T);
 
     fn snapshot(self) -> Self;
 }
 
-impl<T: Num> Gauge<T> for StdGauge<T> {
+impl<T> Gauge<T> for StdGauge<T> {
     fn update(&mut self, value: T) {
         self.value = value
     }
@@ -22,7 +20,7 @@ impl<T: Num> Gauge<T> for StdGauge<T> {
 
 #[cfg(test)]
 mod test {
-    use gauge::{Gauge,StdGauge};
+    use super::*;
 
     #[test]
     fn create_and_snapshot() {
@@ -31,7 +29,7 @@ mod test {
 
         g_snapshot.update(10f64);
 
-        assert!(g.value == 0f64);
-        assert!(g_snapshot.value == 10f64);
+        assert_eq!(g.value, 0f64);
+        assert_eq!(g_snapshot.value, 10f64);
     }
 }
