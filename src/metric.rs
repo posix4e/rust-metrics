@@ -1,2 +1,2 @@
 /// a Metric
-pub trait Metric { }
+pub trait Metric {}
