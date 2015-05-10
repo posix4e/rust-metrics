@@ -9,3 +9,4 @@ authors = ["Endre Karlson <endre.karlson@gmail.com>"]
 
 [dependencies]
 time = "*"
+num = "*"

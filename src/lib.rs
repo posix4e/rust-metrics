@@ -1,5 +1,4 @@
-#![feature(if_let)]
-
+#![feature(collections)]
 extern crate time;
 
 #[cfg(test)]
