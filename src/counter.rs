@@ -4,6 +4,7 @@ use self::num::traits::Zero;
 use std::ops::{Add,Sub};
 use metric::Metric;
 
+#[derive(Copy, Clone)]
 pub struct StdCounter<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> {
     pub value: T,
 }
@@ -38,7 +39,7 @@ impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T> + Copy> Counter<T> for St
 
 impl<T> Metric for StdCounter<T> { }
 
-impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> StdCounter<T> {
+impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T> + Copy> StdCounter<T> {
     pub fn new() -> StdCounter<T> {
         StdCounter{ value: T::zero() }
     }

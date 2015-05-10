@@ -1,3 +1,4 @@
+#[derive(Copy, Clone)]
 pub struct StdGauge<T> {
     pub value: T
 }
