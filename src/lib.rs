@@ -1,4 +1,4 @@
-#![feature(collections)]
+#![feature(collections,test)]
 extern crate time;
 
 #[cfg(test)]
