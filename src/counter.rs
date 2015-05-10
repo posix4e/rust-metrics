@@ -1,4 +1,6 @@
-use std::num::Zero;
+extern crate num;
+
+use self::num::traits::Zero;
 use std::ops::{Add,Sub};
 use metric::Metric;
 
@@ -16,7 +18,7 @@ pub trait Counter<T>: Metric {
     fn snapshot(self) -> Self;
 }
 
-impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> Counter<T> for StdCounter<T> {
+impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T> + Copy> Counter<T> for StdCounter<T> {
     fn clear(&mut self) {
         self.value = T::zero();
     }
