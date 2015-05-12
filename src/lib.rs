@@ -1,8 +1,4 @@
-#![feature(collections,test)]
 extern crate time;
-
-#[cfg(test)]
-extern crate test;
 
 pub mod counter;
 pub mod gauge;

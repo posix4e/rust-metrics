@@ -74,7 +74,7 @@ impl Meter for StdMeter {
     fn rate(&self, rate: f64) -> f64 {
         let s = self.data.lock().unwrap();
 
-        if let Some(pos) = WINDOW.position_elem(&rate) {
+        if let Some(pos) = WINDOW.iter().position(|w| *w == rate) {
             let r: f64 = s.rates[pos];
             return r;
         }
