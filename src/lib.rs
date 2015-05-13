@@ -1,9 +1,4 @@
-#![feature(if_let)]
-
 extern crate time;
-
-#[cfg(test)]
-extern crate test;
 
 pub mod counter;
 pub mod gauge;

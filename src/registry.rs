@@ -19,7 +19,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
     }
 
     fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T) {
-        let boxed: Box<Metric> = (box metric) as Box<Metric>;
+        let boxed = Box::new(metric);
 
         self.metrics.insert(name, boxed);
     }
@@ -27,6 +27,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
 
 // General StdRegistry
 impl<'a> StdRegistry<'a> {
+    #[allow(dead_code)]
     fn new() -> StdRegistry<'a> {
         StdRegistry{
             metrics: HashMap::new()
@@ -36,14 +37,13 @@ impl<'a> StdRegistry<'a> {
 
 #[cfg(test)]
 mod test {
-    use metric::Metric;
     use meter::StdMeter;
     use registry::{Registry, StdRegistry};
 
     #[test]
     fn meter() {
         let mut r: StdRegistry = StdRegistry::new();
-        let mut m: StdMeter = StdMeter::new();
+        let m: StdMeter = StdMeter::new();
 
         r.insert("foo", m);
         r.get("foo");

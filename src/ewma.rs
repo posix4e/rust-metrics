@@ -1,9 +1,8 @@
-use std::num::Float;
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicUint, SeqCst};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct EWMA {
-    pub uncounted: AtomicUint, // This tracks uncounted events
+    pub uncounted: AtomicUsize, // This tracks uncounted events
     alpha: f64,
     rate: Mutex<f64>,
     init: bool,
@@ -21,7 +20,7 @@ impl EWMASnapshot {
 
 impl EWMA {
     pub fn rate(&self) -> f64 {
-        let r = self.rate.lock();
+        let r = self.rate.lock().unwrap();
 
         *r * (1e9 as f64)
     }
@@ -33,11 +32,11 @@ impl EWMA {
     }
 
     pub fn tick(&mut self) {
-        let counter: uint = self.uncounted.load(SeqCst);
+        let counter: usize = self.uncounted.load(Ordering::SeqCst);
 
-        self.uncounted.fetch_sub(counter, SeqCst); // Broken atm
+        self.uncounted.fetch_sub(counter, Ordering::SeqCst); // Broken atm
 
-        let mut rate = self.rate.lock();
+        let mut rate = self.rate.lock().unwrap();
         let i_rate = (counter as f64) / (5e9);
 
         if self.init {
@@ -46,18 +45,16 @@ impl EWMA {
             self.init = true;
             *rate = i_rate;
         }
-
-        rate.cond.signal();
     }
 
-    pub fn update(&self, n: uint) {
-        self.uncounted.fetch_add(n, SeqCst);
+    pub fn update(&self, n: usize) {
+        self.uncounted.fetch_add(n, Ordering::SeqCst);
     }
 
     /// construct new by alpha
     pub fn new_by_alpha(alpha: f64) -> EWMA {
         EWMA{
-            uncounted: AtomicUint::new(0u),
+            uncounted: AtomicUsize::new(0),
             alpha: alpha,
             rate: Mutex::new(0f64),
             init: false,
@@ -73,12 +70,11 @@ impl EWMA {
 
 #[cfg(test)]
 mod test {
-    use ewma::EWMA;
-    use std::num::Float;
+    use super::*;
 
     // Tick a minute
     fn elapse_minute(e: &mut EWMA) {
-        for i in range(0i, 12i) {
+        for _ in 0..12 {
             e.tick();
         }
     }
@@ -93,7 +89,7 @@ mod test {
     #[test]
     fn ewma1() {
         let mut e = EWMA::new(1f64);
-        e.update(3u);
+        e.update(3);
         e.tick();
 
         let mut r: f64;
@@ -151,7 +147,7 @@ mod test {
     #[test]
     fn ewma5() {
         let mut e = EWMA::new(5f64);
-        e.update(3u);
+        e.update(3);
         e.tick();
 
         let r: f64 = e.rate();
@@ -206,7 +202,7 @@ mod test {
     #[test]
     fn ewma15() {
         let mut e = EWMA::new(15f64);
-        e.update(3u);
+        e.update(3);
         e.tick();
 
         let r: f64 = e.rate();
