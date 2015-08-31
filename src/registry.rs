@@ -28,7 +28,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
 // General StdRegistry
 impl<'a> StdRegistry<'a> {
     #[allow(dead_code)]
-    fn new() -> StdRegistry<'a> {
+    pub fn new() -> StdRegistry<'a> {
         StdRegistry{
             metrics: HashMap::new()
         }
