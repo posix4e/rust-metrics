@@ -15,12 +15,24 @@ pub trait Reporter {
 }
 
 pub struct ReportCard {
-    metrics: HashMap<String, Box<Metric>>,
+    pub metrics: HashMap<String, Box<Metric>>,
 }
 
 impl Reporter for ConsoleReporter {
-    fn report(self, report_card: ReportCard ) {
-
+    fn report(self, report_card: ReportCard) {
+        let mut it = report_card.metrics.iter();
+        loop {
+            match it.next() {
+                Some(x) => {
+                    match x {
+                        (k, v) => {
+                            println!("k: {}", k);
+                        }
+                    }
+                }
+                None => break,
+            }
+        }
     }
 
     fn get_unique_reporter_name(&self) -> &'static str {
@@ -30,13 +42,13 @@ impl Reporter for ConsoleReporter {
 
 
 pub struct ConsoleReporter {
-    reporter_name : & 'static str
+    reporter_name: &'static str,
 }
 
 
 impl ConsoleReporter {
-    pub fn new(reporter_name: & 'static str) -> ConsoleReporter {
-        ConsoleReporter {reporter_name : reporter_name}
+    pub fn new(reporter_name: &'static str) -> ConsoleReporter {
+        ConsoleReporter { reporter_name: reporter_name }
     }
 }
 
