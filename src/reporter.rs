@@ -24,21 +24,23 @@ impl Reporter for ConsoleReporter {
     }
 
     fn get_unique_reporter_name(&self) -> &'static str {
-        "console-reporter"
+        self.reporter_name
     }
 }
 
 
-pub struct ConsoleReporter;
+pub struct ConsoleReporter {
+    reporter_name : & 'static str
+}
+
+
+impl ConsoleReporter {
+    pub fn new(reporter_name: & 'static str) -> ConsoleReporter {
+        ConsoleReporter {reporter_name : reporter_name}
+    }
+}
+
 /*
-
-impl<'a> ConsoleReporter<'a> {
-    pub fn new(registry_to_report_to_console:Rc<Registry<'a>>) -> ConsoleReporter<'a> {
-        ConsoleReporter {registry: registry_to_report_to_console}
-    }
-}
-
-
 #[cfg(test)]
 mod test {
     use meter::StdMeter;
