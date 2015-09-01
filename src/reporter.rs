@@ -15,7 +15,7 @@ pub trait Reporter {
 }
 
 pub struct ReportCard {
-    pub metrics: HashMap<String, Box<Metric>>,
+    pub metrics: HashMap<String, Box<Metric>>
 }
 
 impl Reporter for ConsoleReporter {
@@ -42,7 +42,7 @@ impl Reporter for ConsoleReporter {
 
 
 pub struct ConsoleReporter {
-    reporter_name: &'static str,
+    reporter_name: &'static str
 }
 
 

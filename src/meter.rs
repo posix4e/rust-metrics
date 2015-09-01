@@ -12,14 +12,14 @@ const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 pub struct MeterSnapshot {
     count: i64,
     rates: [f64; 3],
-    mean: f64,
+    mean: f64
 }
 
 // A StdMeter struct
 pub struct StdMeter {
     data: Mutex<MeterSnapshot>,
     ewma: [EWMA; 3],
-    start: Timespec,
+    start: Timespec
 }
 
 // A Meter trait
@@ -104,11 +104,7 @@ impl StdMeter {
     }
 
     pub fn new() -> StdMeter {
-        let data: MeterSnapshot = MeterSnapshot {
-            count: 0i64,
-            rates: [0f64, 0f64, 0f64],
-            mean: 0f64,
-        };
+        let data: MeterSnapshot = MeterSnapshot { count: 0i64, rates: [0f64, 0f64, 0f64], mean: 0f64 };
 
         let ewma: [EWMA; 3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
 
