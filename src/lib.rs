@@ -6,3 +6,4 @@ pub mod ewma;
 pub mod meter;
 pub mod metric;
 pub mod registry;
+pub mod reporter;
