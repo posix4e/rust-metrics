@@ -1,7 +1,7 @@
 use time::get_time;
 use time::Timespec;
 
-use std::sync::{Mutex,MutexGuard};
+use std::sync::{Mutex, MutexGuard};
 
 use ewma::EWMA;
 use metric::Metric;
@@ -41,11 +41,7 @@ impl Meter for StdMeter {
     fn snapshot(&self) -> MeterSnapshot {
         let s = self.data.lock().unwrap();
 
-        MeterSnapshot {
-            count: s.count,
-            rates: s.rates,
-            mean: s.mean
-        }
+        MeterSnapshot { count: s.count, rates: s.rates, mean: s.mean }
     }
 
     fn mark(&self, n: i64) {
@@ -108,7 +104,7 @@ impl StdMeter {
     }
 
     pub fn new() -> StdMeter {
-        let data: MeterSnapshot = MeterSnapshot{
+        let data: MeterSnapshot = MeterSnapshot {
             count: 0i64,
             rates: [0f64, 0f64, 0f64],
             mean: 0f64,
@@ -116,11 +112,7 @@ impl StdMeter {
 
         let ewma: [EWMA; 3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
 
-        StdMeter {
-            data: Mutex::new(data),
-            ewma: ewma,
-            start: get_time(),
-        }
+        StdMeter { data: Mutex::new(data), ewma: ewma, start: get_time() }
     }
 }
 

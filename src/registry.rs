@@ -6,15 +6,13 @@ use reporter::Reporter;
 
 pub trait Registry<'a> {
     fn get(&'a self, name: &'a str) -> &'a Metric;
-
     fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T);
-
-    fn add_reporter(&mut self, reporter: Box<Reporter>);
+    fn add_scheduled_reporter(&mut self, reporter: Box<Reporter>);
 }
 
 pub struct StdRegistry<'a> {
-    metrics: HashMap<&'a str, Box<Metric + 'a>>,
-    reporter: HashMap<&'a str, Box<Reporter>>
+    metrics: HashMap<&'a str, Box<Metric+ 'a>>,
+    reporter: HashMap<&'a str, Box<Reporter>>,
 }
 
 // Specific stuff for registry goes here
@@ -29,7 +27,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
         self.metrics.insert(name, boxed);
     }
 
-    fn add_reporter(&mut self, reporter: Box<Reporter>) {
+    fn add_scheduled_reporter(&mut self, reporter: Box<Reporter>) {
         let reporter_name = reporter.get_unique_reporter_name();
         self.reporter.insert(reporter_name, reporter);
     }
@@ -39,10 +37,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
 impl<'a> StdRegistry<'a> {
     #[allow(dead_code)]
     pub fn new() -> StdRegistry<'a> {
-        StdRegistry{
-            metrics: HashMap::new(),
-            reporter: HashMap::new()
-        }
+        StdRegistry { metrics: HashMap::new(), reporter: HashMap::new() }
     }
 }
 
