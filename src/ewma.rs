@@ -5,11 +5,11 @@ pub struct EWMA {
     pub uncounted: AtomicUsize, // This tracks uncounted events
     alpha: f64,
     rate: Mutex<f64>,
-    init: bool,
+    init: bool
 }
 
 pub struct EWMASnapshot {
-    value: f64,
+    value: f64
 }
 
 impl EWMASnapshot {

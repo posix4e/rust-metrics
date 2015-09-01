@@ -1,6 +1,6 @@
 #[derive(Copy, Clone)]
 pub struct StdGauge<T> {
-    pub value: T,
+    pub value: T
 }
 
 pub trait Gauge<T> {
