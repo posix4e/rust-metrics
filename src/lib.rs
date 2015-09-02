@@ -1,6 +1,6 @@
-#![feature(associated_type_defaults)]
 extern crate time;
 extern crate num;
+extern crate histogram;
 
 pub mod counter;
 pub mod gauge;

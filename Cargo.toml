@@ -6,3 +6,4 @@ authors = ["Endre Karlson <endre.karlson@gmail.com>", "Alex Newman <posix4e@gmai
 [dependencies]
 time = "*"
 num = "*"
+histogram = "*"
