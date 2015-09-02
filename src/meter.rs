@@ -1,12 +1,8 @@
 use time::get_time;
 use time::Timespec;
-use num::traits::Zero;
-use std::ops::{Add, Sub};
 use std::sync::{Mutex, MutexGuard};
-
 use ewma::EWMA;
 use metric::{Metric, MetricType};
-use counter::StdCounter;
 
 const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 

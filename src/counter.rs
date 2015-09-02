@@ -1,9 +1,6 @@
 extern crate num;
 
-use self::num::traits::Zero;
-use std::ops::{Add, Sub};
 use metric::{Metric, MetricType};
-use meter::MeterSnapshot;
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdCounter {

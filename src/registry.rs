@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-
-use meter::Meter;
 use metric::Metric;
 use reporter::Reporter;
 
