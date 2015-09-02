@@ -45,15 +45,34 @@ impl<'a> StdRegistry<'a> {
 
 #[cfg(test)]
 mod test {
-    use meter::StdMeter;
+    use meter::{Meter, StdMeter};
+    use counter::{Counter, StdCounter};
+    use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
 
     #[test]
     fn meter() {
-        let mut r: StdRegistry = StdRegistry::new();
-        let m: StdMeter = StdMeter::new();
+        let mut r = StdRegistry::new();
+        let m = StdMeter::new();
+        m.mark(100);
+        r.insert("meter1", m);
 
-        r.insert("foo", m);
-        r.get("foo");
     }
+
+    #[test]
+    fn gauge() {
+        let mut r = StdRegistry::new();
+        let mut g: StdGauge = StdGauge { value: 0f64 };
+        g.update(1.2);
+        r.insert("gauge1", g);
+    }
+
+    #[test]
+    fn counter() {
+        let mut r = StdRegistry::new();
+        let mut c: StdCounter = StdCounter::new();
+        c.inc(1);
+        r.insert("counter1", c);
+    }
+
 }
