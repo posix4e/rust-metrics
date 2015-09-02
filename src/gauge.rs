@@ -22,7 +22,7 @@ impl Gauge for StdGauge {
 }
 
 impl Metric for StdGauge {
-    fn get_type(&self) -> MetricValue {
+    fn export_metric(&self) -> MetricValue {
         MetricValue::Gauge(self.snapshot())
     }
 }

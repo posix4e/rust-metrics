@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+#[derive(Debug)]
 pub struct EWMA {
     pub uncounted: AtomicUsize, // This tracks uncounted events
     alpha: f64,

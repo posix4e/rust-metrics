@@ -35,7 +35,6 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
     }
 }
 
-// General StdRegistry
 impl<'a> StdRegistry<'a> {
     #[allow(dead_code)]
     pub fn new() -> StdRegistry<'a> {
@@ -49,6 +48,7 @@ mod test {
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
+    use histogram::*;
 
     #[test]
     fn meter() {
@@ -56,7 +56,6 @@ mod test {
         let m = StdMeter::new();
         m.mark(100);
         r.insert("meter1", m);
-
     }
 
     #[test]
@@ -75,4 +74,19 @@ mod test {
         r.insert("counter1", c);
     }
 
+    #[test]
+    fn histogram() {
+        let mut r = StdRegistry::new();
+        let mut h = Histogram::new(
+    HistogramConfig{
+        max_memory: 0,
+        max_value: 1000000,
+        precision: 3,
+        }).unwrap();
+        h.record(1, 1);
+        r.insert("histogram", h);
+
+        let mut r = StdRegistry::new();
+
+    }
 }

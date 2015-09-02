@@ -23,7 +23,7 @@ impl Reporter for ConsoleReporter {
                                loop {
                                    for metric_name in &registry.get_metrics_names() {
                                        let metric = registry.get(metric_name);
-                                       match metric.get_type() {
+                                       match metric.export_metric() {
                                            Meter(x) => {
                                                println!("{:?}", x);
                                            }
@@ -33,8 +33,8 @@ impl Reporter for ConsoleReporter {
                                            Counter(x) => {
                                                println!("{:?}", x);
                                            }
-                                           Histogram => {
-
+                                           Histogram(x) => {
+                                               println!("histogram{:?}", x);
                                            }
                                        }
                                    }
@@ -58,12 +58,15 @@ impl ConsoleReporter {
 
 #[cfg(test)]
 mod test {
+
     use meter::{Meter, StdMeter};
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
     use reporter::{ConsoleReporter, Reporter};
     use std::sync::Arc;
+    use std::thread;
+    use histogram::*;
 
     #[test]
     fn meter() {
@@ -76,14 +79,26 @@ mod test {
         let mut g: StdGauge = StdGauge { value: 0f64 };
         g.update(1.2);
 
+        let mut h = Histogram::new(
+    HistogramConfig{
+        max_memory: 0,
+        max_value: 1000000,
+        precision: 3,
+}).unwrap();
+        h.record(1, 1);
+
+
         let mut r = StdRegistry::new();
         r.insert("meter1", m);
         r.insert("counter1", c);
         r.insert("gauge1", g);
+        r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.report();
+        g.update(1.4);
+        thread::sleep_ms(200);
         println!("poplopit");
 
     }

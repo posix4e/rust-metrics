@@ -36,7 +36,7 @@ impl Counter for StdCounter {
 }
 
 impl Metric for StdCounter {
-    fn get_type(&self) -> MetricValue {
+    fn export_metric(&self) -> MetricValue {
         MetricValue::Counter(self.snapshot())
     }
 }
