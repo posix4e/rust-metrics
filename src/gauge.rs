@@ -1,4 +1,4 @@
-use metric::{Metric, MetricType};
+use metric::{Metric, MetricValue};
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdGauge {
@@ -22,8 +22,8 @@ impl Gauge for StdGauge {
 }
 
 impl Metric for StdGauge {
-    fn get_type(&self) -> MetricType {
-        MetricType::Gauge(self.snapshot())
+    fn get_type(&self) -> MetricValue {
+        MetricValue::Gauge(self.snapshot())
     }
 }
 

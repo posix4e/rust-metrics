@@ -24,6 +24,7 @@ extern crate metrics
 - [x] Counters
 - [x] Meters
 - [x] Console Based Reporter
+- [x] Create a more basic histogram trait and MetricValue
 - [ ] Ganglia Reporter
 - [ ] Graphite Reporter
 - [ ] Gauge should be made generic

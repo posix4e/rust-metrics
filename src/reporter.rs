@@ -17,7 +17,7 @@ pub struct ConsoleReporter {
 
 impl Reporter for ConsoleReporter {
     fn report(&self) {
-        use metric::MetricType::{Counter, Gauge, Histogram, Meter};
+        use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
                                loop {
