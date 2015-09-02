@@ -1,47 +1,52 @@
 extern crate num;
 
 use self::num::traits::Zero;
-use std::ops::{Add,Sub};
-use metric::Metric;
+use std::ops::{Add, Sub};
+use metric::{Metric, MetricType};
+use meter::MeterSnapshot;
 
-#[derive(Copy, Clone)]
-pub struct StdCounter<T: Zero + Add<T, Output = T> + Sub<T, Output = T>> {
-    pub value: T,
+#[derive(Copy, Clone, Debug)]
+pub struct StdCounter {
+    pub value: i64
 }
 
-pub trait Counter<T>: Metric {
+pub trait Counter{
     fn clear(&mut self);
 
-    fn dec(&mut self, value: T);
+    fn dec(&mut self, value: i64);
 
-    fn inc(&mut self, value: T);
+    fn inc(&mut self, value: i64);
 
     fn snapshot(self) -> Self;
 }
 
-impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T> + Copy> Counter<T> for StdCounter<T> {
+impl Counter for StdCounter {
     fn clear(&mut self) {
-        self.value = T::zero();
+        self.value = 0;
     }
 
-    fn dec(&mut self, value: T) {
+    fn dec(&mut self, value: i64) {
         self.value = self.value - value;
     }
 
-    fn inc(&mut self, value: T) {
+    fn inc(&mut self, value: i64) {
         self.value = self.value + value;
     }
 
-    fn snapshot(self) -> StdCounter<T> {
+    fn snapshot(self) -> StdCounter {
         StdCounter { value: self.value }
     }
 }
 
-impl<T> Metric for StdCounter<T> { }
+impl Metric for StdCounter {
+    fn get_type(&self) -> MetricType {
+        MetricType::Counter(self.snapshot())
+    }
+}
 
-impl<T: Zero + Add<T, Output = T> + Sub<T, Output = T> + Copy> StdCounter<T> {
-    pub fn new() -> StdCounter<T> {
-        StdCounter{ value: T::zero() }
+impl StdCounter {
+    pub fn new() -> StdCounter {
+        StdCounter { value: 0 }
     }
 }
 
@@ -51,7 +56,7 @@ mod test {
 
     #[test]
     fn increment_by_1() {
-        let mut c: StdCounter<i32> = StdCounter::new();
+        let mut c: StdCounter = StdCounter::new();
         c.inc(1);
 
         assert!(c.value == 1);
@@ -59,7 +64,7 @@ mod test {
 
     #[test]
     fn snapshot() {
-        let c: StdCounter<i32> = StdCounter::new();
+        let c: StdCounter = StdCounter::new();
         let mut c_snapshot = c.snapshot();
 
         c_snapshot.inc(1);

@@ -1,14 +1,17 @@
 use time::get_time;
 use time::Timespec;
-
+use num::traits::Zero;
+use std::ops::{Add, Sub};
 use std::sync::{Mutex, MutexGuard};
 
 use ewma::EWMA;
-use metric::Metric;
+use metric::{Metric, MetricType};
+use counter::StdCounter;
 
 const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 
 // A MeterSnapshot
+#[derive(Debug)]
 pub struct MeterSnapshot {
     count: i64,
     rates: [f64; 3],
@@ -24,6 +27,13 @@ pub struct StdMeter {
 
 // A Meter trait
 pub trait Meter : Metric {
+
+    fn get_meter(&self) -> MeterSnapshot {
+        self.snapshot()
+    }
+
+    fn get_type(&self) -> MetricType;
+
     fn snapshot(&self) -> MeterSnapshot;
 
     fn mark(&self, n: i64);
@@ -38,6 +48,12 @@ pub trait Meter : Metric {
 }
 
 impl Meter for StdMeter {
+    fn get_type(&self) -> MetricType {
+        use metric::MetricType::Meter;
+        let snapshot: MeterSnapshot = self.snapshot();
+        Meter(snapshot)
+    }
+
     fn snapshot(&self) -> MeterSnapshot {
         let s = self.data.lock().unwrap();
 
@@ -91,7 +107,13 @@ impl Meter for StdMeter {
     }
 }
 
-impl Metric for StdMeter { }
+impl Metric for StdMeter {
+    fn get_type(&self) -> MetricType {
+        use metric::MetricType::Meter;
+        let snapshot: MeterSnapshot = self.snapshot();
+        Meter(snapshot)
+    }
+}
 
 impl StdMeter {
     fn update_snapshot(&self, mut s: MutexGuard<MeterSnapshot>) {
