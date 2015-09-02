@@ -1,21 +1,33 @@
-#[derive(Copy, Clone)]
-pub struct StdGauge<T> {
-    pub value: T
+use num::traits::Zero;
+use std::ops::{Add, Sub};
+use metric::{Metric, MetricType};
+use meter::MeterSnapshot;
+use counter::StdCounter;
+
+#[derive(Copy, Clone, Debug)]
+pub struct StdGauge {
+    pub value: f64
 }
 
-pub trait Gauge<T> {
-    fn update(&mut self, value: T);
+pub trait Gauge {
+    fn update(&mut self, value: f64);
 
     fn snapshot(self) -> Self;
 }
 
-impl<T> Gauge<T> for StdGauge<T> {
-    fn update(&mut self, value: T) {
+impl Gauge for StdGauge {
+    fn update(&mut self, value: f64) {
         self.value = value
     }
 
-    fn snapshot(self) -> StdGauge<T> {
+    fn snapshot(self) -> StdGauge {
         StdGauge { value: self.value }
+    }
+}
+
+impl Metric for StdGauge {
+    fn get_type(&self) -> MetricType {
+        MetricType::Gauge(self.snapshot())
     }
 }
 
@@ -25,7 +37,7 @@ mod test {
 
     #[test]
     fn create_and_snapshot() {
-        let g: StdGauge<f64> = StdGauge { value: 0f64 };
+        let g: StdGauge = StdGauge { value: 0f64 };
         let mut g_snapshot = g.snapshot();
 
         g_snapshot.update(10f64);

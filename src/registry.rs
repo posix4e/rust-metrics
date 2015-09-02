@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
+use meter::Meter;
 use metric::Metric;
 use reporter::Reporter;
 
-pub trait Registry<'a> {
+pub trait Registry<'a>: Send + Sync {
     fn add_scheduled_reporter(&mut self, reporter: Box<Reporter>);
     fn get(&'a self, name: &'a str) -> &'a Metric;
+    fn get_metrics_names(&self) -> Vec<&str>;
     fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T);
 }
 
@@ -28,6 +30,10 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
     fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T) {
         let boxed = Box::new(metric);
         self.metrics.insert(name, boxed);
+    }
+
+    fn get_metrics_names(&self) -> Vec<&str> {
+        self.metrics.keys().cloned().collect()
     }
 }
 

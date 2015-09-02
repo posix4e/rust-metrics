@@ -1,11 +1,7 @@
 [package]
 name = "metrics"
-version = "0.0.1"
-authors = ["Endre Karlson <endre.karlson@gmail.com>"]
-
-#[dependencies.dns]
-#version = "0.0.1"
-#path = "../dns"
+version = "0.0.2"
+authors = ["Endre Karlson <endre.karlson@gmail.com>", "Alex Newman <posix4e@gmail.com>"]
 
 [dependencies]
 time = "*"
