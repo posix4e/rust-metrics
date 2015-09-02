@@ -85,7 +85,7 @@ mod test {
         e.update(3);
         e.tick();
 
-        let mut r: f64;
+        let r: f64;
 
         // initial
         r = e.rate();

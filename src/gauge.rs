@@ -1,8 +1,4 @@
-use num::traits::Zero;
-use std::ops::{Add, Sub};
 use metric::{Metric, MetricType};
-use meter::MeterSnapshot;
-use counter::StdCounter;
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdGauge {

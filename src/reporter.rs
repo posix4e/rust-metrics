@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use metric::Metric;
-use std::rc::Rc;
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
@@ -12,7 +9,6 @@ pub trait Reporter: Send + Sync {
 
     fn get_unique_reporter_name(&self) -> &'static str;
 }
-
 
 pub struct ConsoleReporter {
     registry: Arc<StdRegistry<'static>>,
@@ -85,8 +81,8 @@ mod test {
         r.insert("counter1", c);
         r.insert("gauge1", g);
 
-        let mut arc_registry = Arc::new(r);
-        let mut reporter = ConsoleReporter::new(arc_registry.clone(), "test");
+        let arc_registry = Arc::new(r);
+        let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.report();
         println!("poplopit");
 
