@@ -1,6 +1,6 @@
 extern crate num;
 
-use metric::{Metric, MetricType};
+use metric::{Metric, MetricValue};
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdCounter {
@@ -36,8 +36,8 @@ impl Counter for StdCounter {
 }
 
 impl Metric for StdCounter {
-    fn get_type(&self) -> MetricType {
-        MetricType::Counter(self.snapshot())
+    fn get_type(&self) -> MetricValue {
+        MetricValue::Counter(self.snapshot())
     }
 }
 
