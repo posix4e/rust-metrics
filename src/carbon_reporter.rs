@@ -3,45 +3,37 @@ use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
 use meter::Meter;
+use reporter::Reporter;
 
-pub trait Reporter: Send + Sync {
-    fn report(&self);
-
-    fn get_unique_reporter_name(&self) -> &'static str;
-}
-
-pub struct ConsoleReporter {
-    delay_ms: u32,
+pub struct CarbonReporter {
     registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str
 }
 
-impl Reporter for ConsoleReporter {
+impl Reporter for CarbonReporter {
     fn report(&self) {
         use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
-        let delay_ms = self.delay_ms;
         thread::spawn(move || {
                                loop {
                                    for metric_name in &registry.get_metrics_names() {
                                        let metric = registry.get(metric_name);
                                        match metric.export_metric() {
                                            Meter(x) => {
-                                               println!("{:?}", x);
+                                    //           self.send_meter_metric(x);
                                            }
                                            Gauge(x) => {
-                                               println!("{:?}", x);
+                            //                   self.send_gauge_metric(x);
                                            }
                                            Counter(x) => {
-                                               println!("{:?}", x);
+                                //               self.send_counter_metric(x);
                                            }
                                            Histogram(x) => {
-                                               println!("histogram{:?}", x);
+                                    //           self.send_histogram_metric(x);
                                            }
                                        }
                                    }
-
-                                   thread::sleep_ms(delay_ms);
+                                   thread::sleep_ms(1);
                                }
                            });
     }
@@ -51,9 +43,9 @@ impl Reporter for ConsoleReporter {
     }
 }
 
-impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str, delay_ms: u32) -> ConsoleReporter {
-        ConsoleReporter { delay_ms: delay_ms, registry: registry, reporter_name: reporter_name }
+impl CarbonReporter {
+    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> CarbonReporter {
+        CarbonReporter { registry: registry, reporter_name: reporter_name }
     }
 }
 
@@ -64,7 +56,8 @@ mod test {
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
-    use reporter::{ConsoleReporter, Reporter};
+    use reporter::Reporter;
+    use carbon_reporter::CarbonReporter;
     use std::sync::Arc;
     use std::thread;
     use histogram::*;
@@ -96,7 +89,7 @@ mod test {
         r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
-        let reporter = ConsoleReporter::new(arc_registry.clone(), "test", 1);
+        let reporter = CarbonReporter::new(arc_registry.clone(), "test");
         reporter.report();
         g.update(1.4);
         thread::sleep_ms(200);
