@@ -6,6 +6,7 @@ use meter::Meter;
 use reporter::Reporter;
 
 pub struct CarbonReporter {
+    delay_ms: u32,
     registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str
 }
@@ -14,6 +15,7 @@ impl Reporter for CarbonReporter {
     fn report(&self) {
         use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
+        let delay_ms = self.delay_ms;
         thread::spawn(move || {
                                loop {
                                    for metric_name in &registry.get_metrics_names() {
@@ -33,7 +35,7 @@ impl Reporter for CarbonReporter {
                                            }
                                        }
                                    }
-                                   thread::sleep_ms(1);
+                                   thread::sleep_ms(delay_ms);
                                }
                            });
     }
@@ -44,8 +46,8 @@ impl Reporter for CarbonReporter {
 }
 
 impl CarbonReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> CarbonReporter {
-        CarbonReporter { registry: registry, reporter_name: reporter_name }
+    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str, delay_ms: u32) -> CarbonReporter {
+        CarbonReporter { delay_ms: delay_ms, registry: registry, reporter_name: reporter_name }
     }
 }
 
@@ -89,7 +91,7 @@ mod test {
         r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
-        let reporter = CarbonReporter::new(arc_registry.clone(), "test");
+        let reporter = CarbonReporter::new(arc_registry.clone(), "test", 1);
         reporter.report();
         g.update(1.4);
         thread::sleep_ms(200);
