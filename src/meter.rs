@@ -15,6 +15,7 @@ pub struct MeterSnapshot {
 }
 
 // A StdMeter struct
+#[derive(Debug)]
 pub struct StdMeter {
     data: Mutex<MeterSnapshot>,
     ewma: [EWMA; 3],
@@ -28,7 +29,7 @@ pub trait Meter : Metric {
         self.snapshot()
     }
 
-    fn get_type(&self) -> MetricValue;
+    fn export_metric(&self) -> MetricValue;
 
     fn snapshot(&self) -> MeterSnapshot;
 
@@ -44,7 +45,7 @@ pub trait Meter : Metric {
 }
 
 impl Meter for StdMeter {
-    fn get_type(&self) -> MetricValue {
+    fn export_metric(&self) -> MetricValue {
         use metric::MetricValue::Meter;
         let snapshot: MeterSnapshot = self.snapshot();
         Meter(snapshot)
@@ -104,7 +105,7 @@ impl Meter for StdMeter {
 }
 
 impl Metric for StdMeter {
-    fn get_type(&self) -> MetricValue {
+    fn export_metric(&self) -> MetricValue {
         use metric::MetricValue::Meter;
         let snapshot: MeterSnapshot = self.snapshot();
         Meter(snapshot)
