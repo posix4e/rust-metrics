@@ -5,22 +5,20 @@ use std::sync::Arc;
 use meter::Meter;
 
 pub trait Reporter: Send + Sync {
-    fn report(&self);
+    fn report(&self, delay_ms: u32);
 
     fn get_unique_reporter_name(&self) -> &'static str;
 }
 
 pub struct ConsoleReporter {
-    delay_ms: u32,
     registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str
 }
 
 impl Reporter for ConsoleReporter {
-    fn report(&self) {
+    fn report(&self, delay_ms: u32) {
         use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
-        let delay_ms = self.delay_ms;
         thread::spawn(move || {
                                loop {
                                    for metric_name in &registry.get_metrics_names() {
@@ -52,8 +50,11 @@ impl Reporter for ConsoleReporter {
 }
 
 impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str, delay_ms: u32) -> ConsoleReporter {
-        ConsoleReporter { delay_ms: delay_ms, registry: registry, reporter_name: reporter_name }
+    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> ConsoleReporter {
+        ConsoleReporter { registry: registry, reporter_name: reporter_name }
+    }
+    pub fn start(self, delay_ms: u32) {
+        self.report(delay_ms);
     }
 }
 
@@ -96,8 +97,8 @@ mod test {
         r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
-        let reporter = ConsoleReporter::new(arc_registry.clone(), "test", 1);
-        reporter.report();
+        let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
+        reporter.start(1);
         g.update(1.4);
         thread::sleep_ms(200);
         println!("poplopit");
