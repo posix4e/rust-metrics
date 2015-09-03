@@ -9,9 +9,9 @@ const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 // A MeterSnapshot
 #[derive(Debug)]
 pub struct MeterSnapshot {
-    count: i64,
-    rates: [f64; 3],
-    mean: f64
+    pub count: i64,
+    pub rates: [f64; 3],
+    pub mean: f64
 }
 
 // A StdMeter struct
@@ -89,7 +89,6 @@ impl Meter for StdMeter {
         }
         0f64
     }
-
     /// Return the mean rate
     fn mean(&self) -> f64 {
         let s = self.data.lock().unwrap();
