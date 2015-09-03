@@ -2,8 +2,17 @@
 name = "metrics"
 version = "0.0.2"
 authors = ["Endre Karlson <endre.karlson@gmail.com>", "Alex Newman <posix4e@gmail.com>"]
+description = "Coda Hale style metrics for rust"
+
+documentation = "https://github.com/posix4e/rust-metrics/"
+homepage = "https://github.com/posix4e/rust-metrics/"
+repository = "https://github.com/posix4e/rust-metrics/"
+readme = "README.md"
+keywords = ["metrics", "graphite", "ganglia", "opentsdb"]
+license = "Apache-2.0"
+license-file = "LICENSE"
 
 [dependencies]
-time = "*"
-num = "*"
-histogram = "*"
+time = "0.1.32"
+num = "0.1.27"
+histogram = "0.1.5"
