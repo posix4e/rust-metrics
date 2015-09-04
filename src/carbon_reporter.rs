@@ -7,7 +7,7 @@ use reporter::Reporter;
 use counter::StdCounter;
 use gauge::StdGauge;
 use meter::MeterSnapshot;
-use histogram::Histogram;
+use histogram::{Histogram,HistogramBucket};
 use carbon_sender::Carbon;
 pub struct CarbonReporter {
     hostname: &'static str,
@@ -68,7 +68,6 @@ fn send_meter_metric( metric_name: String,
     carbon.write(prefix(format!("{}.m5", metric_name), prefix_str), m5_rate, ts);
     carbon.write(prefix(format!("{}.m15", metric_name), prefix_str), m15_rate, ts);
     carbon.write(prefix(format!("{}.mean", metric_name), prefix_str), mean_rate, ts);
-
 }
 
 fn send_gauge_metric(metric_name: String,
@@ -92,45 +91,46 @@ fn send_counter_metric(metric_name: String,
         counter.value.to_string(),
          ts);
 }
+
 fn send_histogram_metric(metric_name: String,
     histogram:& mut Histogram,
     carbon:& mut Carbon,
     prefix_str: & 'static str,
     ts: u32) {
         let count = histogram.count();
-        //let max = histogram.max().unwrap();
         //let sum = histogram.sum();
         //let mean = sum / count;
-        let min = histogram.min();
+        let max = histogram.percentile(100.0).unwrap();
+        let min = histogram.percentile(0.0).unwrap();
 
-        let p50 = histogram.percentile(0.5).unwrap();
-        let p75 = histogram.percentile(0.75).unwrap();
-        let p95 = histogram.percentile(0.95).unwrap();
-        let p98 = histogram.percentile(0.98).unwrap();
-        let p99 = histogram.percentile(0.99).unwrap();
-        let p999 = histogram.percentile(0.999).unwrap();
-        let p9999 = histogram.percentile(0.9999).unwrap();
-        let p99999 = histogram.percentile(0.99999).unwrap();
+        let p50 = histogram.percentile(50.0).unwrap();
+        let p75 = histogram.percentile(75.0).unwrap();
+        let p95 = histogram.percentile(95.0).unwrap();
+        let p98 = histogram.percentile(98.0).unwrap();
+        let p99 = histogram.percentile(99.0).unwrap();
+        let p999 = histogram.percentile(99.9).unwrap();
+        let p9999 = histogram.percentile(99.99).unwrap();
+        let p99999 = histogram.percentile(99.999).unwrap();
 
         carbon
         .write(prefix(format!("{}.count", metric_name), prefix_str),
         count.to_string(),
          ts);
 
-        // carbon
-         //.write(prefix(format!("{}.max", metric_name), prefix_str),
-         //max.to_string(),
-         // ts);
+         carbon
+         .write(prefix(format!("{}.max", metric_name), prefix_str),
+         max.to_string(),
+          ts);
 
           //carbon
           //.write(prefix(format!("{}.mean", metric_name), prefix_str),
           //mean.into_string(),
           // ts);
 
-           //carbon
-           //.write(prefix(format!("{}.min", metric_name), prefix_str),
-           //min.to_string(),
-//            ts);
+           carbon
+           .write(prefix(format!("{}.min", metric_name), prefix_str),
+           min.to_string(),
+            ts);
 
             carbon
             .write(prefix(format!("{}.p50", metric_name), prefix_str),
