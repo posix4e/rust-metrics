@@ -10,7 +10,6 @@ repository = "https://github.com/posix4e/rust-metrics/"
 readme = "README.md"
 keywords = ["metrics", "graphite", "ganglia", "opentsdb"]
 license = "Apache-2.0"
-license-file = "LICENSE"
 
 [dependencies]
 time = "0.1.32"
