@@ -14,4 +14,4 @@ license = "Apache-2.0"
 [dependencies]
 time = "0.1.32"
 num = "0.1.27"
-histogram = "0.1.5"
+histogram = "0.1.6"
