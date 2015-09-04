@@ -101,7 +101,7 @@ fn send_histogram_metric(metric_name: String,
         //let max = histogram.max().unwrap();
         //let sum = histogram.sum();
         //let mean = sum / count;
-//        let min = histogram.min();
+        let min = histogram.min();
 
         let p50 = histogram.percentile(0.5).unwrap();
         let p75 = histogram.percentile(0.75).unwrap();
