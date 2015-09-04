@@ -30,6 +30,7 @@ extern crate metrics
 - [ ] Ganglia Reporter
 - [x] Graphite Reporter
 - [ ] Gauge should be made generic
+- [ ] Improved testing (Matchers, for the !server macros in the carbon reporter testing)
 
 
 ## License
