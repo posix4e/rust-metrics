@@ -7,12 +7,13 @@ use reporter::Reporter;
 use counter::StdCounter;
 use gauge::StdGauge;
 use meter::MeterSnapshot;
-use histogram::{Histogram,HistogramBucket};
+use histogram::Histogram;
 use carbon_sender::Carbon;
+use time;
+use time::Timespec;
 
 pub struct CarbonReporter {
-    hostname: &'static str,
-    port: u16,
+    host_and_port: String,
     prefix: &'static str,
     registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str
@@ -23,14 +24,14 @@ impl Reporter for CarbonReporter {
         use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 
         let prefix = self.prefix;
-        let mut carbon = Carbon::new(self.hostname, self.port);
+        let host_and_port = self.host_and_port.clone();
+        let mut carbon = Carbon::new(host_and_port);
         let registry = self.registry.clone();
         thread::spawn(move || {
                                loop {
-                                   let ts = 0;
+                                   let ts = time::now().to_timespec();
                                    for metric_name in &registry.get_metrics_names() {
                                        let metric = registry.get(metric_name);
-                                       let cloned_metric_name = metric_name.clone();
                                        let mnas = metric_name.to_string(); // Metric name as string
                                        match metric.export_metric() {
                                            Meter(x) => send_meter_metric(mnas, x, & mut carbon,  prefix, ts),
@@ -57,13 +58,14 @@ fn send_meter_metric( metric_name: String,
     meter: MeterSnapshot,
      carbon:&mut Carbon,
      prefix_str: & 'static str,
-     ts: u32) {
+     ts: Timespec) {
 
     let count = meter.count.to_string();
     let m1_rate = meter.rates[0].to_string();
     let m5_rate = meter.rates[1].to_string();
     let m15_rate = meter.rates[2].to_string();
     let mean_rate = meter.mean.to_string();
+    carbon.write(prefix(format!("{}.count", metric_name), prefix_str), count, ts);
     carbon.write(prefix(format!("{}.m1", metric_name), prefix_str), m1_rate, ts);
     carbon.write(prefix(format!("{}.m5", metric_name), prefix_str), m5_rate, ts);
     carbon.write(prefix(format!("{}.m15", metric_name), prefix_str), m15_rate, ts);
@@ -74,7 +76,7 @@ fn send_gauge_metric(metric_name: String,
      gauge: StdGauge,
      carbon:&mut Carbon,
      prefix_str: & 'static str,
-     ts: u32) {
+     ts: Timespec) {
          carbon
          .write(prefix(format!("{}", metric_name), prefix_str),
          gauge.value.to_string(),
@@ -85,7 +87,7 @@ fn send_counter_metric(metric_name: String,
     counter: StdCounter,
     carbon:& mut Carbon,
     prefix_str: & 'static str,
-    ts: u32){
+    ts: Timespec){
         carbon
         .write(prefix(format!("{}", metric_name), prefix_str),
         counter.value.to_string(),
@@ -95,7 +97,7 @@ fn send_histogram_metric(metric_name: String,
     histogram:& mut Histogram,
     carbon:& mut Carbon,
     prefix_str: & 'static str,
-    ts: u32) {
+    ts: Timespec) {
         let count = histogram.count();
         //let sum = histogram.sum();
         //let mean = sum / count;
@@ -170,13 +172,11 @@ fn send_histogram_metric(metric_name: String,
 impl CarbonReporter {
     pub fn new(registry: Arc<StdRegistry<'static>>,
      reporter_name: &'static str,
-     hostname: &'static str,
-     port: u16,
+     host_and_port: String,
      prefix: &'static str) -> CarbonReporter {
         CarbonReporter {
-            hostname: hostname,
+            host_and_port: host_and_port,
             prefix: prefix,
-            port: port,
             registry: registry,
             reporter_name: reporter_name
         }
@@ -225,11 +225,6 @@ mod test {
         r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
-        let reporter = CarbonReporter::new(arc_registry.clone(), "test", "localhost", 2003, "asd.asdf");
-        reporter.start(1);
-
-        g.update(1.4);
-        thread::sleep_ms(200);
-        println!("poplopit");
+        CarbonReporter::new(arc_registry.clone(), "test", "localhost:0".to_string(), "asd.asdf");
     }
 }
