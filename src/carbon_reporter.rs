@@ -9,6 +9,7 @@ use gauge::StdGauge;
 use meter::MeterSnapshot;
 use histogram::{Histogram,HistogramBucket};
 use carbon_sender::Carbon;
+
 pub struct CarbonReporter {
     hostname: &'static str,
     port: u16,
@@ -63,7 +64,6 @@ fn send_meter_metric( metric_name: String,
     let m5_rate = meter.rates[1].to_string();
     let m15_rate = meter.rates[2].to_string();
     let mean_rate = meter.mean.to_string();
-    carbon.write(prefix(format!("{}.count", metric_name), prefix_str), count, ts);
     carbon.write(prefix(format!("{}.m1", metric_name), prefix_str), m1_rate, ts);
     carbon.write(prefix(format!("{}.m5", metric_name), prefix_str), m5_rate, ts);
     carbon.write(prefix(format!("{}.m15", metric_name), prefix_str), m15_rate, ts);
@@ -89,9 +89,8 @@ fn send_counter_metric(metric_name: String,
         carbon
         .write(prefix(format!("{}", metric_name), prefix_str),
         counter.value.to_string(),
-         ts);
+        ts);
 }
-
 fn send_histogram_metric(metric_name: String,
     histogram:& mut Histogram,
     carbon:& mut Carbon,
@@ -115,57 +114,57 @@ fn send_histogram_metric(metric_name: String,
         carbon
         .write(prefix(format!("{}.count", metric_name), prefix_str),
         count.to_string(),
-         ts);
+        ts);
 
-         carbon
-         .write(prefix(format!("{}.max", metric_name), prefix_str),
-         max.to_string(),
-          ts);
+        carbon
+        .write(prefix(format!("{}.max", metric_name), prefix_str),
+        max.to_string(),
+        ts);
 
           //carbon
           //.write(prefix(format!("{}.mean", metric_name), prefix_str),
           //mean.into_string(),
           // ts);
 
-           carbon
-           .write(prefix(format!("{}.min", metric_name), prefix_str),
-           min.to_string(),
-            ts);
+        carbon
+        .write(prefix(format!("{}.min", metric_name), prefix_str),
+        min.to_string(),
+        ts);
 
-            carbon
-            .write(prefix(format!("{}.p50", metric_name), prefix_str),
-            p50.to_string(),
-             ts);
+        carbon
+        .write(prefix(format!("{}.p50", metric_name), prefix_str),
+        p50.to_string(),
+        ts);
 
-             carbon
-             .write(prefix(format!("{}.p75", metric_name), prefix_str),
-             p75.to_string(),
-              ts);
+        carbon
+        .write(prefix(format!("{}.p75", metric_name), prefix_str),
+        p75.to_string(),
+        ts);
 
-              carbon
-              .write(prefix(format!("{}.p98", metric_name), prefix_str),
-              p98.to_string(),
-               ts);
+        carbon
+        .write(prefix(format!("{}.p98", metric_name), prefix_str),
+        p98.to_string(),
+        ts);
 
-               carbon
-               .write(prefix(format!("{}.p99", metric_name), prefix_str),
-               p99.to_string(),
-                ts);
+        carbon
+        .write(prefix(format!("{}.p99", metric_name), prefix_str),
+        p99.to_string(),
+        ts);
 
-                carbon
-                .write(prefix(format!("{}.p999", metric_name), prefix_str),
-                p999.to_string(),
-                 ts);
+        carbon
+        .write(prefix(format!("{}.p999", metric_name), prefix_str),
+        p999.to_string(),
+        ts);
 
-                 carbon
-                 .write(prefix(format!("{}.p9999", metric_name), prefix_str),
-                 p9999.to_string(),
-                  ts);
+        carbon
+        .write(prefix(format!("{}.p9999", metric_name), prefix_str),
+        p9999.to_string(),
+        ts);
 
-                  carbon
-                  .write(prefix(format!("{}.p99999", metric_name), prefix_str),
-                  p99999.to_string(),
-                   ts);
+        carbon
+        .write(prefix(format!("{}.p99999", metric_name), prefix_str),
+        p99999.to_string(),
+        ts);
 }
 
 impl CarbonReporter {
@@ -178,9 +177,9 @@ impl CarbonReporter {
             hostname: hostname,
             prefix: prefix,
             port: port,
-             registry: registry,
-              reporter_name: reporter_name
-              }
+            registry: registry,
+            reporter_name: reporter_name
+        }
     }
 
     pub fn start(self, delay_ms: u32) {
@@ -190,7 +189,6 @@ impl CarbonReporter {
 
 #[cfg(test)]
 mod test {
-
     use meter::{Meter, StdMeter};
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
@@ -220,7 +218,6 @@ mod test {
 }).unwrap();
         h.record(1, 1);
 
-
         let mut r = StdRegistry::new();
         r.insert("meter1", m);
         r.insert("counter1", c);
@@ -234,6 +231,5 @@ mod test {
         g.update(1.4);
         thread::sleep_ms(200);
         println!("poplopit");
-
     }
 }
