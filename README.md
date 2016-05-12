@@ -27,7 +27,7 @@ extern crate metrics
 - [x] Create a more basic histogram trait and MetricValue
 - [x] Histogram support
 - [ ] max,mean,sum,sdev support for the histogram
-- [ ] Ganglia Reporter
+- [ ] PostgreSQL Reporter
 - [x] Graphite Reporter
 - [ ] Gauge should be made generic
 - [ ] Improved testing (Matchers, for the !server macros in the carbon reporter testing)
