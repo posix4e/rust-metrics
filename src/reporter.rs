@@ -70,8 +70,9 @@ mod test {
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
-    use reporter::{ConsoleReporter, Reporter};
+    use reporter::ConsoleReporter;
     use std::sync::Arc;
+    use std::time::Duration;
     use std::thread;
     use histogram::*;
 
@@ -101,7 +102,7 @@ mod test {
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.start(1);
         g.update(1.4);
-        thread::sleep(Duration::from_millis(200));
+        thread::sleep(Duration::from_millis(200 as u64));
         println!("poplopit");
 
     }

@@ -199,7 +199,6 @@ mod test {
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
-    use reporter::Reporter;
     use carbon_reporter::CarbonReporter;
     use std::sync::Arc;
     use std::thread;
