@@ -4,10 +4,10 @@ use metric::{Metric, MetricValue};
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdCounter {
-    pub value: i64
+    pub value: i64,
 }
 
-pub trait Counter{
+pub trait Counter {
     fn clear(&mut self);
 
     fn dec(&mut self, value: i64);

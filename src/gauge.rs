@@ -2,7 +2,7 @@ use metric::{Metric, MetricValue};
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdGauge {
-    pub value: f64
+    pub value: f64,
 }
 
 pub trait Gauge {

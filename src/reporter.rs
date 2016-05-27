@@ -12,7 +12,7 @@ pub trait Reporter: Send + Sync {
 
 pub struct ConsoleReporter {
     registry: Arc<StdRegistry<'static>>,
-    reporter_name: &'static str
+    reporter_name: &'static str,
 }
 
 impl Reporter for ConsoleReporter {
@@ -20,28 +20,28 @@ impl Reporter for ConsoleReporter {
         use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
-                               loop {
-                                   for metric_name in &registry.get_metrics_names() {
-                                       let metric = registry.get(metric_name);
-                                       match metric.export_metric() {
-                                           Meter(x) => {
-                                               println!("{:?}", x);
-                                           }
-                                           Gauge(x) => {
-                                               println!("{:?}", x);
-                                           }
-                                           Counter(x) => {
-                                               println!("{:?}", x);
-                                           }
-                                           Histogram(x) => {
-                                               println!("histogram{:?}", x);
-                                           }
-                                       }
-                                   }
+            loop {
+                for metric_name in &registry.get_metrics_names() {
+                    let metric = registry.get(metric_name);
+                    match metric.export_metric() {
+                        Meter(x) => {
+                            println!("{:?}", x);
+                        }
+                        Gauge(x) => {
+                            println!("{:?}", x);
+                        }
+                        Counter(x) => {
+                            println!("{:?}", x);
+                        }
+                        Histogram(x) => {
+                            println!("histogram{:?}", x);
+                        }
+                    }
+                }
 
-                                   thread::sleep_ms(delay_ms);
-                               }
-                           });
+                thread::sleep_ms(delay_ms);
+            }
+        });
     }
 
     fn get_unique_reporter_name(&self) -> &'static str {
@@ -50,8 +50,13 @@ impl Reporter for ConsoleReporter {
 }
 
 impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> ConsoleReporter {
-        ConsoleReporter { registry: registry, reporter_name: reporter_name }
+    pub fn new(registry: Arc<StdRegistry<'static>>,
+               reporter_name: &'static str)
+               -> ConsoleReporter {
+        ConsoleReporter {
+            registry: registry,
+            reporter_name: reporter_name,
+        }
     }
     pub fn start(self, delay_ms: u32) {
         self.report(delay_ms);
@@ -82,7 +87,7 @@ mod test {
         g.update(1.2);
 
         let mut hc = HistogramConfig::new();
-                hc.max_value(100).precision(1);
+        hc.max_value(100).precision(1);
         let mut h = Histogram::configured(hc).unwrap();
         h.record(1, 1);
 

@@ -17,5 +17,5 @@ pub enum MetricValue {
     Counter(StdCounter),
     Gauge(StdGauge),
     Meter(MeterSnapshot),
-    Histogram(Histogram)
+    Histogram(Histogram),
 }
