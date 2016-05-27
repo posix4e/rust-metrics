@@ -1,5 +1,6 @@
 use metric::Metric;
 use registry::{Registry, StdRegistry};
+use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
 use meter::Meter;
@@ -38,8 +39,7 @@ impl Reporter for ConsoleReporter {
                         }
                     }
                 }
-
-                thread::sleep_ms(delay_ms);
+                thread::sleep(Duration::from_millis(delay_ms as u64));
             }
         });
     }
@@ -101,7 +101,7 @@ mod test {
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.start(1);
         g.update(1.4);
-        thread::sleep_ms(200);
+        thread::sleep(Duration::from_millis(200));
         println!("poplopit");
 
     }

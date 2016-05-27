@@ -1,6 +1,8 @@
 use std::net::TcpStream;
 use std::io::Write;
+use std::time::Duration;
 use std::thread;
+
 use time::Timespec;
 
 pub struct Carbon {
@@ -34,7 +36,7 @@ impl Carbon {
                 let carbon_command = format!("{} {} {}\n", metric_path, value, timestamp)
                     .into_bytes();
                 match stream.write_all(&carbon_command) {
-                    Ok(x) => {}
+                    Ok(_) => {}
                     Err(x) => println!("Failed to Send {:?}", x),
                 }
             }
@@ -45,8 +47,8 @@ impl Carbon {
         }
     }
     fn reconnect_stream(&mut self) {
-        println!("Waiting 10ms and then reconnecting");
-        thread::sleep_ms(10);
+        println!("Waiting 123ms and then reconnecting");
+        thread::sleep(Duration::from_millis(123));
         self.connect();
     }
 }

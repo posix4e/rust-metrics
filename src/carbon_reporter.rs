@@ -1,5 +1,6 @@
 use metric::Metric;
 use registry::{Registry, StdRegistry};
+use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
 use meter::Meter;
@@ -42,7 +43,7 @@ impl Reporter for CarbonReporter {
                         }
                     }
                 }
-                thread::sleep_ms(delay_ms);
+                thread::sleep(Duration::from_millis(delay_ms as u64));
             }
         });
     }
@@ -146,6 +147,10 @@ fn send_histogram_metric(metric_name: String,
 
     carbon.write(prefix(format!("{}.p75", metric_name), prefix_str),
                  p75.to_string(),
+                 ts);
+
+    carbon.write(prefix(format!("{}.p95", metric_name), prefix_str),
+                 p95.to_string(),
                  ts);
 
     carbon.write(prefix(format!("{}.p98", metric_name), prefix_str),
