@@ -77,12 +77,9 @@ mod test {
     #[test]
     fn histogram() {
         let mut r = StdRegistry::new();
-        let mut h = Histogram::new(
-    HistogramConfig{
-        max_memory: 0,
-        max_value: 1000000,
-        precision: 3,
-        }).unwrap();
+        let mut c = HistogramConfig::new();
+            c.max_value(100).precision(1);
+        let mut h = Histogram::configured(c).unwrap();
         h.record(1, 1);
         r.insert("histogram", h);
 

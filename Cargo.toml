@@ -1,6 +1,6 @@
 [package]
 name = "metrics"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Endre Karlson <endre.karlson@gmail.com>", "Alex Newman <posix4e@gmail.com>"]
 description = "Coda Hale style metrics for rust"
 
@@ -12,11 +12,7 @@ keywords = ["metrics", "graphite", "ganglia", "opentsdb"]
 license = "Apache-2.0"
 
 [dependencies]
-time = "0.1.32"
-num = "0.1.27"
-histogram = "0.1.6"
-log = "0.3.2"
-
-[[test]]
-name = "test"
-path = "test/test.rs"
+time = "0.1.35"
+num = "0.1.32"
+histogram =  "0.3.6"
+log = "0.3.6"

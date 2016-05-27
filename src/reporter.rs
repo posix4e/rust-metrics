@@ -81,14 +81,10 @@ mod test {
         let mut g: StdGauge = StdGauge { value: 0f64 };
         g.update(1.2);
 
-        let mut h = Histogram::new(
-    HistogramConfig{
-        max_memory: 0,
-        max_value: 1000000,
-        precision: 3,
-}).unwrap();
+        let mut hc = HistogramConfig::new();
+                hc.max_value(100).precision(1);
+        let mut h = Histogram::configured(hc).unwrap();
         h.record(1, 1);
-
 
         let mut r = StdRegistry::new();
         r.insert("meter1", m);
