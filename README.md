@@ -1,4 +1,5 @@
 # rust-metrics
+[Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
 
 Metrics collection for Rust.
 
@@ -26,7 +27,7 @@ extern crate metrics
 - [x] Console Based Reporter
 - [x] Create a more basic histogram trait and MetricValue
 - [x] Histogram support
-- [ ] max,mean,sum,sdev support for the histogram
+- [ ] max,mean,sum,stdev support for the histogram
 - [ ] PostgreSQL Reporter
 - [x] Graphite Reporter
 - [ ] Gauge should be made generic
