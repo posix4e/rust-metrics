@@ -65,7 +65,7 @@ impl Meter for StdMeter {
 
         s.count += n;
 
-        for i in (0..WINDOW.len()) {
+        for i in 0..WINDOW.len() {
             self.ewma[i].update(n as usize);
         }
 
@@ -75,7 +75,7 @@ impl Meter for StdMeter {
     fn tick(&mut self) {
         let s = self.data.lock().unwrap();
 
-        for i in (0..WINDOW.len()) {
+        for i in 0..WINDOW.len() {
             self.ewma[i].tick();
         }
 
@@ -116,7 +116,7 @@ impl Metric for StdMeter {
 
 impl StdMeter {
     fn update_snapshot(&self, mut s: MutexGuard<MeterSnapshot>) {
-        for i in (0..WINDOW.len()) {
+        for i in 0..WINDOW.len() {
             s.rates[i] = self.ewma[i].rate();
         }
 
