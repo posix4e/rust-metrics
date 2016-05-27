@@ -1,5 +1,5 @@
 # rust-metrics
-[Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
+[![Linux Status]Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
 
 Metrics collection for Rust.
 
