@@ -10,8 +10,8 @@ pub trait Registry<'a>: Send + Sync {
 }
 
 pub struct StdRegistry<'a> {
-    metrics: HashMap<&'a str, Box<Metric+ 'a>>,
-    reporter: HashMap<&'a str, Box<Reporter>>
+    metrics: HashMap<&'a str, Box<Metric + 'a>>,
+    reporter: HashMap<&'a str, Box<Reporter>>,
 }
 
 // Specific stuff for registry goes here
@@ -38,7 +38,10 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
 impl<'a> StdRegistry<'a> {
     #[allow(dead_code)]
     pub fn new() -> StdRegistry<'a> {
-        StdRegistry { metrics: HashMap::new(), reporter: HashMap::new() }
+        StdRegistry {
+            metrics: HashMap::new(),
+            reporter: HashMap::new(),
+        }
     }
 }
 
@@ -78,7 +81,7 @@ mod test {
     fn histogram() {
         let mut r = StdRegistry::new();
         let mut c = HistogramConfig::new();
-            c.max_value(100).precision(1);
+        c.max_value(100).precision(1);
         let mut h = Histogram::configured(c).unwrap();
         h.record(1, 1);
         r.insert("histogram", h);

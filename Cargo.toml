@@ -1,6 +1,6 @@
 [package]
 name = "metrics"
-version = "0.0.3"
+version = "0.1.0"
 authors = ["Endre Karlson <endre.karlson@gmail.com>", "Alex Newman <posix4e@gmail.com>"]
 description = "Coda Hale style metrics for rust"
 

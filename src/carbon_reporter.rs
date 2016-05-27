@@ -16,7 +16,7 @@ pub struct CarbonReporter {
     host_and_port: String,
     prefix: &'static str,
     registry: Arc<StdRegistry<'static>>,
-    reporter_name: &'static str
+    reporter_name: &'static str,
 }
 
 impl Reporter for CarbonReporter {
@@ -28,21 +28,23 @@ impl Reporter for CarbonReporter {
         let mut carbon = Carbon::new(host_and_port);
         let registry = self.registry.clone();
         thread::spawn(move || {
-                               loop {
-                                   let ts = time::now().to_timespec();
-                                   for metric_name in &registry.get_metrics_names() {
-                                       let metric = registry.get(metric_name);
-                                       let mnas = metric_name.to_string(); // Metric name as string
-                                       match metric.export_metric() {
-                                           Meter(x) => send_meter_metric(mnas, x, & mut carbon,  prefix, ts),
-                                           Gauge(x) => send_gauge_metric(mnas, x, & mut carbon,  prefix, ts),
-                                           Counter(x) => send_counter_metric(mnas, x, & mut carbon, prefix, ts),
-                                           Histogram(mut x) => send_histogram_metric(mnas, & mut x, & mut carbon,  prefix, ts),
-                                       }
-                                   }
-                                   thread::sleep_ms(delay_ms);
-                               }
-                           });
+            loop {
+                let ts = time::now().to_timespec();
+                for metric_name in &registry.get_metrics_names() {
+                    let metric = registry.get(metric_name);
+                    let mnas = metric_name.to_string(); // Metric name as string
+                    match metric.export_metric() {
+                        Meter(x) => send_meter_metric(mnas, x, &mut carbon, prefix, ts),
+                        Gauge(x) => send_gauge_metric(mnas, x, &mut carbon, prefix, ts),
+                        Counter(x) => send_counter_metric(mnas, x, &mut carbon, prefix, ts),
+                        Histogram(mut x) => {
+                            send_histogram_metric(mnas, &mut x, &mut carbon, prefix, ts)
+                        }
+                    }
+                }
+                thread::sleep_ms(delay_ms);
+            }
+        });
     }
 
     fn get_unique_reporter_name(&self) -> &'static str {
@@ -50,135 +52,134 @@ impl Reporter for CarbonReporter {
     }
 }
 
-fn prefix(metric_line: String, prefix_str: & 'static str) -> String {
-        format!("{}.{}", prefix_str, metric_line)
+fn prefix(metric_line: String, prefix_str: &'static str) -> String {
+    format!("{}.{}", prefix_str, metric_line)
 }
 
-fn send_meter_metric( metric_name: String,
-    meter: MeterSnapshot,
-     carbon:&mut Carbon,
-     prefix_str: & 'static str,
-     ts: Timespec) {
+fn send_meter_metric(metric_name: String,
+                     meter: MeterSnapshot,
+                     carbon: &mut Carbon,
+                     prefix_str: &'static str,
+                     ts: Timespec) {
 
     let count = meter.count.to_string();
     let m1_rate = meter.rates[0].to_string();
     let m5_rate = meter.rates[1].to_string();
     let m15_rate = meter.rates[2].to_string();
     let mean_rate = meter.mean.to_string();
-    carbon.write(prefix(format!("{}.count", metric_name), prefix_str), count, ts);
-    carbon.write(prefix(format!("{}.m1", metric_name), prefix_str), m1_rate, ts);
-    carbon.write(prefix(format!("{}.m5", metric_name), prefix_str), m5_rate, ts);
-    carbon.write(prefix(format!("{}.m15", metric_name), prefix_str), m15_rate, ts);
-    carbon.write(prefix(format!("{}.mean", metric_name), prefix_str), mean_rate, ts);
+    carbon.write(prefix(format!("{}.count", metric_name), prefix_str),
+                 count,
+                 ts);
+    carbon.write(prefix(format!("{}.m1", metric_name), prefix_str),
+                 m1_rate,
+                 ts);
+    carbon.write(prefix(format!("{}.m5", metric_name), prefix_str),
+                 m5_rate,
+                 ts);
+    carbon.write(prefix(format!("{}.m15", metric_name), prefix_str),
+                 m15_rate,
+                 ts);
+    carbon.write(prefix(format!("{}.mean", metric_name), prefix_str),
+                 mean_rate,
+                 ts);
 }
 
 fn send_gauge_metric(metric_name: String,
-     gauge: StdGauge,
-     carbon:&mut Carbon,
-     prefix_str: & 'static str,
-     ts: Timespec) {
-         carbon
-         .write(prefix(format!("{}", metric_name), prefix_str),
-         gauge.value.to_string(),
-          ts);
+                     gauge: StdGauge,
+                     carbon: &mut Carbon,
+                     prefix_str: &'static str,
+                     ts: Timespec) {
+    carbon.write(prefix(format!("{}", metric_name), prefix_str),
+                 gauge.value.to_string(),
+                 ts);
 }
 
 fn send_counter_metric(metric_name: String,
-    counter: StdCounter,
-    carbon:& mut Carbon,
-    prefix_str: & 'static str,
-    ts: Timespec){
-        carbon
-        .write(prefix(format!("{}", metric_name), prefix_str),
-        counter.value.to_string(),
-        ts);
+                       counter: StdCounter,
+                       carbon: &mut Carbon,
+                       prefix_str: &'static str,
+                       ts: Timespec) {
+    carbon.write(prefix(format!("{}", metric_name), prefix_str),
+                 counter.value.to_string(),
+                 ts);
 }
 fn send_histogram_metric(metric_name: String,
-    histogram:& mut Histogram,
-    carbon:& mut Carbon,
-    prefix_str: & 'static str,
-    ts: Timespec) {
-        let count = histogram.count();
-        //let sum = histogram.sum();
-        //let mean = sum / count;
-        let max = histogram.percentile(100.0).unwrap();
-        let min = histogram.percentile(0.0).unwrap();
+                         histogram: &mut Histogram,
+                         carbon: &mut Carbon,
+                         prefix_str: &'static str,
+                         ts: Timespec) {
+    let count = histogram.count();
+    // let sum = histogram.sum();
+    // let mean = sum / count;
+    let max = histogram.percentile(100.0).unwrap();
+    let min = histogram.percentile(0.0).unwrap();
 
-        let p50 = histogram.percentile(50.0).unwrap();
-        let p75 = histogram.percentile(75.0).unwrap();
-        let p95 = histogram.percentile(95.0).unwrap();
-        let p98 = histogram.percentile(98.0).unwrap();
-        let p99 = histogram.percentile(99.0).unwrap();
-        let p999 = histogram.percentile(99.9).unwrap();
-        let p9999 = histogram.percentile(99.99).unwrap();
-        let p99999 = histogram.percentile(99.999).unwrap();
+    let p50 = histogram.percentile(50.0).unwrap();
+    let p75 = histogram.percentile(75.0).unwrap();
+    let p95 = histogram.percentile(95.0).unwrap();
+    let p98 = histogram.percentile(98.0).unwrap();
+    let p99 = histogram.percentile(99.0).unwrap();
+    let p999 = histogram.percentile(99.9).unwrap();
+    let p9999 = histogram.percentile(99.99).unwrap();
+    let p99999 = histogram.percentile(99.999).unwrap();
 
-        carbon
-        .write(prefix(format!("{}.count", metric_name), prefix_str),
-        count.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.count", metric_name), prefix_str),
+                 count.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.max", metric_name), prefix_str),
-        max.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.max", metric_name), prefix_str),
+                 max.to_string(),
+                 ts);
 
-          //carbon
-          //.write(prefix(format!("{}.mean", metric_name), prefix_str),
-          //mean.into_string(),
-          // ts);
+    // carbon
+    // .write(prefix(format!("{}.mean", metric_name), prefix_str),
+    // mean.into_string(),
+    // ts);
 
-        carbon
-        .write(prefix(format!("{}.min", metric_name), prefix_str),
-        min.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.min", metric_name), prefix_str),
+                 min.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p50", metric_name), prefix_str),
-        p50.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p50", metric_name), prefix_str),
+                 p50.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p75", metric_name), prefix_str),
-        p75.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p75", metric_name), prefix_str),
+                 p75.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p98", metric_name), prefix_str),
-        p98.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p98", metric_name), prefix_str),
+                 p98.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p99", metric_name), prefix_str),
-        p99.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p99", metric_name), prefix_str),
+                 p99.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p999", metric_name), prefix_str),
-        p999.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p999", metric_name), prefix_str),
+                 p999.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p9999", metric_name), prefix_str),
-        p9999.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p9999", metric_name), prefix_str),
+                 p9999.to_string(),
+                 ts);
 
-        carbon
-        .write(prefix(format!("{}.p99999", metric_name), prefix_str),
-        p99999.to_string(),
-        ts);
+    carbon.write(prefix(format!("{}.p99999", metric_name), prefix_str),
+                 p99999.to_string(),
+                 ts);
 }
 
 impl CarbonReporter {
     pub fn new(registry: Arc<StdRegistry<'static>>,
-     reporter_name: &'static str,
-     host_and_port: String,
-     prefix: &'static str) -> CarbonReporter {
+               reporter_name: &'static str,
+               host_and_port: String,
+               prefix: &'static str)
+               -> CarbonReporter {
         CarbonReporter {
             host_and_port: host_and_port,
             prefix: prefix,
             registry: registry,
-            reporter_name: reporter_name
+            reporter_name: reporter_name,
         }
     }
 
@@ -211,7 +212,7 @@ mod test {
         g.update(1.2);
 
         let mut hc = HistogramConfig::new();
-            hc.max_value(100).precision(1);
+        hc.max_value(100).precision(1);
         let mut h = Histogram::configured(hc).unwrap();
 
         h.record(1, 1);
@@ -223,6 +224,9 @@ mod test {
         r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
-        CarbonReporter::new(arc_registry.clone(), "test", "localhost:0".to_string(), "asd.asdf");
+        CarbonReporter::new(arc_registry.clone(),
+                            "test",
+                            "localhost:0".to_string(),
+                            "asd.asdf");
     }
 }

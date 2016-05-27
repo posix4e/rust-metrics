@@ -21,6 +21,7 @@ extern crate metrics
 
 ## Features
 
+- [ ] C library examples 
 - [x] Gauges
 - [x] Counters
 - [x] Meters
@@ -29,6 +30,7 @@ extern crate metrics
 - [x] Histogram support
 - [ ] max,mean,sum,stdev support for the histogram
 - [ ] PostgreSQL Reporter
+- [ ] https://prometheus.io/docs/instrumenting/writing_clientlibs/
 - [x] Graphite Reporter
 - [ ] Gauge should be made generic
 - [ ] Improved testing (Matchers, for the !server macros in the carbon reporter testing)

@@ -11,7 +11,7 @@ const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 pub struct MeterSnapshot {
     pub count: i64,
     pub rates: [f64; 3],
-    pub mean: f64
+    pub mean: f64,
 }
 
 // A StdMeter struct
@@ -19,12 +19,11 @@ pub struct MeterSnapshot {
 pub struct StdMeter {
     data: Mutex<MeterSnapshot>,
     ewma: [EWMA; 3],
-    start: Timespec
+    start: Timespec,
 }
 
 // A Meter trait
-pub trait Meter : Metric {
-
+pub trait Meter: Metric {
     fn get_meter(&self) -> MeterSnapshot {
         self.snapshot()
     }
@@ -54,7 +53,11 @@ impl Meter for StdMeter {
     fn snapshot(&self) -> MeterSnapshot {
         let s = self.data.lock().unwrap();
 
-        MeterSnapshot { count: s.count, rates: s.rates, mean: s.mean }
+        MeterSnapshot {
+            count: s.count,
+            rates: s.rates,
+            mean: s.mean,
+        }
     }
 
     fn mark(&self, n: i64) {
@@ -122,11 +125,19 @@ impl StdMeter {
     }
 
     pub fn new() -> StdMeter {
-        let data: MeterSnapshot = MeterSnapshot { count: 0i64, rates: [0f64, 0f64, 0f64], mean: 0f64 };
+        let data: MeterSnapshot = MeterSnapshot {
+            count: 0i64,
+            rates: [0f64, 0f64, 0f64],
+            mean: 0f64,
+        };
 
         let ewma: [EWMA; 3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
 
-        StdMeter { data: Mutex::new(data), ewma: ewma, start: get_time() }
+        StdMeter {
+            data: Mutex::new(data),
+            ewma: ewma,
+            start: get_time(),
+        }
     }
 }
 
