@@ -8,9 +8,8 @@ Metrics collection for Rust.
 Add this to your `Cargo.toml`:
 
 ```toml
-[dependencies.metrics]
-
-git = "https://github.com/posix4e/rust-metrics.git"
+name = "metrics"
+version = "0.1.1"
 ```
 
 And add this to your crate root:
