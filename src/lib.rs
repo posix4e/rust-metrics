@@ -9,5 +9,6 @@ pub mod meter;
 pub mod metric;
 pub mod registry;
 pub mod reporter;
+
+// Reporter libraries
 pub mod carbon_reporter;
-pub mod carbon_sender;
