@@ -15,4 +15,7 @@ RUN rm -rf src
 # So now all dependencies should be cached
 COPY src/ /rust-metrics/src/
 RUN cargo test
-ENTRYPOINT /bin/bash
+COPY examples/ /rust-metrics/examples/
+COPY bin/ /rust-metrics/bin/
+
+ENTRYPOINT env PATH=$PATH:/rust-metrics/bin/ /bin/bash

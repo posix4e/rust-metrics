@@ -16,3 +16,9 @@ time = "0.1.35"
 num = "0.1.32"
 histogram =  "0.3.6"
 log = "0.3.6"
+iron = "*"
+router = "*"
+
+# should be a dev dependency but this speeds up docker
+# We should double check the version
+hyper = "*"

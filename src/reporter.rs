@@ -4,8 +4,6 @@ use std::thread;
 use std::sync::Arc;
 
 pub trait Reporter: Send + Sync {
-    fn report(&self, delay_ms: u32);
-
     fn get_unique_reporter_name(&self) -> &'static str;
 }
 
@@ -15,7 +13,21 @@ pub struct ConsoleReporter {
 }
 
 impl Reporter for ConsoleReporter {
-    fn report(&self, delay_ms: u32) {
+    fn get_unique_reporter_name(&self) -> &'static str {
+        self.reporter_name
+    }
+}
+
+impl ConsoleReporter {
+    pub fn new(registry: Arc<StdRegistry<'static>>,
+               reporter_name: &'static str)
+               -> ConsoleReporter {
+        ConsoleReporter {
+            registry: registry,
+            reporter_name: reporter_name,
+        }
+    }
+    pub fn start(&self, delay_ms: u32) {
         use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
@@ -40,24 +52,6 @@ impl Reporter for ConsoleReporter {
                 thread::sleep(Duration::from_millis(delay_ms as u64));
             }
         });
-    }
-
-    fn get_unique_reporter_name(&self) -> &'static str {
-        self.reporter_name
-    }
-}
-
-impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>,
-               reporter_name: &'static str)
-               -> ConsoleReporter {
-        ConsoleReporter {
-            registry: registry,
-            reporter_name: reporter_name,
-        }
-    }
-    pub fn start(self, delay_ms: u32) {
-        self.report(delay_ms);
     }
 }
 
