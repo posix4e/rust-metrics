@@ -12,3 +12,4 @@ pub mod reporter;
 
 // Reporter libraries
 pub mod carbon_reporter;
+//pub mod prometheus_reporter;

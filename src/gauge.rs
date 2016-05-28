@@ -1,4 +1,5 @@
 use metric::{Metric, MetricValue};
+use time::precise_time_ns;
 
 #[derive(Copy, Clone, Debug)]
 pub struct StdGauge {
@@ -7,13 +8,17 @@ pub struct StdGauge {
 
 pub trait Gauge {
     fn update(&mut self, value: f64);
-
+    fn set_to_current_time(&mut self);
     fn snapshot(self) -> Self;
 }
 
 impl Gauge for StdGauge {
     fn update(&mut self, value: f64) {
-        self.value = value
+        self.value = value;
+    }
+
+    fn set_to_current_time(&mut self) {
+        self.update(precise_time_ns() as f64);
     }
 
     fn snapshot(self) -> StdGauge {
