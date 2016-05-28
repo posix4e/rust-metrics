@@ -19,7 +19,7 @@ extern crate metrics
 
 ## Features
 
-- [ ] C library examples 
+- [ ] C library examples
 - [x] Gauges
 - [x] Counters
 - [x] Meters
@@ -32,7 +32,7 @@ extern crate metrics
 - [x] Graphite Reporter
 - [ ] Gauge should be made generic
 - [ ] Improved testing (Matchers, for the !server macros in the carbon reporter testing)
-
+- [ ] Tested in Production
 
 ## License
 
