@@ -65,7 +65,7 @@ mod test {
     fn gauge() {
         let mut r = StdRegistry::new();
         let mut g: StdGauge = StdGauge { value: 0f64 };
-        g.update(1.2);
+        g.set(1.2);
         r.insert("gauge1", g);
     }
 
@@ -73,7 +73,7 @@ mod test {
     fn counter() {
         let mut r = StdRegistry::new();
         let mut c: StdCounter = StdCounter::new();
-        c.inc(1);
+        c.add(1 as f64);
         r.insert("counter1", c);
     }
 

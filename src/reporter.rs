@@ -1,9 +1,7 @@
-use metric::Metric;
 use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-use meter::Meter;
 
 pub trait Reporter: Send + Sync {
     fn report(&self, delay_ms: u32);
@@ -82,10 +80,10 @@ mod test {
         m.mark(100);
 
         let mut c: StdCounter = StdCounter::new();
-        c.inc(1);
+        c.inc();
 
         let mut g: StdGauge = StdGauge { value: 0f64 };
-        g.update(1.2);
+        g.set(1.2);
 
         let mut hc = HistogramConfig::new();
         hc.max_value(100).precision(1);
@@ -101,7 +99,7 @@ mod test {
         let arc_registry = Arc::new(r);
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.start(1);
-        g.update(1.4);
+        g.set(1.4);
         thread::sleep(Duration::from_millis(200 as u64));
         println!("poplopit");
 

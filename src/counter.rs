@@ -2,32 +2,34 @@ extern crate num;
 
 use metric::{Metric, MetricValue};
 
+// This can be much better with a different datatype
 #[derive(Copy, Clone, Debug)]
 pub struct StdCounter {
-    pub value: i64,
+    pub value: f64,
 }
 
 pub trait Counter {
     fn clear(&mut self);
-
-    fn dec(&mut self, value: i64);
-
-    fn inc(&mut self, value: i64);
-
+    fn inc(&mut self);
+    fn add(&mut self, value: f64);
     fn snapshot(self) -> Self;
 }
 
+
 impl Counter for StdCounter {
     fn clear(&mut self) {
-        self.value = 0;
+        self.value = 0 as f64;
     }
 
-    fn dec(&mut self, value: i64) {
-        self.value = self.value - value;
+    // inc(): Increment the counter by 1
+    fn inc(&mut self) {
+        self.value = self.value + 1 as f64;
     }
 
-    fn inc(&mut self, value: i64) {
-        self.value = self.value + value;
+    // inc(double v): Increment the counter by the given amount. MUST check that v >= 0.
+    // We crash with interger overflow
+    fn add(&mut self, value: f64) {
+        self.value = self.value + value as f64;
     }
 
     fn snapshot(self) -> StdCounter {
@@ -43,7 +45,7 @@ impl Metric for StdCounter {
 
 impl StdCounter {
     pub fn new() -> StdCounter {
-        StdCounter { value: 0 }
+        StdCounter { value: 0 as f64 }
     }
 }
 
@@ -52,21 +54,26 @@ mod test {
     use super::*;
 
     #[test]
-    fn increment_by_1() {
+    fn a_counting_counter() {
         let mut c: StdCounter = StdCounter::new();
-        c.inc(1);
+        c.add(1 as f64);
 
-        assert!(c.value == 1);
+        assert!(c.value == 1 as f64);
+
+        let mut c: StdCounter = StdCounter::new();
+        c.inc();
+
+        assert!(c.value == 1 as f64);
     }
 
     #[test]
-    fn snapshot() {
+    fn make_sure_we_can_actually_export_metrics() {
         let c: StdCounter = StdCounter::new();
         let mut c_snapshot = c.snapshot();
 
-        c_snapshot.inc(1);
+        c_snapshot.add(1 as f64);
 
-        assert!(c.value == 0);
-        assert!(c_snapshot.value == 1);
+        assert!(c.value == 0 as f64);
+        assert!(c_snapshot.value == 1 as f64);
     }
 }

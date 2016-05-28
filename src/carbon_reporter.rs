@@ -1,9 +1,7 @@
-use metric::Metric;
 use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-use meter::Meter;
 use reporter::Reporter;
 use counter::StdCounter;
 use gauge::StdGauge;
@@ -258,10 +256,10 @@ mod test {
         m.mark(100);
 
         let mut c: StdCounter = StdCounter::new();
-        c.inc(1);
+        c.inc();
 
         let mut g: StdGauge = StdGauge { value: 0f64 };
-        g.update(1.2);
+        g.set(1.2);
 
         let mut hc = HistogramConfig::new();
         hc.max_value(100).precision(1);
