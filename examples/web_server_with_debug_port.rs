@@ -4,11 +4,11 @@ extern crate histogram;
 
 use iron::prelude::*;
 use iron::status;
-use metrics::meter::{Meter, StdMeter};
-use metrics::counter::{Counter, StdCounter};
-use metrics::gauge::{Gauge, StdGauge};
+use metrics::metrics::counter::*;
+use metrics::metrics::gauge::*;
+use metrics::metrics::meter::*;
 use metrics::registry::{Registry, StdRegistry};
-use metrics::prometheus_reporter::PrometheusReporter;
+use metrics::reporter::prometheus::PrometheusReporter;
 use std::sync::Arc;
 use histogram::*;
 
