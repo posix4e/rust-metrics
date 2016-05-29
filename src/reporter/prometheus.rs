@@ -13,7 +13,7 @@ use time;
 use time::Timespec;
 
 use iron::{Iron, Request, Response, IronResult, AfterMiddleware, Chain};
-use iron::error::{IronError};
+use iron::error::IronError;
 use iron::status;
 use router::{Router, NoRoute};
 use std::result;
@@ -37,7 +37,7 @@ pub struct PrometheusReporter {
     host_and_port: &'static str,
     prefix: &'static str,
     registry: Arc<StdRegistry<'static>>,
-    reporter_name: &'static str
+    reporter_name: &'static str,
 }
 
 impl Reporter for PrometheusReporter {
@@ -74,7 +74,6 @@ impl PrometheusReporter {
             Iron::new(chain).http(self.host_and_port).unwrap();
         })
     }
-
 }
 
 fn handler(_: &mut Request) -> IronResult<Response> {
@@ -116,10 +115,8 @@ mod test {
         r.insert("histogram", h);
 
         let arc_registry = Arc::new(r);
-        let reporter = PrometheusReporter::new(arc_registry.clone(),
-                            "test",
-                            "0.0.0.0:8080",
-                            "asd.asdf");
+        let reporter =
+            PrometheusReporter::new(arc_registry.clone(), "test", "0.0.0.0:8080", "asd.asdf");
         reporter.start();
 
         let client = hyper::client::Client::new();
