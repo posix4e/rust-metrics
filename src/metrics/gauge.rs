@@ -1,4 +1,4 @@
-use metric::{Metric, MetricValue};
+use metrics::metric::{Metric, MetricValue};
 use time::get_time;
 
 #[derive(Copy, Clone, Debug)]

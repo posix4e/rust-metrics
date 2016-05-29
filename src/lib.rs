@@ -4,12 +4,9 @@ extern crate histogram;
 extern crate iron;
 extern crate router;
 
-pub mod counter;
-pub mod gauge;
-pub mod ewma;
-pub mod meter;
-pub mod metric;
 pub mod registry;
+
+pub mod metrics;
 
 // Reporter libraries
 pub mod reporter;

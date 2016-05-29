@@ -1,8 +1,8 @@
 use time::get_time;
 use time::Timespec;
 use std::sync::{Mutex, MutexGuard};
-use ewma::EWMA;
-use metric::{Metric, MetricValue};
+use metrics::ewma::EWMA;
+use metrics::metric::{Metric, MetricValue};
 
 const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
 
@@ -45,7 +45,7 @@ pub trait Meter: Metric {
 
 impl Meter for StdMeter {
     fn export_metric(&self) -> MetricValue {
-        use metric::MetricValue::Meter;
+        use metrics::metric::MetricValue::Meter;
         let snapshot: MeterSnapshot = self.snapshot();
         Meter(snapshot)
     }
@@ -108,7 +108,7 @@ impl Meter for StdMeter {
 
 impl Metric for StdMeter {
     fn export_metric(&self) -> MetricValue {
-        use metric::MetricValue::Meter;
+        use metrics::metric::MetricValue::Meter;
         let snapshot: MeterSnapshot = self.snapshot();
         Meter(snapshot)
     }

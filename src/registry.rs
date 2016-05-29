@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use metric::Metric;
+use metrics::metric::Metric;
 use reporter::base::Reporter;
 
 pub trait Registry<'a>: Send + Sync {
@@ -47,9 +47,9 @@ impl<'a> StdRegistry<'a> {
 
 #[cfg(test)]
 mod test {
-    use meter::{Meter, StdMeter};
-    use counter::{Counter, StdCounter};
-    use gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
+    use metrics::counter::{Counter, StdCounter};
+    use metrics::gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
     use histogram::*;
 

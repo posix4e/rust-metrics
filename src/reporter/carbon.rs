@@ -3,9 +3,9 @@ use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
 use reporter::base::Reporter;
-use counter::StdCounter;
-use gauge::StdGauge;
-use meter::MeterSnapshot;
+use metrics::counter::StdCounter;
+use metrics::gauge::StdGauge;
+use metrics::meter::MeterSnapshot;
 use histogram::Histogram;
 use time;
 use time::Timespec;
@@ -209,7 +209,7 @@ impl CarbonReporter {
     }
 
     fn report_to_carbon_continuously(self, delay_ms: u32) -> thread::JoinHandle<()> {
-        use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+        use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 
         let prefix = self.prefix;
         let host_and_port = self.host_and_port.clone();
@@ -242,9 +242,9 @@ impl CarbonReporter {
 
 #[cfg(test)]
 mod test {
-    use meter::{Meter, StdMeter};
-    use counter::{Counter, StdCounter};
-    use gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
+    use metrics::counter::{Counter, StdCounter};
+    use metrics::gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
     use reporter::carbon::CarbonReporter;
     use std::sync::Arc;

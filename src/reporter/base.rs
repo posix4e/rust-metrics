@@ -28,7 +28,7 @@ impl ConsoleReporter {
         }
     }
     pub fn start(&self, delay_ms: u32) {
-        use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+        use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
             loop {
@@ -58,9 +58,9 @@ impl ConsoleReporter {
 #[cfg(test)]
 mod test {
 
-    use meter::{Meter, StdMeter};
-    use counter::{Counter, StdCounter};
-    use gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
+    use metrics::counter::{Counter, StdCounter};
+    use metrics::gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
     use reporter::base::ConsoleReporter;
     use std::sync::Arc;

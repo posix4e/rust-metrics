@@ -1,6 +1,6 @@
 extern crate num;
 
-use metric::{Metric, MetricValue};
+use metrics::metric::{Metric, MetricValue};
 
 // This can be much better with a different datatype
 #[derive(Copy, Clone, Debug)]
