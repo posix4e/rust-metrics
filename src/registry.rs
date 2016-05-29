@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use metric::Metric;
-use reporter::Reporter;
+use reporter::base::Reporter;
 
 pub trait Registry<'a>: Send + Sync {
     fn add_scheduled_reporter(&mut self, reporter: Box<Reporter>);

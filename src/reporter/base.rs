@@ -62,7 +62,7 @@ mod test {
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
-    use reporter::ConsoleReporter;
+    use reporter::base::ConsoleReporter;
     use std::sync::Arc;
     use std::time::Duration;
     use std::thread;

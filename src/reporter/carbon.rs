@@ -2,7 +2,7 @@ use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-use reporter::Reporter;
+use reporter::base::Reporter;
 use counter::StdCounter;
 use gauge::StdGauge;
 use meter::MeterSnapshot;
@@ -246,7 +246,7 @@ mod test {
     use counter::{Counter, StdCounter};
     use gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
-    use carbon_reporter::CarbonReporter;
+    use reporter::carbon::CarbonReporter;
     use std::sync::Arc;
     use std::thread;
     use histogram::*;
