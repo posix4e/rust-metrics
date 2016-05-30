@@ -1,0 +1,6 @@
+#!/bin/sh
+set -ex
+export PATH=/root/.cargo/bin:/home/$USER/.cargo/bin/:$PATH
+protoc --rust_out . metrics.proto
+mkdir -p src
+mv metrics.rs src/promo_proto.rs

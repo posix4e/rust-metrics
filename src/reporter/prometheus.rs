@@ -1,43 +1,36 @@
+// A dirty prototype to see what prometheus would look like
+// Split up into domain based functions
+// Provide some mechanism for benchmarking the overhead of
+// prometheus
 use metrics::metric::Metric;
 use registry::{Registry, StdRegistry};
-use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-use metrics::meter::Meter;
 use reporter::base::Reporter;
-use metrics::counter::StdCounter;
-use metrics::gauge::StdGauge;
-use metrics::meter::MeterSnapshot;
-use histogram::Histogram;
 use time;
-use time::Timespec;
-
-use iron::{Iron, Request, Response, IronResult, AfterMiddleware, Chain};
-use iron::error::IronError;
-use iron::status;
-use router::{Router, NoRoute};
-use std::result;
+use promo_proto::MetricFamily;
+use router::Router;
 use iron;
+use iron::typemap::Key;
+use iron::prelude::*;
+use iron::status;
 
-struct Custom404;
-
-impl AfterMiddleware for Custom404 {
-    fn catch(&self, _: &mut Request, err: IronError) -> IronResult<Response> {
-        println!("Hitting custom 404 middleware");
-
-        if let Some(_) = err.error.downcast::<NoRoute>() {
-            Ok(Response::with((status::NotFound, "Custom 404 response")))
-        } else {
-            Err(err)
-        }
-    }
-}
+use promo_proto;
+use persistent::Read;
+use protobuf::Message;
+// TODO terrible name and wrong caps please rename
+#[derive(Copy, Clone)]
+struct foo;
 
 pub struct PrometheusReporter {
     host_and_port: &'static str,
     prefix: &'static str,
     registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str,
+}
+
+impl Key for foo {
+    type Value = Arc<StdRegistry<'static>>;
 }
 
 impl Reporter for PrometheusReporter {
@@ -64,20 +57,83 @@ impl PrometheusReporter {
         }
     }
 
-    pub fn start(self) -> thread::JoinHandle<()> {
+    pub fn start(self) -> thread::JoinHandle<iron::Listening> {
         thread::spawn(move || {
             let mut router = Router::new();
             router.get("/", handler);
             let mut chain = Chain::new(router);
-            chain.link_after(Custom404);
+            // The double long ARC pointer FTW!
+            chain.link_before(Read::<foo>::one(self.registry));
             // TODO -> Result<iron::Listening, iron::error::Error>
-            Iron::new(chain).http(self.host_and_port).unwrap();
+            Iron::new(chain).http(self.host_and_port).unwrap()
         })
     }
 }
 
-fn handler(_: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, "Handling response")))
+// TODO get an i64 instead?
+fn timestamp() -> f64 {
+    let timespec = time::get_time();
+    // 1459440009.113178
+    let mills: f64 = timespec.sec as f64 + (timespec.nsec as f64 / 1000.0 / 1000.0 / 1000.0);
+    mills
+}
+
+fn handler(req: &mut Request) -> IronResult<Response> {
+    Ok(Response::with((status::Ok, to_u8(to_pba(req.get::<Read<foo>>().unwrap())))))
+}
+
+fn to_u8(metric_families: Vec<promo_proto::MetricFamily>) -> Vec<u8> {
+    let mut buf = Vec::new();
+    for m in metric_families {
+        m.write_length_delimited_to_writer(&mut buf).unwrap();
+    }
+    buf
+}
+
+// This is totally terrible, it'd be much better to use macros
+// and serde once nightly is stable. I'd consider setting a feature flag but
+// it still might increase complexity to deploy
+// To an array of MetricFamily
+fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFamily> {
+    use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+    use protobuf::repeated::RepeatedField;
+    let mut metric_families = Vec::new();
+    let metric_names = registry.get_metrics_names();
+    for metric_by_name in metric_names {
+        let mut metric_family = MetricFamily::new();
+        let mut pb_metric = promo_proto::Metric::new();
+        let metric = registry.get(metric_by_name);
+        let ts = timestamp() as i64;
+        pb_metric.set_timestamp_ms(ts);
+        match metric.export_metric() {
+            Counter(x) => {
+                let mut counter = promo_proto::Counter::new();
+                counter.set_value(x.value);
+                pb_metric.set_counter(counter);
+                metric_family.set_field_type(promo_proto::MetricType::COUNTER);
+            }
+            Gauge(x) => {
+                let mut gauge = promo_proto::Gauge::new();
+                gauge.set_value(x.value);
+                pb_metric.set_gauge(gauge);
+                metric_family.set_field_type(promo_proto::MetricType::GAUGE);
+
+            }
+            Meter(x) => {
+                // TODO ask the prometheus guys what we want to do
+                pb_metric.set_summary(promo_proto::Summary::new());
+                metric_family.set_field_type(promo_proto::MetricType::SUMMARY);
+
+            }
+            Histogram(x) => {
+                pb_metric.set_histogram(promo_proto::Histogram::new());
+                metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
+            }
+        }
+        metric_family.set_metric(RepeatedField::from_vec(vec![pb_metric,]));
+        metric_families.push(metric_family);
+    }
+    metric_families
 }
 
 #[cfg(test)]
@@ -88,6 +144,8 @@ mod test {
     use registry::{Registry, StdRegistry};
     use reporter::prometheus::PrometheusReporter;
     use std::sync::Arc;
+    use std::time::Duration;
+    use std::thread;
     use histogram::*;
 
     #[test]
@@ -120,7 +178,8 @@ mod test {
         reporter.start();
 
         let client = hyper::client::Client::new();
-
+        // Seems as though iron isn't running maybe
+        thread::sleep(Duration::from_millis(1024 as u64));
         let res = client.get("http://127.0.0.1:8080").send().unwrap();
 
 

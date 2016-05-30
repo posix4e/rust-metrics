@@ -1,1 +1,8 @@
 language: rust
+addons:
+  apt:
+    packages:
+      - protobuf-compiler
+before_install:
+  - cargo install protobuf
+  - bash ./bin/generate_pb

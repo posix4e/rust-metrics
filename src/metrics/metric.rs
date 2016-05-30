@@ -4,6 +4,7 @@ use metrics::meter::MeterSnapshot;
 /// a Metric
 use histogram::Histogram;
 
+//  TODO rename to MetricSnapshot
 pub trait Metric: Send + Sync {
     fn export_metric(&self) -> MetricValue;
 }
