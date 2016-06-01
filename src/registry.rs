@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use metrics::metric::Metric;
 use reporter::base::Reporter;
 
+// TODO break out any notion of metrics. Instead we should have a notion of a collector.
+// A collector should be able to insert metrics, and a registry should not.
 pub trait Registry<'a>: Send + Sync {
     fn add_scheduled_reporter(&mut self, reporter: Box<Reporter>);
     fn get(&'a self, name: &'a str) -> &'a Metric;
