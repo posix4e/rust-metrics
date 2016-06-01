@@ -14,3 +14,4 @@
 # More information here http://doc.crates.io/guide.html#cargotoml-vs-cargolock
 Cargo.lock
 src/promo_proto.rs
+*.swp
