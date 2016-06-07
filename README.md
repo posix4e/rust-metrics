@@ -1,9 +1,46 @@
 # rust-metrics
 [![Linux Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
 
-Metrics collection for Rust.
+Metrics are things you can use to safely & directly store metrics with little overhead. Metrics
+can be attached to a registry and that registry can be collected across a system. This registry
+also provides reporting services. Current reporters include
+
+- Prometheus
+- Graphite/Carbon/Whisper
+- Console/Syslog/Journald (via stdout)
+
+```
+   fn meter() {
+        let m = StdMeter::new();
+        m.mark(100);
+
+        let mut c: StdCounter = StdCounter::new();
+        c.inc();
+
+        let mut g: StdGauge = StdGauge { value: 0f64 };
+        g.set(1.2);
+
+        let mut hc = HistogramConfig::new();
+        hc.max_value(100).precision(1);
+        let mut h = Histogram::configured(hc).unwrap();
+
+        h.record(1, 1);
+
+        let mut r = StdRegistry::new();
+        r.insert("meter1", m);
+        r.insert("counter1", c);
+        r.insert("gauge1", g);
+        r.insert("histogram", h);
+
+        let arc_registry = Arc::new(r);
+        CarbonReporter::new(arc_registry.clone(),
+                            "test",
+                            "localhost:0".to_string(),
+                            "asd.asdf");
+```
 
 ## Usage
+
 
 Add this to your `Cargo.toml`:
 
@@ -17,22 +54,13 @@ And add this to your crate root:
 extern crate metrics
 ```
 
-## Features
+## TBD
 
-- [ ] C library examples
-- [x] Gauges
-- [x] Counters
-- [x] Meters
-- [x] Console Based Reporter
-- [x] Create a more basic histogram trait and MetricValue
-- [x] Histogram support
-- [ ] max,mean,sum,stdev support for the histogram
-- [ ] PostgreSQL Reporter
-- [ ] https://prometheus.io/docs/instrumenting/writing_clientlibs/
-- [x] Graphite Reporter
-- [ ] Gauge should be made generic
-- [ ] Improved testing (Matchers, for the !server macros in the carbon reporter testing)
+- [ ] C ffi
+- [ ] js ffi
+- [ ] Prometheus enabled
 - [ ] Tested in Production
+- [ ] Clean up TODOs
 
 ## License
 

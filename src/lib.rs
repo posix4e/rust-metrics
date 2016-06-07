@@ -1,17 +1,15 @@
 extern crate time;
 extern crate num;
 extern crate histogram;
-
-mod test_utils;
-
-pub mod counter;
-pub mod gauge;
-pub mod ewma;
-pub mod meter;
-pub mod metric;
+extern crate iron;
+extern crate router;
+extern crate persistent;
 pub mod registry;
-pub mod reporter;
+
+pub mod metrics;
 
 // Reporter libraries
-pub mod carbon_reporter;
-// pub mod prometheus_reporter;
+pub mod reporter;
+
+extern crate protobuf; // depend on rust-protobuf runtime
+mod promo_proto; // add generated crate

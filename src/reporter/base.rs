@@ -4,8 +4,6 @@ use std::thread;
 use std::sync::Arc;
 
 pub trait Reporter: Send + Sync {
-    fn report(&self, delay_ms: u32);
-
     fn get_unique_reporter_name(&self) -> &'static str;
 }
 
@@ -15,8 +13,22 @@ pub struct ConsoleReporter {
 }
 
 impl Reporter for ConsoleReporter {
-    fn report(&self, delay_ms: u32) {
-        use metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+    fn get_unique_reporter_name(&self) -> &'static str {
+        self.reporter_name
+    }
+}
+
+impl ConsoleReporter {
+    pub fn new(registry: Arc<StdRegistry<'static>>,
+               reporter_name: &'static str)
+               -> ConsoleReporter {
+        ConsoleReporter {
+            registry: registry,
+            reporter_name: reporter_name,
+        }
+    }
+    pub fn start(&self, delay_ms: u32) {
+        use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
             loop {
@@ -41,34 +53,16 @@ impl Reporter for ConsoleReporter {
             }
         });
     }
-
-    fn get_unique_reporter_name(&self) -> &'static str {
-        self.reporter_name
-    }
-}
-
-impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>,
-               reporter_name: &'static str)
-               -> ConsoleReporter {
-        ConsoleReporter {
-            registry: registry,
-            reporter_name: reporter_name,
-        }
-    }
-    pub fn start(self, delay_ms: u32) {
-        self.report(delay_ms);
-    }
 }
 
 #[cfg(test)]
 mod test {
 
-    use meter::{Meter, StdMeter};
-    use counter::{Counter, StdCounter};
-    use gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
+    use metrics::counter::{Counter, StdCounter};
+    use metrics::gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
-    use reporter::ConsoleReporter;
+    use reporter::base::ConsoleReporter;
     use std::sync::Arc;
     use std::time::Duration;
     use std::thread;
