@@ -1,3 +1,5 @@
+// A registry to store metrics in
+
 use std::collections::HashMap;
 use metrics::metric::Metric;
 use reporter::base::Reporter;
