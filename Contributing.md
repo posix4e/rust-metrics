@@ -1,8 +1,9 @@
 Contributing to rust-metrics
 -----------------------
 
-Please use `cargo fmt` as part of the commit process. 
+Please use `cargo fmt` as part of the commit process.
 
+0. Check our issues for things marked ready to do
 1. resemble the surrounding code, and
 2. contain lines no longer than 120 columns.
 
