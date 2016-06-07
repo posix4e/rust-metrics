@@ -11,7 +11,7 @@ also provides reporting services. Current reporters include. Contact us on #mozi
 - Console/Syslog/Journald (via stdout)
 
 ```
-   fn meter() {
+   fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interval_to_graphite/carbon() {
         let m = StdMeter::new();
         m.mark(100);
 
