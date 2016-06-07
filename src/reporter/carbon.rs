@@ -1,3 +1,4 @@
+// CarbonReporter sends a message to a carbon end point at a regular basis.
 use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
