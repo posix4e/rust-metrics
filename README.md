@@ -60,7 +60,6 @@ extern crate metrics
 - [ ] js ffi
 - [ ] Prometheus enabled
 - [ ] Tested in Production
-- [ ] Clean up TODOs
 
 ## License
 
