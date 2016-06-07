@@ -1,3 +1,5 @@
+// Common traits and functionality to reporting. 
+// Also contains the ConsoleReporter
 use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
