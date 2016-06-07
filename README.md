@@ -1,5 +1,7 @@
 # rust-metrics
 [![Linux Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
+[![Chat on Freenode](https://img.shields.io/badge/freenode-%23jsoncdc-brightgreen.svg)](irc://chat.freenode.net/jsoncdc)
+
 
 Metrics are things you can use to safely & directly store metrics with little overhead. Metrics
 can be attached to a registry and that registry can be collected across a system. This registry
