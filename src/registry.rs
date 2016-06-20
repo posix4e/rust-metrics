@@ -11,11 +11,13 @@ pub trait Registry<'a>: Send + Sync {
     fn get(&'a self, name: &'a str) -> &'a Metric;
     fn get_metrics_names(&self) -> Vec<&str>;
     fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T);
+    fn labels(&self) -> HashMap<String, String>;
 }
 
 pub struct StdRegistry<'a> {
     metrics: HashMap<&'a str, Box<Metric + 'a>>,
     reporter: HashMap<&'a str, Box<Reporter>>,
+    labels: HashMap<String, String>,
 }
 
 // Specific stuff for registry goes here
@@ -37,14 +39,26 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
     fn get_metrics_names(&self) -> Vec<&str> {
         self.metrics.keys().cloned().collect()
     }
+
+    fn labels(&self) -> HashMap<String, String> {
+        self.labels.clone()
+    }
 }
 
 impl<'a> StdRegistry<'a> {
-    #[allow(dead_code)]
+    pub fn new_with_labels(labels: HashMap<String, String>) -> StdRegistry<'a> {
+        StdRegistry {
+            metrics: HashMap::new(),
+            reporter: HashMap::new(),
+            labels: labels,
+        }
+    }
+
     pub fn new() -> StdRegistry<'a> {
         StdRegistry {
             metrics: HashMap::new(),
             reporter: HashMap::new(),
+            labels: HashMap::new(),
         }
     }
 }
@@ -56,6 +70,9 @@ mod test {
     use metrics::gauge::{Gauge, StdGauge};
     use registry::{Registry, StdRegistry};
     use histogram::*;
+
+
+    // TODO add labels tests
 
     #[test]
     fn meter() {

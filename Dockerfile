@@ -25,11 +25,12 @@ WORKDIR /
 
 # Actually move the source in place
 COPY src/ /rust-metrics/src/
+RUN touch /rust-metrics/src/*
 
 WORKDIR /rust-metrics/
-RUN find src
-RUN cargo test
+RUN cargo build
 COPY examples/ /rust-metrics/examples/
 COPY bin/ /rust-metrics/bin/
+RUN cargo test
 
 ENTRYPOINT env PATH=$PATH:/rust-metrics/bin/ /bin/bash

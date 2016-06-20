@@ -18,6 +18,11 @@ use iron::status;
 use promo_proto;
 use persistent::Read;
 use protobuf::Message;
+use protobuf::repeated::RepeatedField;
+use promo_proto::LabelPair;
+use std::collections::HashMap;
+use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+
 // TODO terrible name and wrong caps please rename
 #[derive(Copy, Clone)]
 struct foo;
@@ -60,7 +65,7 @@ impl PrometheusReporter {
     pub fn start(self) -> thread::JoinHandle<iron::Listening> {
         thread::spawn(move || {
             let mut router = Router::new();
-            router.get("/", handler);
+            router.get("/metrics", handler);
             let mut chain = Chain::new(router);
             // The double long ARC pointer FTW!
             chain.link_before(Read::<foo>::one(self.registry));
@@ -79,15 +84,27 @@ fn timestamp() -> f64 {
 }
 
 fn handler(req: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, to_u8(to_pba(req.get::<Read<foo>>().unwrap())))))
+    Ok(Response::with((status::Ok, families_to_u8(to_pba(req.get::<Read<foo>>().unwrap())))))
 }
 
-fn to_u8(metric_families: Vec<promo_proto::MetricFamily>) -> Vec<u8> {
+fn families_to_u8(metric_families: Vec<promo_proto::MetricFamily>) -> Vec<u8> {
     let mut buf = Vec::new();
-    for m in metric_families {
-        m.write_length_delimited_to_writer(&mut buf).unwrap();
+    for family in metric_families {
+        family.write_length_delimited_to_writer(&mut buf).unwrap();
     }
     buf
+}
+
+fn to_repeated_fields_labels(labels: HashMap<String, String>) -> RepeatedField<LabelPair> {
+    let mut repeated_fields = Vec::new();
+    // name/value is what they call it in the protobufs *shrug*
+    for (name, value) in labels {
+        let mut label_pair = LabelPair::new();
+        label_pair.set_name(name);
+        label_pair.set_value(value);
+        repeated_fields.push(label_pair);
+    }
+    RepeatedField::from_vec(repeated_fields)
 }
 
 // This is totally terrible, it'd be much better to use macros
@@ -95,16 +112,18 @@ fn to_u8(metric_families: Vec<promo_proto::MetricFamily>) -> Vec<u8> {
 // it still might increase complexity to deploy
 // To an array of MetricFamily
 fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFamily> {
-    use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
-    use protobuf::repeated::RepeatedField;
     let mut metric_families = Vec::new();
     let metric_names = registry.get_metrics_names();
     for metric_by_name in metric_names {
         let mut metric_family = MetricFamily::new();
         let mut pb_metric = promo_proto::Metric::new();
         let metric = registry.get(metric_by_name);
+        let formated_metric = format!("{}_{}_{}", "application_name", metric_by_name, "bytes");
+        metric_family.set_name(String::from(formated_metric));
         let ts = timestamp() as i64;
         pb_metric.set_timestamp_ms(ts);
+        pb_metric.set_label(to_repeated_fields_labels(registry.labels()));
+
         match metric.export_metric() {
             Counter(x) => {
                 let mut counter = promo_proto::Counter::new();
@@ -130,6 +149,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFa
                 metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
             }
         }
+        
         metric_family.set_metric(RepeatedField::from_vec(vec![pb_metric,]));
         metric_families.push(metric_family);
     }
@@ -147,6 +167,7 @@ mod test {
     use std::time::Duration;
     use std::thread;
     use histogram::*;
+    use std::collections::HashMap;
 
     #[test]
     fn add_some_stats_and_slurp_them_with_http() {
@@ -166,7 +187,7 @@ mod test {
 
         h.record(1, 1);
 
-        let mut r = StdRegistry::new();
+        let mut r = StdRegistry::new_with_labels(HashMap::new());
         r.insert("meter1", m);
         r.insert("counter1", c);
         r.insert("gauge1", g);
@@ -181,7 +202,6 @@ mod test {
         // Seems as though iron isn't running maybe
         thread::sleep(Duration::from_millis(1024 as u64));
         let res = client.get("http://127.0.0.1:8080").send().unwrap();
-
-
+        // TODO fix url and check to make sure we got a valid protobuf
     }
 }

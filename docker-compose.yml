@@ -1,0 +1,18 @@
+version: '2'
+services:
+
+  local_webserver: 
+    build: .
+    entrypoint: ./bin/ws
+    expose:
+      - "3030"
+      - "9090"
+
+  prometheus:
+    build: prometheus_support
+    depends_on:
+      - local_webserver
+    ports:
+      - "9090:9090"
+    links:
+      -  local_webserver

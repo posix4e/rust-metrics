@@ -60,6 +60,7 @@ extern crate metrics
 - [ ] C ffi
 - [ ] js ffi
 - [ ] Prometheus enabled
+- [ ] Make prometheus optional
 - [ ] Tested in Production
 
 ## License

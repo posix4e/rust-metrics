@@ -1,0 +1,15 @@
+--- 
+global: 
+  evaluation_interval: 15s
+  external_labels: 
+    monitor: codelab-monitor
+  scrape_interval: 15s
+rule_files: ~
+scrape_configs: 
+  - 
+    job_name: prometheus
+    scrape_interval: 5s
+    static_configs: 
+      - 
+        targets: 
+          - "local_webserver:9090"

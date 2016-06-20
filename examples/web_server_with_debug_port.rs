@@ -10,6 +10,7 @@ use metrics::metrics::meter::*;
 use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::prometheus::PrometheusReporter;
 use std::sync::Arc;
+use std::collections::HashMap;
 use histogram::*;
 
 fn main() {
@@ -30,16 +31,18 @@ fn main() {
 
     h.record(1, 1);
 
-    let mut r = StdRegistry::new();
-    r.insert("meter1", m);
+    let mut labels = HashMap::new();
+    labels.insert(String::from("test"), String::from("test"));
+    let mut r = StdRegistry::new_with_labels(labels);
+    //r.insert("meter1", m);
     r.insert("counter1", c);
     r.insert("gauge1", g);
-    r.insert("histogram", h);
+   // r.insert("histogram", h);
 
     let arc_registry = Arc::new(r);
     let reporter = PrometheusReporter::new(arc_registry.clone(),
                         "test",
-                        "0.0.0.0:8080",
+                        "0.0.0.0:9090",
                         "asd.asdf");
     reporter.start();
     Iron::new(|_: &mut Request| {
