@@ -1,8 +1,8 @@
 FROM ubuntu:xenial
-RUN apt-get update && apt-get install curl git perl bash file sudo build-essential vim libssl-dev protobuf-compiler -y
+RUN apt-get update && apt-get install curl git perl bash file sudo build-essential vim libssl-dev protobuf-compiler -y llvm-dev
 RUN curl -sf https://static.rust-lang.org/rustup.sh -o rustup.sh
 RUN chmod +x rustup.sh
-RUN ./rustup.sh
+RUN ./rustup.sh  --channel=nightly
 # This keeps an immutable cached environment
 
 RUN cargo install protobuf
@@ -28,6 +28,8 @@ COPY src/ /rust-metrics/src/
 
 WORKDIR /rust-metrics/
 RUN find src
+#for afl build
+RUN cargo rustc -- -Z no-landing-pads
 RUN cargo test
 COPY examples/ /rust-metrics/examples/
 COPY bin/ /rust-metrics/bin/

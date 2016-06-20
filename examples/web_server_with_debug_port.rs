@@ -1,3 +1,8 @@
+#![cfg_attr(feature = "fuzz", feature(plugin))]
+#![cfg_attr(feature = "fuzz", plugin(afl_plugin))]
+#[cfg(feature = "fuzz")]
+extern crate afl;
+
 extern crate iron;
 extern crate metrics;
 extern crate histogram;

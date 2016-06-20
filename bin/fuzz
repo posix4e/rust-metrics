@@ -1,0 +1,4 @@
+#!/bin/sh
+set -ex
+export RUST_BACKTRACE=1
+cargo run --example web_server_with_debug_port --features fuzz
