@@ -1,5 +1,3 @@
-extern crate num;
-
 use metrics::metric::{Metric, MetricValue};
 
 // This can be much better with a different datatype
