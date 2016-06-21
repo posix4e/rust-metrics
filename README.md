@@ -73,6 +73,44 @@ extern crate metrics
 - [ ] Make prometheus optional
 - [ ] Tested in Production
 
+## Development
+
+To work on this crate:
+
+- Install protobuf for `protoc` binary:
+
+    On OS X [Homebrew](https://github.com/Homebrew/homebrew) can be used:
+
+    ```
+    brew install protobuf
+    ```
+
+    On Ubuntu, `protobuf-compiler` package can be installed:
+
+    ```
+    apt-get install protobuf-compiler
+    ```
+- Install the rust `protoc` plugin:
+
+    ```
+    cargo install protobuf
+    ```
+
+    and make sure the resulting binary in `$HOME/.cargo/bin` is in your path.
+
+- Run this script to generate the protobuf `.rs` files:
+
+    ```
+    ./bin/generate_pb
+    ```
+
+- Then you should be able to use cargo:
+
+    ```
+    cargo build # to build the code
+    cargo test # to run the tests
+    ```
+
 ## License
 
 `rust-metrics` is primarily distributed under the terms of both the MIT license and the
