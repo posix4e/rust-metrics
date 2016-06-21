@@ -1,5 +1,4 @@
 extern crate time;
-extern crate num;
 extern crate histogram;
 extern crate iron;
 extern crate router;
