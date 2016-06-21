@@ -28,5 +28,5 @@ If you don't have rust setup and you want to run the examples run:
 ```
 
 each of the examples:
-- ws # Runs a webserver with prometheus metrics
+- ws # Runs a webserver with Prometheus metrics
 is given a command in the PATH of the running docker container.

@@ -1,4 +1,4 @@
-/// An example of sending data to a prometheus server with a local webserver
+/// An example of sending data to a Prometheus server with a local webserver
 extern crate iron;
 extern crate metrics;
 extern crate histogram;

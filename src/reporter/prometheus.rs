@@ -1,8 +1,8 @@
-// Simple prometheus support. Still a work in progress.
+// Simple Prometheus support. Still a work in progress.
 // TODO
 // We aren't collecting metrics properly we should be
-// on the regular collecting metrics, and snapshoting them
-// and sending them all up when prometheus comes to scrape.
+// on the regular collecting metrics, and snapshotting them
+// and sending them all up when Prometheus comes to scrape.
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
@@ -141,7 +141,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFa
 
             }
             Meter(_) => {
-                // TODO ask the prometheus guys what we want to do
+                // TODO ask the Prometheus guys what we want to do
                 pb_metric.set_summary(promo_proto::Summary::new());
                 metric_family.set_field_type(promo_proto::MetricType::SUMMARY);
 
