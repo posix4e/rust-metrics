@@ -34,7 +34,7 @@ fn main() {
 
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));
-    let mut r = StdRegistry::new_with_labels(labels);
+    let r = StdRegistry::new_with_labels(labels);
     // r.insert("meter1", m);
     // r.insert("counter1", c);
     // r.insert("gauge1", g);
