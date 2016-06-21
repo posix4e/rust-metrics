@@ -13,7 +13,7 @@ use time::Timespec;
 use std::net::TcpStream;
 use std::io::Write;
 
-pub struct CarbonStream {
+struct CarbonStream {
     graphite_stream: Option<TcpStream>,
     host_and_port: String,
 }
