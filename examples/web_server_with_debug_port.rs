@@ -1,3 +1,4 @@
+/// An example of sending data to a prometheus server with a local webserver
 extern crate iron;
 extern crate metrics;
 extern crate histogram;
@@ -34,9 +35,9 @@ fn main() {
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));
     let mut r = StdRegistry::new_with_labels(labels);
-    //r.insert("meter1", m);
-    r.insert("counter1", c);
-    r.insert("gauge1", g);
+    // r.insert("meter1", m);
+   // r.insert("counter1", c);
+   // r.insert("gauge1", g);
    // r.insert("histogram", h);
 
     let arc_registry = Arc::new(r);

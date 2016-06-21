@@ -4,8 +4,9 @@ services:
   local_webserver: 
     build: .
     entrypoint: ./bin/ws
+    ports:
+      - "3000:3000"
     expose:
-      - "3030"
       - "9090"
 
   prometheus:
@@ -14,5 +15,16 @@ services:
       - local_webserver
     ports:
       - "9090:9090"
+    links:
+      -  local_webserver
+
+  carbon_graphite:
+    image: rvernica/graphite
+    ports:
+       - "8080:8080"
+    expose:
+       - "2003"
+    depends_on:
+      - local_webserver
     links:
       -  local_webserver
