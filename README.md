@@ -14,25 +14,25 @@ also provides reporting services. Current reporters include. Contact us on #rust
 fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interval_to_graphite_or_carbon() {
      let m = StdMeter::new();
      m.mark(100);
-    
+
      let mut c: StdCounter = StdCounter::new();
      c.inc();
-    
-     let mut g: StdGauge = StdGauge { value: 0f64 };
+
+     let mut g: StdGauge = StdGauge { value: 0.0 };
      g.set(1.2);
-    
+
      let mut hc = HistogramConfig::new();
      hc.max_value(100).precision(1);
      let mut h = Histogram::configured(hc).unwrap();
-    
+
      h.record(1, 1);
-    
+
      let mut r = StdRegistry::new();
      r.insert("meter1", m);
      r.insert("counter1", c);
      r.insert("gauge1", g);
      r.insert("histogram", h);
-    
+
      let arc_registry = Arc::new(r);
      CarbonReporter::new(arc_registry.clone(),
                          "test",

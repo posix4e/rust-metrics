@@ -4,7 +4,7 @@ use std::sync::{Mutex, MutexGuard};
 use metrics::ewma::EWMA;
 use metrics::metric::{Metric, MetricValue};
 
-const WINDOW: [f64; 3] = [1f64, 5f64, 15f64];
+const WINDOW: [f64; 3] = [1.0, 5.0, 15.0];
 
 // A MeterSnapshot
 #[derive(Debug)]
@@ -90,7 +90,7 @@ impl Meter for StdMeter {
             let r: f64 = s.rates[pos];
             return r;
         }
-        0f64
+        0.0
     }
     /// Return the mean rate
     fn mean(&self) -> f64 {
@@ -126,12 +126,12 @@ impl StdMeter {
 
     pub fn new() -> StdMeter {
         let data: MeterSnapshot = MeterSnapshot {
-            count: 0i64,
-            rates: [0f64, 0f64, 0f64],
-            mean: 0f64,
+            count: 0,
+            rates: [0.0, 0.0, 0.0],
+            mean: 0.0,
         };
 
-        let ewma: [EWMA; 3] = [EWMA::new(1f64), EWMA::new(5f64), EWMA::new(15f64)];
+        let ewma: [EWMA; 3] = [EWMA::new(1.0), EWMA::new(5.0), EWMA::new(15.0)];
 
         StdMeter {
             data: Mutex::new(data),

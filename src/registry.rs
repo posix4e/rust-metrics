@@ -85,7 +85,7 @@ mod test {
     #[test]
     fn gauge() {
         let mut r = StdRegistry::new();
-        let mut g: StdGauge = StdGauge { value: 0f64 };
+        let mut g: StdGauge = StdGauge { value: 0.0 };
         g.set(1.2);
         r.insert("gauge1", g);
     }
