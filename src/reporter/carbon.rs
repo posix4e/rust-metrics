@@ -80,7 +80,7 @@ fn prefix(metric_line: String, prefix_str: &'static str) -> String {
     format!("{}.{}", prefix_str, metric_line)
 }
 
-fn send_meter_metric(metric_name: String,
+fn send_meter_metric(metric_name: &str,
                      meter: MeterSnapshot,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
@@ -108,7 +108,7 @@ fn send_meter_metric(metric_name: String,
                  ts);
 }
 
-fn send_gauge_metric(metric_name: String,
+fn send_gauge_metric(metric_name: &str,
                      gauge: StdGauge,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
@@ -118,7 +118,7 @@ fn send_gauge_metric(metric_name: String,
                  ts);
 }
 
-fn send_counter_metric(metric_name: String,
+fn send_counter_metric(metric_name: &str,
                        counter: StdCounter,
                        carbon: &mut CarbonStream,
                        prefix_str: &'static str,
@@ -127,7 +127,7 @@ fn send_counter_metric(metric_name: String,
                  counter.value.to_string(),
                  ts);
 }
-fn send_histogram_metric(metric_name: String,
+fn send_histogram_metric(metric_name: &str,
                          histogram: &mut Histogram,
                          carbon: &mut CarbonStream,
                          prefix_str: &'static str,
@@ -223,13 +223,12 @@ impl CarbonReporter {
                 let ts = time::now().to_timespec();
                 for metric_name in &registry.get_metrics_names() {
                     let metric = registry.get(metric_name);
-                    let mnas = metric_name.to_string(); // Metric name as string
                     match metric.export_metric() {
-                        Meter(x) => send_meter_metric(mnas, x, &mut carbon, prefix, ts),
-                        Gauge(x) => send_gauge_metric(mnas, x, &mut carbon, prefix, ts),
-                        Counter(x) => send_counter_metric(mnas, x, &mut carbon, prefix, ts),
+                        Meter(x) => send_meter_metric(metric_name, x, &mut carbon, prefix, ts),
+                        Gauge(x) => send_gauge_metric(metric_name, x, &mut carbon, prefix, ts),
+                        Counter(x) => send_counter_metric(metric_name, x, &mut carbon, prefix, ts),
                         Histogram(mut x) => {
-                            send_histogram_metric(mnas, &mut x, &mut carbon, prefix, ts)
+                            send_histogram_metric(metric_name, &mut x, &mut carbon, prefix, ts)
                         }
                     }
                 }
