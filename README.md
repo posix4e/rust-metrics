@@ -69,4 +69,4 @@ Apache License (Version 2.0).
 
 See [LICENSE-APACHE](LICENSE-APACHE), [LICENSE-MIT](LICENSE-MIT) for details.
 
-Copyright (c) 2015 Alex Newman.
+Copyright (c) 2016 Alex Newman.
