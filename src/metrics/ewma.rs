@@ -23,7 +23,7 @@ impl EWMA {
     pub fn rate(&self) -> f64 {
         let r = self.rate.lock().unwrap();
 
-        *r * (1e9 as f64)
+        *r * (1.0e9)
     }
 
     pub fn snapshot(&self) -> EWMASnapshot {
@@ -87,7 +87,7 @@ mod test {
 
     #[test]
     fn ewma1() {
-        let mut e = EWMA::new(1f64);
+        let mut e = EWMA::new(1.0);
         e.update(3);
         e.tick();
 

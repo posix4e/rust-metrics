@@ -32,13 +32,13 @@ impl Gauge for StdGauge {
 
     // inc(): Increment the gauge by 1
     fn inc(&mut self) {
-        let value = self.value + 1 as f64;
+        let value = self.value + 1.0;
         self.value = value;
     }
 
     // dec(): Decrement the gauge by 1
     fn dec(&mut self) {
-        self.value = self.value - 1 as f64;
+        self.value = self.value - 1.0;
     }
 
     // implementing prometheus inc(double v): Increment the gauge by the given amount
@@ -84,12 +84,12 @@ mod test {
 
     #[test]
     fn create_and_snapshot() {
-        let g: StdGauge = StdGauge { value: 0f64 };
+        let g: StdGauge = StdGauge { value: 0.0 };
         let mut g_snapshot = g.snapshot();
 
-        g_snapshot.set(10f64);
+        g_snapshot.set(10.0);
 
-        assert_eq!(g.value, 0f64);
-        assert_eq!(g_snapshot.value, 10f64);
+        assert_eq!(g.value, 0.0);
+        assert_eq!(g_snapshot.value, 10.0);
     }
 }

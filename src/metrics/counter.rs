@@ -16,12 +16,12 @@ pub trait Counter {
 
 impl Counter for StdCounter {
     fn clear(&mut self) {
-        self.value = 0 as f64;
+        self.value = 0.0;
     }
 
     // inc(): Increment the counter by 1
     fn inc(&mut self) {
-        self.value = self.value + 1 as f64;
+        self.value = self.value + 1.0;
     }
 
     // inc(double v): Increment the counter by the given amount. MUST check that v >= 0.
@@ -43,7 +43,7 @@ impl Metric for StdCounter {
 
 impl StdCounter {
     pub fn new() -> StdCounter {
-        StdCounter { value: 0 as f64 }
+        StdCounter { value: 0.0 }
     }
 }
 
@@ -54,14 +54,14 @@ mod test {
     #[test]
     fn a_counting_counter() {
         let mut c: StdCounter = StdCounter::new();
-        c.add(1 as f64);
+        c.add(1.0);
 
-        assert!(c.value == 1 as f64);
+        assert!(c.value == 1.0);
 
         let mut c: StdCounter = StdCounter::new();
         c.inc();
 
-        assert!(c.value == 1 as f64);
+        assert!(c.value == 1.0);
     }
 
     #[test]
@@ -69,9 +69,9 @@ mod test {
         let c: StdCounter = StdCounter::new();
         let mut c_snapshot = c.snapshot();
 
-        c_snapshot.add(1 as f64);
+        c_snapshot.add(1.0);
 
-        assert!(c.value == 0 as f64);
-        assert!(c_snapshot.value == 1 as f64);
+        assert!(c.value == 0.0);
+        assert!(c_snapshot.value == 1.0);
     }
 }

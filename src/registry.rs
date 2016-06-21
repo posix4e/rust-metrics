@@ -94,7 +94,7 @@ mod test {
     fn counter() {
         let mut r = StdRegistry::new();
         let mut c: StdCounter = StdCounter::new();
-        c.add(1 as f64);
+        c.add(1.0);
         r.insert("counter1", c);
     }
 
