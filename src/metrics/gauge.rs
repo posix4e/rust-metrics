@@ -74,8 +74,7 @@ impl Metric for StdGauge {
 fn timestamp() -> f64 {
     let timespec = get_time();
     // 1459440009.113178
-    let mills: f64 = timespec.sec as f64 + (timespec.nsec as f64 / 1000.0 / 1000.0 / 1000.0);
-    mills
+    timespec.sec as f64 + (timespec.nsec as f64 / 1000.0 / 1000.0 / 1000.0)
 }
 
 #[cfg(test)]

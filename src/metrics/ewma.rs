@@ -81,7 +81,7 @@ mod test {
     // Returns whether the rate() is within 0.0001 of expected after ticking a minute
     fn within(e: &mut EWMA, expected: f64) -> bool {
         elapse_minute(e);
-        let r: f64 = e.rate();
+        let r = e.rate();
         (r - expected).abs() < 0.0001
     }
 
@@ -91,10 +91,8 @@ mod test {
         e.update(3);
         e.tick();
 
-        let r: f64;
-
         // initial
-        r = e.rate();
+        let r = e.rate();
         assert_eq!(r, 0.6);
 
         // 1 minute
@@ -149,7 +147,7 @@ mod test {
         e.update(3);
         e.tick();
 
-        let r: f64 = e.rate();
+        let r = e.rate();
         assert_eq!(r, 0.6);
 
         // 1 minute

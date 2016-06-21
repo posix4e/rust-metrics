@@ -87,8 +87,7 @@ impl Meter for StdMeter {
         let s = self.data.lock().unwrap();
 
         if let Some(pos) = WINDOW.iter().position(|w| *w == rate) {
-            let r: f64 = s.rates[pos];
-            return r;
+            return s.rates[pos];
         }
         0.0
     }
