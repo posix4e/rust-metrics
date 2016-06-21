@@ -6,7 +6,7 @@ Metrics are things you can use to safely & directly store metrics with little ov
 can be attached to a registry and that registry can be collected across a system. This registry
 also provides reporting services. Current reporters include. Contact us on #rust-metrics on mozilla irc.
 
-- Prometheus
+- [Prometheus](https://prometheus.io/)
 - Graphite/Carbon/Whisper
 - Console/Syslog/Journald (via stdout)
 
