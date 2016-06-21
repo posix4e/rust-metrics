@@ -1,7 +1,8 @@
-// A dirty prototype to see what prometheus would look like
-// Split up into domain based functions
-// Provide some mechanism for benchmarking the overhead of
-// prometheus
+// Simple prometheus support. Still a work in progress.
+// TODO
+// We aren't collecting metrics properly we should be
+// on the regular collecting metrics, and snapshoting them
+// and sending them all up when prometheus comes to scrape.
 use metrics::metric::Metric;
 use registry::{Registry, StdRegistry};
 use std::thread;
@@ -149,7 +150,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFa
                 metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
             }
         }
-        
+
         metric_family.set_metric(RepeatedField::from_vec(vec![pb_metric,]));
         metric_families.push(metric_family);
     }
