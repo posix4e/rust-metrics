@@ -3,7 +3,6 @@
 // We aren't collecting metrics properly we should be
 // on the regular collecting metrics, and snapshoting them
 // and sending them all up when prometheus comes to scrape.
-use metrics::metric::Metric;
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
@@ -27,6 +26,7 @@ use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 #[derive(Copy, Clone)]
 struct HandlerStorage;
 
+#[allow(dead_code)] // until `prefix is used
 pub struct PrometheusReporter {
     host_and_port: &'static str,
     // TODO to use as the application name?
@@ -45,6 +45,7 @@ impl Reporter for PrometheusReporter {
     }
 }
 
+#[allow(dead_code)] // until `prefix is used
 fn prefix(metric_line: String, prefix_str: &'static str) -> String {
     format!("{}.{}", prefix_str, metric_line)
 }
@@ -139,13 +140,13 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFa
                 metric_family.set_field_type(promo_proto::MetricType::GAUGE);
 
             }
-            Meter(x) => {
+            Meter(_) => {
                 // TODO ask the prometheus guys what we want to do
                 pb_metric.set_summary(promo_proto::Summary::new());
                 metric_family.set_field_type(promo_proto::MetricType::SUMMARY);
 
             }
-            Histogram(x) => {
+            Histogram(_) => {
                 pb_metric.set_histogram(promo_proto::Histogram::new());
                 metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
             }
@@ -186,7 +187,7 @@ mod test {
         hc.max_value(100).precision(1);
         let mut h = Histogram::configured(hc).unwrap();
 
-        h.record(1, 1);
+        h.record(1, 1).unwrap();
 
         let mut r = StdRegistry::new_with_labels(HashMap::new());
         r.insert("meter1", m);
@@ -202,7 +203,7 @@ mod test {
         let client = hyper::client::Client::new();
         // Seems as though iron isn't running maybe
         thread::sleep(Duration::from_millis(1024));
-        let res = client.get("http://127.0.0.1:8080").send().unwrap();
+        client.get("http://127.0.0.1:8080").send().unwrap();
         // TODO fix url and check to make sure we got a valid protobuf
     }
 }

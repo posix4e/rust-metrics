@@ -11,7 +11,6 @@ use metrics::metrics::meter::*;
 use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::carbon::CarbonReporter;
 use std::sync::Arc;
-use std::collections::HashMap;
 use histogram::*;
 use std::thread;
 
@@ -32,7 +31,7 @@ fn main() {
         hc.max_value(100).precision(1);
         let mut h = Histogram::configured(hc).unwrap();
 
-        h.record(1, 1);
+        h.record(1, 1).unwrap();
 
         let mut r = StdRegistry::new();
         r.insert("meter1", m);

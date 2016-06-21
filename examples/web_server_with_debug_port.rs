@@ -8,7 +8,7 @@ use iron::status;
 use metrics::metrics::counter::*;
 use metrics::metrics::gauge::*;
 use metrics::metrics::meter::*;
-use metrics::registry::{Registry, StdRegistry};
+use metrics::registry::StdRegistry;
 use metrics::reporter::prometheus::PrometheusReporter;
 use std::sync::Arc;
 use std::collections::HashMap;
@@ -30,11 +30,11 @@ fn main() {
     hc.max_value(100).precision(1);
     let mut h = Histogram::configured(hc).unwrap();
 
-    h.record(1, 1);
+    h.record(1, 1).unwrap();
 
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));
-    let mut r = StdRegistry::new_with_labels(labels);
+    let r = StdRegistry::new_with_labels(labels);
     // r.insert("meter1", m);
     // r.insert("counter1", c);
     // r.insert("gauge1", g);
