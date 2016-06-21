@@ -140,13 +140,13 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFa
                 metric_family.set_field_type(promo_proto::MetricType::GAUGE);
 
             }
-            Meter(x) => {
+            Meter(_) => {
                 // TODO ask the prometheus guys what we want to do
                 pb_metric.set_summary(promo_proto::Summary::new());
                 metric_family.set_field_type(promo_proto::MetricType::SUMMARY);
 
             }
-            Histogram(x) => {
+            Histogram(_) => {
                 pb_metric.set_histogram(promo_proto::Histogram::new());
                 metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
             }
