@@ -12,8 +12,9 @@ services:
       - carbon_graphite
 
   carbon_graphite:
-    image: rvernica/graphite
+    image: nickstenning/graphite
     ports:
-       - "8080:8080"
+       - "8080:80"
     expose:
        - "2003"
+       - "2004"
