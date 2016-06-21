@@ -30,7 +30,7 @@ fn main() {
     hc.max_value(100).precision(1);
     let mut h = Histogram::configured(hc).unwrap();
 
-    h.record(1, 1);
+    h.record(1, 1).unwrap();
 
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));

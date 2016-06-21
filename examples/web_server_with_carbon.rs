@@ -31,7 +31,7 @@ fn main() {
         hc.max_value(100).precision(1);
         let mut h = Histogram::configured(hc).unwrap();
 
-        h.record(1, 1);
+        h.record(1, 1).unwrap();
 
         let mut r = StdRegistry::new();
         r.insert("meter1", m);
