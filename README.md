@@ -46,7 +46,7 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
 Add this to your `Cargo.toml`:
 
 ```toml
-"metrics" = "0.1.1"
+"metrics" = "*"
 ```
 
 And add this to your crate root:
@@ -54,6 +54,13 @@ And add this to your crate root:
 ```rust
 extern crate metrics
 ```
+## Provided scripts in bin
+
+- build_docker: This builds the default docker iamge.
+- generate_pb: Generates the prometheus protocol buffer code.
+- run_docker: This will run the  docker container once it's been built (or download the last one i pushed)
+- start_docker: use docker_compose  to launch prometheus, carbon/graphite and clients which send them data
+- ws: Starts a webserver which runs with a built in prometheus reporter
 
 ## TBD
 
