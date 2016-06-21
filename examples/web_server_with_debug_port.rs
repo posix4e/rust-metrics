@@ -36,19 +36,17 @@ fn main() {
     labels.insert(String::from("test"), String::from("test"));
     let mut r = StdRegistry::new_with_labels(labels);
     // r.insert("meter1", m);
-   // r.insert("counter1", c);
-   // r.insert("gauge1", g);
-   // r.insert("histogram", h);
+    // r.insert("counter1", c);
+    // r.insert("gauge1", g);
+    // r.insert("histogram", h);
 
     let arc_registry = Arc::new(r);
-    let reporter = PrometheusReporter::new(arc_registry.clone(),
-                        "test",
-                        "0.0.0.0:9090",
-                        "asd.asdf");
+    let reporter =
+        PrometheusReporter::new(arc_registry.clone(), "test", "0.0.0.0:9090", "asd.asdf");
     reporter.start();
-    Iron::new(|_: &mut Request| {
-        Ok(Response::with(status::NotFound))
-    }).http("0.0.0.0:3000").unwrap();
+    Iron::new(|_: &mut Request| Ok(Response::with(status::NotFound)))
+        .http("0.0.0.0:3000")
+        .unwrap();
     println!("WebServer Running");
 
 }
