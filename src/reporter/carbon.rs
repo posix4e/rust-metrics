@@ -12,6 +12,7 @@ use time;
 use time::Timespec;
 use std::net::TcpStream;
 use std::io::Write;
+use std::io::Error;
 
 struct CarbonStream {
     graphite_stream: Option<TcpStream>,
@@ -35,16 +36,13 @@ impl CarbonStream {
         }
     }
 
-    pub fn connect(&mut self) {
-        let host_and_port = &*self.host_and_port;
-        match TcpStream::connect(host_and_port) {
-            Ok(x) => self.graphite_stream = Some(x),
-            Err(e) => panic!("Unable to connect to {} because {}", host_and_port, e),
-        }
-
+    pub fn connect(&mut self) -> Result<String, Error> {
+        let graphite_stream = try!(TcpStream::connect(&*self.host_and_port));
+        self.graphite_stream = Some(graphite_stream);
+        Ok(String::from(""))
     }
 
-    pub fn write(&mut self, metric_path: String, value: String, timespec: Timespec) {
+    pub fn write(&mut self, metric_path: String, value: String, timespec: Timespec) -> Result<String, Error> {
         let seconds_in_ms = (timespec.sec * 1000) as u32;
         let nseconds_in_ms = (timespec.nsec / 1000) as u32;
         let timestamp = seconds_in_ms + nseconds_in_ms;
@@ -52,21 +50,20 @@ impl CarbonStream {
             Some(ref mut stream) => {
                 let carbon_command = format!("{} {} {}\n", metric_path, value, timestamp)
                     .into_bytes();
-                match stream.write_all(&carbon_command) {
-                    Ok(_) => {}
-                    Err(x) => println!("Failed to Send {:?}", x),
-                }
+                try!(stream.write_all(&carbon_command));
             }
             None => {
-                self.reconnect_stream();
-                self.write(metric_path, value, timespec);
+                try!(self.reconnect_stream());
+                try!(self.write(metric_path, value, timespec));
             }
         }
+        Ok(String::from(""))
     }
-    fn reconnect_stream(&mut self) {
+    fn reconnect_stream(&mut self) -> Result<String, Error> {
+        // TODO 123 is made up
         println!("Waiting 123ms and then reconnecting");
         thread::sleep(Duration::from_millis(123));
-        self.connect();
+        self.connect()
     }
 }
 
