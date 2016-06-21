@@ -29,6 +29,7 @@ struct HandlerStorage;
 
 pub struct PrometheusReporter {
     host_and_port: &'static str,
+    // TODO to use as the application name?
     prefix: &'static str,
     registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str,

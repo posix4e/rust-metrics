@@ -12,6 +12,7 @@ use time;
 use time::Timespec;
 use std::net::TcpStream;
 use std::io::Write;
+use std::io::Error;
 
 struct CarbonStream {
     graphite_stream: Option<TcpStream>,
@@ -35,16 +36,13 @@ impl CarbonStream {
         }
     }
 
-    pub fn connect(&mut self) {
-        let host_and_port = &*self.host_and_port;
-        match TcpStream::connect(host_and_port) {
-            Ok(x) => self.graphite_stream = Some(x),
-            Err(e) => panic!("Unable to connect to {} because {}", host_and_port, e),
-        }
-
+    pub fn connect(&mut self) -> Result<String, Error> {
+        let graphite_stream = try!(TcpStream::connect(&*self.host_and_port));
+        self.graphite_stream = Some(graphite_stream);
+        Ok(String::from(""))
     }
 
-    pub fn write(&mut self, metric_path: String, value: String, timespec: Timespec) {
+    pub fn write(&mut self, metric_path: String, value: String, timespec: Timespec) -> Result<String, Error> {
         let seconds_in_ms = (timespec.sec * 1000) as u32;
         let nseconds_in_ms = (timespec.nsec / 1000) as u32;
         let timestamp = seconds_in_ms + nseconds_in_ms;
@@ -52,21 +50,20 @@ impl CarbonStream {
             Some(ref mut stream) => {
                 let carbon_command = format!("{} {} {}\n", metric_path, value, timestamp)
                     .into_bytes();
-                match stream.write_all(&carbon_command) {
-                    Ok(_) => {}
-                    Err(x) => println!("Failed to Send {:?}", x),
-                }
+                try!(stream.write_all(&carbon_command));
             }
             None => {
-                self.reconnect_stream();
-                self.write(metric_path, value, timespec);
+                try!(self.reconnect_stream());
+                try!(self.write(metric_path, value, timespec));
             }
         }
+        Ok(String::from(""))
     }
-    fn reconnect_stream(&mut self) {
+    fn reconnect_stream(&mut self) -> Result<String, Error> {
+        // TODO 123 is made up
         println!("Waiting 123ms and then reconnecting");
         thread::sleep(Duration::from_millis(123));
-        self.connect();
+        self.connect()
     }
 }
 
@@ -84,54 +81,57 @@ fn send_meter_metric(metric_name: &str,
                      meter: MeterSnapshot,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
-                     ts: Timespec) {
+                     ts: Timespec) -> Result<String, Error> {
 
     let count = meter.count.to_string();
     let m1_rate = meter.rates[0].to_string();
     let m5_rate = meter.rates[1].to_string();
     let m15_rate = meter.rates[2].to_string();
     let mean_rate = meter.mean.to_string();
-    carbon.write(prefix(format!("{}.count", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.count", metric_name), prefix_str),
                  count,
-                 ts);
-    carbon.write(prefix(format!("{}.m1", metric_name), prefix_str),
+                 ts));
+    try!(carbon.write(prefix(format!("{}.m1", metric_name), prefix_str),
                  m1_rate,
-                 ts);
-    carbon.write(prefix(format!("{}.m5", metric_name), prefix_str),
+                 ts));
+    try!(carbon.write(prefix(format!("{}.m5", metric_name), prefix_str),
                  m5_rate,
-                 ts);
-    carbon.write(prefix(format!("{}.m15", metric_name), prefix_str),
+                 ts));
+    try!(carbon.write(prefix(format!("{}.m15", metric_name), prefix_str),
                  m15_rate,
-                 ts);
-    carbon.write(prefix(format!("{}.mean", metric_name), prefix_str),
+                 ts));
+    try!(carbon.write(prefix(format!("{}.mean", metric_name), prefix_str),
                  mean_rate,
-                 ts);
+                 ts));
+    Ok(String::from(""))
 }
 
 fn send_gauge_metric(metric_name: &str,
                      gauge: StdGauge,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
-                     ts: Timespec) {
-    carbon.write(prefix(format!("{}", metric_name), prefix_str),
+                     ts: Timespec) -> Result<String, Error> {
+    try!(carbon.write(prefix(format!("{}", metric_name), prefix_str),
                  gauge.value.to_string(),
-                 ts);
+                 ts));
+    Ok(String::from(""))
 }
 
 fn send_counter_metric(metric_name: &str,
                        counter: StdCounter,
                        carbon: &mut CarbonStream,
                        prefix_str: &'static str,
-                       ts: Timespec) {
-    carbon.write(prefix(format!("{}", metric_name), prefix_str),
+                       ts: Timespec) -> Result<String, Error> {
+    try!(carbon.write(prefix(format!("{}", metric_name), prefix_str),
                  counter.value.to_string(),
-                 ts);
+                 ts));
+    Ok(String::from(""))
 }
 fn send_histogram_metric(metric_name: &str,
                          histogram: &mut Histogram,
                          carbon: &mut CarbonStream,
                          prefix_str: &'static str,
-                         ts: Timespec) {
+                         ts: Timespec) -> Result<String, Error> {
     let count = histogram.count();
     // let sum = histogram.sum();
     // let mean = sum / count;
@@ -147,54 +147,55 @@ fn send_histogram_metric(metric_name: &str,
     let p9999 = histogram.percentile(99.99).unwrap();
     let p99999 = histogram.percentile(99.999).unwrap();
 
-    carbon.write(prefix(format!("{}.count", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.count", metric_name), prefix_str),
                  count.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.max", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.max", metric_name), prefix_str),
                  max.to_string(),
-                 ts);
+                 ts));
 
     // carbon
     // .write(prefix(format!("{}.mean", metric_name), prefix_str),
     // mean.into_string(),
     // ts);
 
-    carbon.write(prefix(format!("{}.min", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.min", metric_name), prefix_str),
                  min.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p50", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p50", metric_name), prefix_str),
                  p50.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p75", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p75", metric_name), prefix_str),
                  p75.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p95", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p95", metric_name), prefix_str),
                  p95.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p98", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p98", metric_name), prefix_str),
                  p98.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p99", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p99", metric_name), prefix_str),
                  p99.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p999", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p999", metric_name), prefix_str),
                  p999.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p9999", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p9999", metric_name), prefix_str),
                  p9999.to_string(),
-                 ts);
+                 ts));
 
-    carbon.write(prefix(format!("{}.p99999", metric_name), prefix_str),
+    try!(carbon.write(prefix(format!("{}.p99999", metric_name), prefix_str),
                  p99999.to_string(),
-                 ts);
+                 ts));
+    Ok(String::from(""))
 }
 
 impl CarbonReporter {
@@ -211,7 +212,8 @@ impl CarbonReporter {
         }
     }
 
-    fn report_to_carbon_continuously(self, delay_ms: u32) -> thread::JoinHandle<()> {
+    fn report_to_carbon_continuously(self, delay_ms: u32) 
+        -> thread::JoinHandle<Result<String, Error>> {
         use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 
         let prefix = self.prefix;
@@ -223,14 +225,20 @@ impl CarbonReporter {
                 let ts = time::now().to_timespec();
                 for metric_name in &registry.get_metrics_names() {
                     let metric = registry.get(metric_name);
-                    match metric.export_metric() {
-                        Meter(x) => send_meter_metric(metric_name, x, &mut carbon, prefix, ts),
-                        Gauge(x) => send_gauge_metric(metric_name, x, &mut carbon, prefix, ts),
-                        Counter(x) => send_counter_metric(metric_name, x, &mut carbon, prefix, ts),
+                    try!(match metric.export_metric() {
+                        Meter(x) => {
+                            send_meter_metric(metric_name, x, &mut carbon, prefix, ts)
+                        }
+                        Gauge(x) => {
+                            send_gauge_metric(metric_name, x, &mut carbon, prefix, ts)
+                        }
+                        Counter(x) => {
+                            send_counter_metric(metric_name, x, &mut carbon, prefix, ts)
+                        }
                         Histogram(mut x) => {
                             send_histogram_metric(metric_name, &mut x, &mut carbon, prefix, ts)
                         }
-                    }
+                    });
                 }
                 thread::sleep(Duration::from_millis(delay_ms as u64));
             }
