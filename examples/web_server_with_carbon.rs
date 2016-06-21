@@ -11,7 +11,6 @@ use metrics::metrics::meter::*;
 use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::carbon::CarbonReporter;
 use std::sync::Arc;
-use std::collections::HashMap;
 use histogram::*;
 use std::thread;
 

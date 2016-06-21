@@ -3,7 +3,6 @@
 // We aren't collecting metrics properly we should be
 // on the regular collecting metrics, and snapshoting them
 // and sending them all up when prometheus comes to scrape.
-use metrics::metric::Metric;
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;

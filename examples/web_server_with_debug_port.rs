@@ -8,7 +8,7 @@ use iron::status;
 use metrics::metrics::counter::*;
 use metrics::metrics::gauge::*;
 use metrics::metrics::meter::*;
-use metrics::registry::{Registry, StdRegistry};
+use metrics::registry::StdRegistry;
 use metrics::reporter::prometheus::PrometheusReporter;
 use std::sync::Arc;
 use std::collections::HashMap;
