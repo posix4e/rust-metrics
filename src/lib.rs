@@ -1,3 +1,5 @@
+#![warn(trivial_numeric_casts)]
+
 extern crate time;
 extern crate histogram;
 extern crate iron;
