@@ -41,13 +41,13 @@ impl Gauge for StdGauge {
         self.value = self.value - 1.0;
     }
 
-    // implementing prometheus inc(double v): Increment the gauge by the given amount
+    // Implementing Prometheus inc(double v): Increment the gauge by the given amount
     fn add(&mut self, value: f64) {
         self.value = self.value + value;
         // TODO check for negative
     }
 
-    // Implemeting prometheus dec(double v): Decrement the gauge by the given amount
+    // Implementing Prometheus dec(double v): Decrement the gauge by the given amount
     fn sub(&mut self, value: f64) {
         self.value = self.value - value;
     }

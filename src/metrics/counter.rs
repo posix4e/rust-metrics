@@ -25,7 +25,7 @@ impl Counter for StdCounter {
     }
 
     // inc(double v): Increment the counter by the given amount. MUST check that v >= 0.
-    // We crash with interger overflow
+    // We crash with integer overflow
     fn add(&mut self, value: f64) {
         self.value = self.value + value;
     }
