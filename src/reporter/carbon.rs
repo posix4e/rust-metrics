@@ -18,6 +18,8 @@ pub struct CarbonStream {
     host_and_port: String,
 }
 
+// TODO perhaps we autodiscover the host and port
+//
 pub struct CarbonReporter {
     host_and_port: String,
     prefix: &'static str,

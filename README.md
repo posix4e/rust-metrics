@@ -54,13 +54,16 @@ And add this to your crate root:
 ```rust
 extern crate metrics
 ```
-## Provided scripts in bin
+## Provided scripts in bin/
 
 - build_docker: This builds the default docker iamge.
 - generate_pb: Generates the prometheus protocol buffer code.
 - run_docker: This will run the  docker container once it's been built (or download the last one i pushed)
 - start_docker: use docker_compose  to launch prometheus, carbon/graphite and clients which send them data
-- ws: Starts a webserver which runs with a built in prometheus reporter
+- webserver_with_prometheus: Starts a webserver which runs with a prometheus reporter
+- start_prometheus_example: Use docker-compose to start a prometheus server & hook it up to webserver_with_prometheus
+- webserver_with_carbon: Starts a webserver with a carbon reporter
+- start_carbon_example: Use docker-compose to start graphite/carbon/whisper and hook it up to webserver_with_carbon
 
 ## TBD
 

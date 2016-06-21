@@ -1,0 +1,4 @@
+#!/bin/sh
+set -ex
+
+docker-compose -f `pwd`/prometheus_support/docker-compose.yml up --build

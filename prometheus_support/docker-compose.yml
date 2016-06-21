@@ -1,0 +1,19 @@
+version: '2'
+services:
+
+  local_webserver: 
+    build: ..
+    entrypoint: ./bin/webserver_with_prometheus
+    ports:
+      - "3000:3000"
+    expose:
+      - "9090"
+
+  prometheus:
+    build: .
+    depends_on:
+      - local_webserver
+    ports:
+      - "9090:9090"
+    links:
+      -  local_webserver

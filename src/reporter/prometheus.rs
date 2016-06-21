@@ -24,9 +24,8 @@ use promo_proto::LabelPair;
 use std::collections::HashMap;
 use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 
-// TODO terrible name and wrong caps please rename
 #[derive(Copy, Clone)]
-struct foo;
+struct HandlerStorage;
 
 pub struct PrometheusReporter {
     host_and_port: &'static str,
@@ -35,7 +34,7 @@ pub struct PrometheusReporter {
     reporter_name: &'static str,
 }
 
-impl Key for foo {
+impl Key for HandlerStorage {
     type Value = Arc<StdRegistry<'static>>;
 }
 
@@ -69,7 +68,7 @@ impl PrometheusReporter {
             router.get("/metrics", handler);
             let mut chain = Chain::new(router);
             // The double long ARC pointer FTW!
-            chain.link_before(Read::<foo>::one(self.registry));
+            chain.link_before(Read::<HandlerStorage>::one(self.registry));
             // TODO -> Result<iron::Listening, iron::error::Error>
             Iron::new(chain).http(self.host_and_port).unwrap()
         })
@@ -85,7 +84,8 @@ fn timestamp() -> f64 {
 }
 
 fn handler(req: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, families_to_u8(to_pba(req.get::<Read<foo>>().unwrap())))))
+    Ok(Response::with((status::Ok,
+                       families_to_u8(to_pba(req.get::<Read<HandlerStorage>>().unwrap())))))
 }
 
 fn families_to_u8(metric_families: Vec<promo_proto::MetricFamily>) -> Vec<u8> {

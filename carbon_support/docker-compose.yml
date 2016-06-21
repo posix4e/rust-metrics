@@ -1,0 +1,19 @@
+version: '2'
+services:
+
+  local_webserver: 
+    build: ..
+    entrypoint: ./bin/webserver_with_carbon
+    ports:
+      - "3000:3000"
+    expose:
+      - "9090"
+    links:
+      - carbon_graphite
+
+  carbon_graphite:
+    image: rvernica/graphite
+    ports:
+       - "8080:8080"
+    expose:
+       - "2003"
