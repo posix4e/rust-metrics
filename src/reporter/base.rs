@@ -96,7 +96,7 @@ mod test {
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.start(1);
         g.set(1.4);
-        thread::sleep(Duration::from_millis(200 as u64));
+        thread::sleep(Duration::from_millis(200));
         println!("poplopit");
 
     }

@@ -202,7 +202,7 @@ mod test {
 
         let client = hyper::client::Client::new();
         // Seems as though iron isn't running maybe
-        thread::sleep(Duration::from_millis(1024 as u64));
+        thread::sleep(Duration::from_millis(1024));
         let res = client.get("http://127.0.0.1:8080").send().unwrap();
         // TODO fix url and check to make sure we got a valid protobuf
     }
