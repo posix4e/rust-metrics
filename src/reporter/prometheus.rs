@@ -26,6 +26,7 @@ use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 #[derive(Copy, Clone)]
 struct HandlerStorage;
 
+#[allow(dead_code)] // until `prefix is used
 pub struct PrometheusReporter {
     host_and_port: &'static str,
     // TODO to use as the application name?
@@ -44,6 +45,7 @@ impl Reporter for PrometheusReporter {
     }
 }
 
+#[allow(dead_code)] // until `prefix is used
 fn prefix(metric_line: String, prefix_str: &'static str) -> String {
     format!("{}.{}", prefix_str, metric_line)
 }
