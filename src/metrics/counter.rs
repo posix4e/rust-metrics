@@ -21,13 +21,13 @@ impl Counter for StdCounter {
 
     // inc(): Increment the counter by 1
     fn inc(&mut self) {
-        self.value = self.value + 1.0;
+        self.value += 1.0;
     }
 
     // inc(double v): Increment the counter by the given amount. MUST check that v >= 0.
     // We crash with integer overflow
     fn add(&mut self, value: f64) {
-        self.value = self.value + value;
+        self.value += value;
     }
 
     fn snapshot(self) -> StdCounter {
