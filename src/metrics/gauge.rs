@@ -32,24 +32,23 @@ impl Gauge for StdGauge {
 
     // inc(): Increment the gauge by 1
     fn inc(&mut self) {
-        let value = self.value + 1.0;
-        self.value = value;
+        self.value += 1.0;
     }
 
     // dec(): Decrement the gauge by 1
     fn dec(&mut self) {
-        self.value = self.value - 1.0;
+        self.value -= 1.0;
     }
 
     // Implementing Prometheus inc(double v): Increment the gauge by the given amount
     fn add(&mut self, value: f64) {
-        self.value = self.value + value;
+        self.value += value;
         // TODO check for negative
     }
 
     // Implementing Prometheus dec(double v): Decrement the gauge by the given amount
     fn sub(&mut self, value: f64) {
-        self.value = self.value - value;
+        self.value -= value;
     }
 
     fn set(&mut self, value: f64) {
