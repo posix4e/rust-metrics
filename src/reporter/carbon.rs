@@ -140,7 +140,7 @@ fn send_histogram_metric(metric_name: &str,
                          prefix_str: &'static str,
                          ts: Timespec)
                          -> Result<String, Error> {
-    let count = histogram.count();
+    let count = histogram.into_iter().count();
     // let sum = histogram.sum();
     // let mean = sum / count;
     let max = histogram.percentile(100.0).unwrap();
@@ -274,11 +274,13 @@ mod test {
         let mut g: StdGauge = StdGauge { value: 0.0 };
         g.set(1.2);
 
-        let mut hc = HistogramConfig::new();
-        hc.max_value(100).precision(1);
-        let mut h = Histogram::configured(hc).unwrap();
+        let mut h = Histogram::configure()
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
 
-        h.record(1, 1).unwrap();
+        h.increment_by(1, 1).unwrap();
 
         let mut r = StdRegistry::new();
         r.insert("meter1", m);

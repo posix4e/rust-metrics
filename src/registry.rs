@@ -102,10 +102,12 @@ mod test {
     #[test]
     fn histogram() {
         let mut r = StdRegistry::new();
-        let mut c = HistogramConfig::new();
-        c.max_value(100).precision(1);
-        let mut h = Histogram::configured(c).unwrap();
-        h.record(1, 1).unwrap();
+        let mut h = Histogram::configure()
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
+        h.increment_by(1, 1).unwrap();
         r.insert("histogram", h);
     }
 }
