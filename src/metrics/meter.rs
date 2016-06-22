@@ -113,6 +113,12 @@ impl Metric for StdMeter {
     }
 }
 
+impl Default for StdMeter {
+    fn default() -> Self {
+        StdMeter::new()
+    }
+}
+
 impl StdMeter {
     fn update_snapshot(&self, mut s: MutexGuard<MeterSnapshot>) {
         for i in 0..WINDOW.len() {
