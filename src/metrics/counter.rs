@@ -56,12 +56,12 @@ mod test {
         let mut c: StdCounter = StdCounter::new();
         c.add(1.0);
 
-        assert!(c.value == 1.0);
+        assert_eq!(c.value, 1.0);
 
         let mut c: StdCounter = StdCounter::new();
         c.inc();
 
-        assert!(c.value == 1.0);
+        assert_eq!(c.value, 1.0);
     }
 
     #[test]
@@ -71,7 +71,7 @@ mod test {
 
         c_snapshot.add(1.0);
 
-        assert!(c.value == 0.0);
-        assert!(c_snapshot.value == 1.0);
+        assert_eq!(c.value, 0.0);
+        assert_eq!(c_snapshot.value, 1.0);
     }
 }
