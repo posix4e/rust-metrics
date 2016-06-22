@@ -22,7 +22,7 @@ pub trait Gauge {
     fn set(&mut self, value: f64);
     fn set_to_current_time(&mut self);
 
-    fn snapshot(self) -> Self;
+    fn snapshot(&self) -> Self;
 }
 
 // Naive implementation of a gauge, it might be nice to make one build on atomics
@@ -59,7 +59,7 @@ impl Gauge for StdGauge {
         self.value = timestamp();
     }
 
-    fn snapshot(self) -> StdGauge {
+    fn snapshot(&self) -> StdGauge {
         StdGauge { value: self.value }
     }
 }

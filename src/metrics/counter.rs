@@ -10,7 +10,7 @@ pub trait Counter {
     fn clear(&mut self);
     fn inc(&mut self);
     fn add(&mut self, value: f64);
-    fn snapshot(self) -> Self;
+    fn snapshot(&self) -> Self;
 }
 
 
@@ -30,7 +30,7 @@ impl Counter for StdCounter {
         self.value += value;
     }
 
-    fn snapshot(self) -> StdCounter {
+    fn snapshot(&self) -> StdCounter {
         StdCounter { value: self.value }
     }
 }
