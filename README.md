@@ -75,7 +75,7 @@ extern crate metrics
 
 ## Development
 
-To work on this crate:
+To work on this crate without **build_docker**:
 
 - Install protobuf for `protoc` binary:
 
