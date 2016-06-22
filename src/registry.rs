@@ -14,6 +14,7 @@ pub trait Registry<'a>: Send + Sync {
     fn labels(&self) -> HashMap<String, String>;
 }
 
+#[derive(Default)]
 pub struct StdRegistry<'a> {
     metrics: HashMap<&'a str, Box<Metric + 'a>>,
     reporter: HashMap<&'a str, Box<Reporter>>,

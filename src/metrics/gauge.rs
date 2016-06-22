@@ -1,7 +1,7 @@
 use metrics::metric::{Metric, MetricValue};
 use time::get_time;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct StdGauge {
     pub value: f64,
 }
@@ -82,7 +82,7 @@ mod test {
 
     #[test]
     fn create_and_snapshot() {
-        let g: StdGauge = StdGauge { value: 0.0 };
+        let g = StdGauge::default();
         let mut g_snapshot = g.snapshot();
 
         g_snapshot.set(10.0);

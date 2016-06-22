@@ -1,7 +1,7 @@
 use metrics::metric::{Metric, MetricValue};
 
 // This can be much better with a different datatype
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct StdCounter {
     pub value: f64,
 }
