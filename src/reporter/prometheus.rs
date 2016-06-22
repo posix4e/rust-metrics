@@ -89,7 +89,7 @@ fn handler(req: &mut Request) -> IronResult<Response> {
                        families_to_u8(to_pba(req.get::<Read<HandlerStorage>>().unwrap())))))
 }
 
-fn families_to_u8(metric_families: Vec<promo_proto::MetricFamily>) -> Vec<u8> {
+fn families_to_u8(metric_families: Vec<MetricFamily>) -> Vec<u8> {
     let mut buf = Vec::new();
     for family in metric_families {
         family.write_length_delimited_to_writer(&mut buf).unwrap();
@@ -113,7 +113,7 @@ fn to_repeated_fields_labels(labels: HashMap<String, String>) -> RepeatedField<L
 // and serde once nightly is stable. I'd consider setting a feature flag but
 // it still might increase complexity to deploy
 // To an array of MetricFamily
-fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<promo_proto::MetricFamily> {
+fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
     let mut metric_families = Vec::new();
     let metric_names = registry.get_metrics_names();
     for metric_by_name in metric_names {
