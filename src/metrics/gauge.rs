@@ -1,57 +1,56 @@
 use metrics::metric::{Metric, MetricValue};
 use time::get_time;
 
+/// Naive implementation of a `Gauge`.
+///
+/// It might be nice to make one built on atomics.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StdGauge {
     pub value: f64,
 }
 
+/// A snapshot of the value of a `Gauge`.
 #[derive(Debug)]
 pub struct GaugeSnapshot {
     pub value: f64,
 }
 
-// Gauge is a Metric that represents a single numerical value that can
-// arbitrarily go up and down.
-//
-// A Gauge is typically used for measured values like temperatures or current
-// memory usage, but also "counts" that can go up and down.
-//
+/// `Gauge` is a `Metric` that represents a single numerical value that can
+/// arbitrarily go up and down.
+///
+/// A `Gauge` is typically used for measured values like temperatures or current
+/// memory usage, but also "counts" that can go up and down.
 pub trait Gauge {
+    /// Increment the gauge by 1.
     fn inc(&mut self);
+    /// Decrement the gauge by 1.
     fn dec(&mut self);
-    // How much we raise the gauge
+    /// Increment the gauge by the given amount.
     fn add(&mut self, value: f64);
-    // How much we lower the gauge
+    /// Decrement the gauge by the given amount.
     fn sub(&mut self, value: f64);
+    /// Set the current value of the gauge.
     fn set(&mut self, value: f64);
+    ///  Set the current value to the current timestamp.
     fn set_to_current_time(&mut self);
-
+    /// Take a snapshot of the current value for use with a `Reporter`.
     fn snapshot(&self) -> GaugeSnapshot;
 }
 
-// Naive implementation of a gauge, it might be nice to make one build on atomics
 impl Gauge for StdGauge {
-    // dec(double v): Decrement the gauge by the given amount
-    // set(double v): Set the gauge to the given value
-
-    // inc(): Increment the gauge by 1
     fn inc(&mut self) {
         self.value += 1.0;
     }
 
-    // dec(): Decrement the gauge by 1
     fn dec(&mut self) {
         self.value -= 1.0;
     }
 
-    // Implementing Prometheus inc(double v): Increment the gauge by the given amount
     fn add(&mut self, value: f64) {
         self.value += value;
         // TODO check for negative
     }
 
-    // Implementing Prometheus dec(double v): Decrement the gauge by the given amount
     fn sub(&mut self, value: f64) {
         self.value -= value;
     }

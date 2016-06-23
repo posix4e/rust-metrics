@@ -1,20 +1,30 @@
 use metrics::metric::{Metric, MetricValue};
 
-// This can be much better with a different datatype
+/// Naive implementation of a `Counter`.
+///
+/// It might be nice to make one built on atomics. It would also be nice
+/// if this weren't based on `f64`.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StdCounter {
     pub value: f64,
 }
 
+/// A snapshot of the current value of a `Counter`.
 #[derive(Debug)]
 pub struct CounterSnapshot {
     pub value: f64,
 }
 
+/// `Counter` is a `Metric` that represents a single numerical value that can
+/// increases over time.
 pub trait Counter {
+    /// Clear the counter, setting the value to `0`.
     fn clear(&mut self);
+    /// Increment the counter by 1.
     fn inc(&mut self);
+    /// Increment the counter by the given amount. MUST check that v >= 0.
     fn add(&mut self, value: f64);
+    /// Take a snapshot of the current value for use with a `Reporter`.
     fn snapshot(&self) -> CounterSnapshot;
 }
 
@@ -24,13 +34,10 @@ impl Counter for StdCounter {
         self.value = 0.0;
     }
 
-    // inc(): Increment the counter by 1
     fn inc(&mut self) {
         self.value += 1.0;
     }
 
-    // inc(double v): Increment the counter by the given amount. MUST check that v >= 0.
-    // We crash with integer overflow
     fn add(&mut self, value: f64) {
         self.value += value;
     }
