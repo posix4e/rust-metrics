@@ -15,10 +15,10 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
      let m = StdMeter::new();
      m.mark(100);
 
-     let mut c: StdCounter = StdCounter::new();
+     let mut c = StdCounter::new();
      c.inc();
 
-     let mut g: StdGauge = StdGauge { value: 0.0 };
+     let mut g = StdGauge::default();
      g.set(1.2);
 
      let mut hc = HistogramConfig::new();

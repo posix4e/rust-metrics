@@ -137,25 +137,25 @@ mod test {
 
     #[test]
     fn zero() {
-        let m: StdMeter = StdMeter::new();
-        let s: MeterSnapshot = m.snapshot();
+        let m = StdMeter::new();
+        let s = m.snapshot();
 
         assert_eq!(s.count, 0);
     }
 
     #[test]
     fn non_zero() {
-        let m: StdMeter = StdMeter::new();
+        let m = StdMeter::new();
         m.mark(3);
 
-        let s: MeterSnapshot = m.snapshot();
+        let s = m.snapshot();
 
         assert_eq!(s.count, 3);
     }
 
     #[test]
     fn snapshot() {
-        let m: StdMeter = StdMeter::new();
+        let m = StdMeter::new();
         m.mark(1);
         m.mark(1);
 
@@ -170,7 +170,7 @@ mod test {
     // Test that decay works correctly
     #[test]
     fn decay() {
-        let mut m: StdMeter = StdMeter::new();
+        let mut m = StdMeter::new();
 
         m.tick();
     }
