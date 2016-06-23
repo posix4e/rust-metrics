@@ -221,7 +221,7 @@ impl CarbonReporter {
     }
 
     fn report_to_carbon_continuously(self,
-                                     delay_ms: u32)
+                                     delay_ms: u64)
                                      -> thread::JoinHandle<Result<String, Error>> {
         use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
 
@@ -243,12 +243,12 @@ impl CarbonReporter {
                         }
                     });
                 }
-                thread::sleep(Duration::from_millis(delay_ms as u64));
+                thread::sleep(Duration::from_millis(delay_ms));
             }
         })
     }
 
-    pub fn start(self, delay_ms: u32) {
+    pub fn start(self, delay_ms: u64) {
         self.report_to_carbon_continuously(delay_ms);
     }
 }

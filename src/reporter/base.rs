@@ -27,7 +27,7 @@ impl ConsoleReporter {
             reporter_name: reporter_name,
         }
     }
-    pub fn start(&self, delay_ms: u32) {
+    pub fn start(&self, delay_ms: u64) {
         use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
@@ -49,7 +49,7 @@ impl ConsoleReporter {
                         }
                     }
                 }
-                thread::sleep(Duration::from_millis(delay_ms as u64));
+                thread::sleep(Duration::from_millis(delay_ms));
             }
         });
     }
