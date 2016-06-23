@@ -1,52 +1,64 @@
-use metrics::metric::{Metric, MetricValue};
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+use metrics::{Metric, MetricValue};
 use time::get_time;
 
+/// Naive implementation of a `Gauge`.
+///
+/// It might be nice to make one built on atomics.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StdGauge {
+    /// The gauge value.
     pub value: f64,
 }
 
-// Gauge is a Metric that represents a single numerical value that can
-// arbitrarily go up and down.
-//
-// A Gauge is typically used for measured values like temperatures or current
-// memory usage, but also "counts" that can go up and down.
-//
-pub trait Gauge {
-    fn inc(&mut self);
-    fn dec(&mut self);
-    // How much we raise the gauge
-    fn add(&mut self, value: f64);
-    // How much we lower the gauge
-    fn sub(&mut self, value: f64);
-    fn set(&mut self, value: f64);
-    fn set_to_current_time(&mut self);
-
-    fn snapshot(&self) -> Self;
+/// A snapshot of the value of a `Gauge`.
+#[derive(Debug)]
+pub struct GaugeSnapshot {
+    /// The snapshot of the gauge value.
+    pub value: f64,
 }
 
-// Naive implementation of a gauge, it might be nice to make one build on atomics
-impl Gauge for StdGauge {
-    // dec(double v): Decrement the gauge by the given amount
-    // set(double v): Set the gauge to the given value
+/// `Gauge` is a `Metric` that represents a single numerical value that can
+/// arbitrarily go up and down.
+///
+/// A `Gauge` is typically used for measured values like temperatures or current
+/// memory usage, but also "counts" that can go up and down.
+pub trait Gauge {
+    /// Increment the gauge by 1.
+    fn inc(&mut self);
+    /// Decrement the gauge by 1.
+    fn dec(&mut self);
+    /// Increment the gauge by the given amount.
+    fn add(&mut self, value: f64);
+    /// Decrement the gauge by the given amount.
+    fn sub(&mut self, value: f64);
+    /// Set the current value of the gauge.
+    fn set(&mut self, value: f64);
+    ///  Set the current value to the current timestamp.
+    fn set_to_current_time(&mut self);
+    /// Take a snapshot of the current value for use with a `Reporter`.
+    fn snapshot(&self) -> GaugeSnapshot;
+}
 
-    // inc(): Increment the gauge by 1
+impl Gauge for StdGauge {
     fn inc(&mut self) {
         self.value += 1.0;
     }
 
-    // dec(): Decrement the gauge by 1
     fn dec(&mut self) {
         self.value -= 1.0;
     }
 
-    // Implementing Prometheus inc(double v): Increment the gauge by the given amount
     fn add(&mut self, value: f64) {
         self.value += value;
         // TODO check for negative
     }
 
-    // Implementing Prometheus dec(double v): Decrement the gauge by the given amount
     fn sub(&mut self, value: f64) {
         self.value -= value;
     }
@@ -59,8 +71,8 @@ impl Gauge for StdGauge {
         self.value = timestamp();
     }
 
-    fn snapshot(&self) -> StdGauge {
-        StdGauge { value: self.value }
+    fn snapshot(&self) -> GaugeSnapshot {
+        GaugeSnapshot { value: self.value }
     }
 }
 
@@ -82,12 +94,13 @@ mod test {
 
     #[test]
     fn create_and_snapshot() {
-        let g = StdGauge::default();
-        let mut g_snapshot = g.snapshot();
+        let mut g = StdGauge::default();
+        let snapshot_1 = g.snapshot();
+        g.set(10.0);
+        let snapshot_2 = g.snapshot();
 
-        g_snapshot.set(10.0);
-
-        assert_eq!(g.value, 0.0);
-        assert_eq!(g_snapshot.value, 10.0);
+        assert_eq!(g.value, 10.0);
+        assert_eq!(snapshot_1.value, 0.0);
+        assert_eq!(snapshot_2.value, 10.0);
     }
 }

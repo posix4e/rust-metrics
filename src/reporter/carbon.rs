@@ -1,12 +1,16 @@
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 // CarbonReporter sends a message to a carbon end point at a regular basis.
 use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-use reporter::base::Reporter;
-use metrics::counter::StdCounter;
-use metrics::gauge::StdGauge;
-use metrics::meter::MeterSnapshot;
+use reporter::Reporter;
+use metrics::{CounterSnapshot, GaugeSnapshot, MeterSnapshot};
 use histogram::Histogram;
 use time;
 use time::Timespec;
@@ -29,7 +33,7 @@ pub struct CarbonReporter {
 }
 
 impl CarbonStream {
-    pub fn new(host_and_port: String) -> CarbonStream {
+    pub fn new(host_and_port: String) -> Self {
         CarbonStream {
             host_and_port: host_and_port,
             graphite_stream: None,
@@ -112,7 +116,7 @@ fn send_meter_metric(metric_name: &str,
 }
 
 fn send_gauge_metric(metric_name: &str,
-                     gauge: StdGauge,
+                     gauge: GaugeSnapshot,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
                      ts: Timespec)
@@ -124,7 +128,7 @@ fn send_gauge_metric(metric_name: &str,
 }
 
 fn send_counter_metric(metric_name: &str,
-                       counter: StdCounter,
+                       counter: CounterSnapshot,
                        carbon: &mut CarbonStream,
                        prefix_str: &'static str,
                        ts: Timespec)
@@ -211,7 +215,7 @@ impl CarbonReporter {
                reporter_name: &'static str,
                host_and_port: String,
                prefix: &'static str)
-               -> CarbonReporter {
+               -> Self {
         CarbonReporter {
             host_and_port: host_and_port,
             prefix: prefix,
@@ -221,9 +225,9 @@ impl CarbonReporter {
     }
 
     fn report_to_carbon_continuously(self,
-                                     delay_ms: u32)
+                                     delay_ms: u64)
                                      -> thread::JoinHandle<Result<String, Error>> {
-        use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+        use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
 
         let prefix = self.prefix;
         let host_and_port = self.host_and_port.clone();
@@ -243,35 +247,33 @@ impl CarbonReporter {
                         }
                     });
                 }
-                thread::sleep(Duration::from_millis(delay_ms as u64));
+                thread::sleep(Duration::from_millis(delay_ms));
             }
         })
     }
 
-    pub fn start(self, delay_ms: u32) {
+    pub fn start(self, delay_ms: u64) {
         self.report_to_carbon_continuously(delay_ms);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use metrics::meter::{Meter, StdMeter};
-    use metrics::counter::{Counter, StdCounter};
-    use metrics::gauge::{Gauge, StdGauge};
-    use registry::{Registry, StdRegistry};
-    use reporter::carbon::CarbonReporter;
-    use std::sync::Arc;
     use histogram::*;
+    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
+    use registry::{Registry, StdRegistry};
+    use std::sync::Arc;
+    use super::CarbonReporter;
 
     #[test]
     fn meter() {
         let m = StdMeter::new();
         m.mark(100);
 
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.inc();
 
-        let mut g: StdGauge = StdGauge { value: 0.0 };
+        let mut g = StdGauge::default();
         g.set(1.2);
 
         let mut h = Histogram::configure()

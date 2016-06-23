@@ -1,3 +1,9 @@
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 // Simple Prometheus support. Still a work in progress.
 // TODO
 // We aren't collecting metrics properly we should be
@@ -6,7 +12,7 @@
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
-use reporter::base::Reporter;
+use reporter::Reporter;
 use time;
 use promo_proto::MetricFamily;
 use router::Router;
@@ -21,7 +27,7 @@ use protobuf::Message;
 use protobuf::repeated::RepeatedField;
 use promo_proto::LabelPair;
 use std::collections::HashMap;
-use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
 
 #[derive(Copy, Clone)]
 struct HandlerStorage;
@@ -55,7 +61,7 @@ impl PrometheusReporter {
                reporter_name: &'static str,
                host_and_port: &'static str,
                prefix: &'static str)
-               -> PrometheusReporter {
+               -> Self {
         PrometheusReporter {
             host_and_port: host_and_port,
             prefix: prefix,
@@ -160,16 +166,14 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
 
 #[cfg(test)]
 mod test {
-    use metrics::meter::{Meter, StdMeter};
-    use metrics::counter::{Counter, StdCounter};
-    use metrics::gauge::{Gauge, StdGauge};
-    use registry::{Registry, StdRegistry};
-    use reporter::prometheus::PrometheusReporter;
-    use std::sync::Arc;
-    use std::time::Duration;
-    use std::thread;
     use histogram::*;
+    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
+    use registry::{Registry, StdRegistry};
     use std::collections::HashMap;
+    use std::sync::Arc;
+    use std::thread;
+    use std::time::Duration;
+    use super::PrometheusReporter;
 
     #[test]
     fn add_some_stats_and_slurp_them_with_http() {
@@ -177,10 +181,10 @@ mod test {
         let m = StdMeter::new();
         m.mark(100);
 
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.inc();
 
-        let mut g: StdGauge = StdGauge { value: 0.0 };
+        let mut g = StdGauge::default();
         g.set(1.2);
 
         let mut h = Histogram::configure()

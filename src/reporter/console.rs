@@ -1,13 +1,14 @@
-// Common traits and functionality to reporting.
-// Also contains the ConsoleReporter
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 use registry::{Registry, StdRegistry};
+use reporter::Reporter;
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-
-pub trait Reporter: Send + Sync {
-    fn get_unique_reporter_name(&self) -> &'static str;
-}
 
 pub struct ConsoleReporter {
     registry: Arc<StdRegistry<'static>>,
@@ -21,16 +22,14 @@ impl Reporter for ConsoleReporter {
 }
 
 impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>,
-               reporter_name: &'static str)
-               -> ConsoleReporter {
+    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> Self {
         ConsoleReporter {
             registry: registry,
             reporter_name: reporter_name,
         }
     }
-    pub fn start(&self, delay_ms: u32) {
-        use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+    pub fn start(&self, delay_ms: u64) {
+        use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
             loop {
@@ -51,7 +50,7 @@ impl ConsoleReporter {
                         }
                     }
                 }
-                thread::sleep(Duration::from_millis(delay_ms as u64));
+                thread::sleep(Duration::from_millis(delay_ms));
             }
         });
     }
@@ -60,25 +59,23 @@ impl ConsoleReporter {
 #[cfg(test)]
 mod test {
 
-    use metrics::meter::{Meter, StdMeter};
-    use metrics::counter::{Counter, StdCounter};
-    use metrics::gauge::{Gauge, StdGauge};
-    use registry::{Registry, StdRegistry};
-    use reporter::base::ConsoleReporter;
-    use std::sync::Arc;
-    use std::time::Duration;
-    use std::thread;
     use histogram::*;
+    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
+    use registry::{Registry, StdRegistry};
+    use std::sync::Arc;
+    use std::thread;
+    use std::time::Duration;
+    use super::ConsoleReporter;
 
     #[test]
     fn meter() {
         let m = StdMeter::new();
         m.mark(100);
 
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.inc();
 
-        let mut g: StdGauge = StdGauge { value: 0.0 };
+        let mut g = StdGauge::default();
         g.set(1.2);
 
         let mut h = Histogram::configure()

@@ -1,3 +1,9 @@
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 /// An example of sending data to a Prometheus server with a local webserver
 extern crate iron;
 extern crate metrics;
@@ -5,11 +11,9 @@ extern crate histogram;
 
 use iron::prelude::*;
 use iron::status;
-use metrics::metrics::counter::*;
-use metrics::metrics::gauge::*;
-use metrics::metrics::meter::*;
+use metrics::metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
 use metrics::registry::StdRegistry;
-use metrics::reporter::prometheus::PrometheusReporter;
+use metrics::reporter::PrometheusReporter;
 use std::sync::Arc;
 use std::collections::HashMap;
 use histogram::*;
@@ -20,17 +24,17 @@ fn main() {
     let m = StdMeter::new();
     m.mark(100);
 
-    let mut c: StdCounter = StdCounter::new();
+    let mut c = StdCounter::new();
     c.inc();
 
-    let mut g: StdGauge = StdGauge { value: 0.0 };
+    let mut g = StdGauge::default();
     g.set(1.2);
 
     let mut h = Histogram::configure()
-                .max_value(100)
-                .precision(1)
-                .build()
-                .unwrap();
+        .max_value(100)
+        .precision(1)
+        .build()
+        .unwrap();
 
     h.increment_by(1, 1).unwrap();
 

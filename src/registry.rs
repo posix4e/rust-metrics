@@ -1,8 +1,16 @@
-// A registry to store metrics in
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! A registry to store metrics in
+
+#![allow(missing_docs)]
 
 use std::collections::HashMap;
-use metrics::metric::Metric;
-use reporter::base::Reporter;
+use metrics::Metric;
+use reporter::Reporter;
 
 // TODO break out any notion of metrics. Instead we should have a notion of a collector.
 // A collector should be able to insert metrics, and a registry should not.
@@ -47,7 +55,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
 }
 
 impl<'a> StdRegistry<'a> {
-    pub fn new_with_labels(labels: HashMap<String, String>) -> StdRegistry<'a> {
+    pub fn new_with_labels(labels: HashMap<String, String>) -> Self {
         StdRegistry {
             metrics: HashMap::new(),
             reporter: HashMap::new(),
@@ -55,7 +63,7 @@ impl<'a> StdRegistry<'a> {
         }
     }
 
-    pub fn new() -> StdRegistry<'a> {
+    pub fn new() -> Self {
         StdRegistry {
             metrics: HashMap::new(),
             reporter: HashMap::new(),
@@ -66,9 +74,7 @@ impl<'a> StdRegistry<'a> {
 
 #[cfg(test)]
 mod test {
-    use metrics::meter::{Meter, StdMeter};
-    use metrics::counter::{Counter, StdCounter};
-    use metrics::gauge::{Gauge, StdGauge};
+    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use histogram::*;
 

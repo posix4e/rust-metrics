@@ -4,21 +4,23 @@
 
 Metrics are things you can use to safely & directly store metrics with little overhead. Metrics
 can be attached to a registry and that registry can be collected across a system. This registry
-also provides reporting services. Current reporters include. Contact us on #rust-metrics on mozilla irc.
+also provides reporting services. Current reporters include:
 
 - [Prometheus](https://prometheus.io/)
 - Graphite/Carbon/Whisper
 - Console/Syslog/Journald (via stdout)
+
+Contact us on #rust-metrics on Mozilla IRC.
 
 ```rust
 fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interval_to_graphite_or_carbon() {
      let m = StdMeter::new();
      m.mark(100);
 
-     let mut c: StdCounter = StdCounter::new();
+     let mut c = StdCounter::new();
      c.inc();
 
-     let mut g: StdGauge = StdGauge { value: 0.0 };
+     let mut g = StdGauge::default();
      g.set(1.2);
 
      let mut hc = HistogramConfig::new();

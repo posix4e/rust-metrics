@@ -1,8 +1,15 @@
-use time::get_time;
-use time::Timespec;
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+#![allow(missing_docs)]
+
+use metrics::{Metric, MetricValue};
 use std::sync::{Mutex, MutexGuard};
-use metrics::ewma::EWMA;
-use metrics::metric::{Metric, MetricValue};
+use time::{get_time, Timespec};
+use utils::EWMA;
 
 const WINDOW: [f64; 3] = [1.0, 5.0, 15.0];
 
@@ -24,12 +31,6 @@ pub struct StdMeter {
 
 // A Meter trait
 pub trait Meter: Metric {
-    fn get_meter(&self) -> MeterSnapshot {
-        self.snapshot()
-    }
-
-    fn export_metric(&self) -> MetricValue;
-
     fn snapshot(&self) -> MeterSnapshot;
 
     fn mark(&self, n: i64);
@@ -44,12 +45,6 @@ pub trait Meter: Metric {
 }
 
 impl Meter for StdMeter {
-    fn export_metric(&self) -> MetricValue {
-        use metrics::metric::MetricValue::Meter;
-        let snapshot: MeterSnapshot = self.snapshot();
-        Meter(snapshot)
-    }
-
     fn snapshot(&self) -> MeterSnapshot {
         let s = self.data.lock().unwrap();
 
@@ -107,9 +102,7 @@ impl Meter for StdMeter {
 
 impl Metric for StdMeter {
     fn export_metric(&self) -> MetricValue {
-        use metrics::metric::MetricValue::Meter;
-        let snapshot: MeterSnapshot = self.snapshot();
-        Meter(snapshot)
+        MetricValue::Meter(self.snapshot())
     }
 }
 
@@ -129,7 +122,7 @@ impl StdMeter {
         s.mean = s.count as f64 / diff.num_seconds() as f64;
     }
 
-    pub fn new() -> StdMeter {
+    pub fn new() -> Self {
         let data: MeterSnapshot = MeterSnapshot {
             count: 0,
             rates: [0.0, 0.0, 0.0],
@@ -152,25 +145,25 @@ mod test {
 
     #[test]
     fn zero() {
-        let m: StdMeter = StdMeter::new();
-        let s: MeterSnapshot = m.snapshot();
+        let m = StdMeter::new();
+        let s = m.snapshot();
 
         assert_eq!(s.count, 0);
     }
 
     #[test]
     fn non_zero() {
-        let m: StdMeter = StdMeter::new();
+        let m = StdMeter::new();
         m.mark(3);
 
-        let s: MeterSnapshot = m.snapshot();
+        let s = m.snapshot();
 
         assert_eq!(s.count, 3);
     }
 
     #[test]
     fn snapshot() {
-        let m: StdMeter = StdMeter::new();
+        let m = StdMeter::new();
         m.mark(1);
         m.mark(1);
 
@@ -185,7 +178,7 @@ mod test {
     // Test that decay works correctly
     #[test]
     fn decay() {
-        let mut m: StdMeter = StdMeter::new();
+        let mut m = StdMeter::new();
 
         m.tick();
     }

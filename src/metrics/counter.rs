@@ -1,16 +1,39 @@
-use metrics::metric::{Metric, MetricValue};
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-// This can be much better with a different datatype
+use metrics::{Metric, MetricValue};
+
+/// Naive implementation of a `Counter`.
+///
+/// It might be nice to make one built on atomics. It would also be nice
+/// if this weren't based on `f64`.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StdCounter {
+    /// The counter value.
     pub value: f64,
 }
 
+/// A snapshot of the current value of a `Counter`.
+#[derive(Debug)]
+pub struct CounterSnapshot {
+    /// The snapshot of the counter value.
+    pub value: f64,
+}
+
+/// `Counter` is a `Metric` that represents a single numerical value that can
+/// increases over time.
 pub trait Counter {
+    /// Clear the counter, setting the value to `0`.
     fn clear(&mut self);
+    /// Increment the counter by 1.
     fn inc(&mut self);
+    /// Increment the counter by the given amount. MUST check that v >= 0.
     fn add(&mut self, value: f64);
-    fn snapshot(&self) -> Self;
+    /// Take a snapshot of the current value for use with a `Reporter`.
+    fn snapshot(&self) -> CounterSnapshot;
 }
 
 
@@ -19,19 +42,16 @@ impl Counter for StdCounter {
         self.value = 0.0;
     }
 
-    // inc(): Increment the counter by 1
     fn inc(&mut self) {
         self.value += 1.0;
     }
 
-    // inc(double v): Increment the counter by the given amount. MUST check that v >= 0.
-    // We crash with integer overflow
     fn add(&mut self, value: f64) {
         self.value += value;
     }
 
-    fn snapshot(&self) -> StdCounter {
-        StdCounter { value: self.value }
+    fn snapshot(&self) -> CounterSnapshot {
+        CounterSnapshot { value: self.value }
     }
 }
 
@@ -42,7 +62,8 @@ impl Metric for StdCounter {
 }
 
 impl StdCounter {
-    pub fn new() -> StdCounter {
+    /// Create a new `StdCounter`.
+    pub fn new() -> Self {
         StdCounter { value: 0.0 }
     }
 }
@@ -53,25 +74,25 @@ mod test {
 
     #[test]
     fn a_counting_counter() {
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.add(1.0);
 
         assert_eq!(c.value, 1.0);
 
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.inc();
 
         assert_eq!(c.value, 1.0);
     }
 
     #[test]
-    fn make_sure_we_can_actually_export_metrics() {
-        let c: StdCounter = StdCounter::new();
-        let mut c_snapshot = c.snapshot();
-
-        c_snapshot.add(1.0);
-
-        assert_eq!(c.value, 0.0);
-        assert_eq!(c_snapshot.value, 1.0);
+    fn validate_snapshots() {
+        let mut c = StdCounter::new();
+        let snapshot_1 = c.snapshot();
+        c.add(1.0);
+        let snapshot_2 = c.snapshot();
+        assert_eq!(c.value, 1.0);
+        assert_eq!(snapshot_1.value, 0.0);
+        assert_eq!(snapshot_2.value, 1.0);
     }
 }

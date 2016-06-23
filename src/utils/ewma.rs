@@ -1,24 +1,35 @@
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+/// An exponentially weighted moving average.
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct EWMA {
-    pub uncounted: AtomicUsize, // This tracks uncounted events
+    uncounted: AtomicUsize, // This tracks uncounted events
     alpha: f64,
     rate: Mutex<f64>,
     init: bool,
 }
 
+#[allow(missing_docs)]
 pub struct EWMASnapshot {
     value: f64,
 }
 
+#[allow(missing_docs)]
 impl EWMASnapshot {
     pub fn rate(&self) -> f64 {
         self.value
     }
 }
 
+#[allow(missing_docs)]
 impl EWMA {
     pub fn rate(&self) -> f64 {
         let r = self.rate.lock().unwrap();
@@ -51,7 +62,7 @@ impl EWMA {
     }
 
     /// construct new by alpha
-    pub fn new_by_alpha(alpha: f64) -> EWMA {
+    pub fn new_by_alpha(alpha: f64) -> Self {
         EWMA {
             uncounted: AtomicUsize::new(0),
             alpha: alpha,
@@ -61,7 +72,7 @@ impl EWMA {
     }
 
     /// constructs a new EWMA for a n-minute moving average.
-    pub fn new(rate: f64) -> EWMA {
+    pub fn new(rate: f64) -> Self {
         let i = -5.0 / 60.0 / rate;
         EWMA::new_by_alpha(1.0 - i.exp())
     }
@@ -248,7 +259,6 @@ mod test {
         assert_eq!(within(&mut e, 0.23594443252115815), true);
 
         // 15 minute
-        assert_eq!(within(&mut e, 0.2207276647028646247028654470286553),
-                   true);
+        assert_eq!(within(&mut e, 0.2207276647028646247028654470286553), true);
     }
 }
