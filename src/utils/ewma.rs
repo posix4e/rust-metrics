@@ -1,9 +1,10 @@
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+/// An exponentially weighted moving average.
 #[derive(Debug)]
 pub struct EWMA {
-    pub uncounted: AtomicUsize, // This tracks uncounted events
+    uncounted: AtomicUsize, // This tracks uncounted events
     alpha: f64,
     rate: Mutex<f64>,
     init: bool,
