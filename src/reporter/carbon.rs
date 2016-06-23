@@ -4,8 +4,8 @@ use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
 use reporter::base::Reporter;
-use metrics::counter::StdCounter;
-use metrics::gauge::StdGauge;
+use metrics::counter::CounterSnapshot;
+use metrics::gauge::GaugeSnapshot;
 use metrics::meter::MeterSnapshot;
 use histogram::Histogram;
 use time;
@@ -112,7 +112,7 @@ fn send_meter_metric(metric_name: &str,
 }
 
 fn send_gauge_metric(metric_name: &str,
-                     gauge: StdGauge,
+                     gauge: GaugeSnapshot,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
                      ts: Timespec)
@@ -124,7 +124,7 @@ fn send_gauge_metric(metric_name: &str,
 }
 
 fn send_counter_metric(metric_name: &str,
-                       counter: StdCounter,
+                       counter: CounterSnapshot,
                        carbon: &mut CarbonStream,
                        prefix_str: &'static str,
                        ts: Timespec)

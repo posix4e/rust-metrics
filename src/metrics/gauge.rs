@@ -6,6 +6,11 @@ pub struct StdGauge {
     pub value: f64,
 }
 
+#[derive(Debug)]
+pub struct GaugeSnapshot {
+    pub value: f64,
+}
+
 // Gauge is a Metric that represents a single numerical value that can
 // arbitrarily go up and down.
 //
@@ -22,7 +27,7 @@ pub trait Gauge {
     fn set(&mut self, value: f64);
     fn set_to_current_time(&mut self);
 
-    fn snapshot(&self) -> Self;
+    fn snapshot(&self) -> GaugeSnapshot;
 }
 
 // Naive implementation of a gauge, it might be nice to make one build on atomics
@@ -59,8 +64,8 @@ impl Gauge for StdGauge {
         self.value = timestamp();
     }
 
-    fn snapshot(&self) -> StdGauge {
-        StdGauge { value: self.value }
+    fn snapshot(&self) -> GaugeSnapshot {
+        GaugeSnapshot { value: self.value }
     }
 }
 
@@ -82,12 +87,13 @@ mod test {
 
     #[test]
     fn create_and_snapshot() {
-        let g = StdGauge::default();
-        let mut g_snapshot = g.snapshot();
+        let mut g = StdGauge::default();
+        let snapshot_1 = g.snapshot();
+        g.set(10.0);
+        let snapshot_2 = g.snapshot();
 
-        g_snapshot.set(10.0);
-
-        assert_eq!(g.value, 0.0);
-        assert_eq!(g_snapshot.value, 10.0);
+        assert_eq!(g.value, 10.0);
+        assert_eq!(snapshot_1.value, 0.0);
+        assert_eq!(snapshot_2.value, 10.0);
     }
 }

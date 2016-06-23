@@ -1,5 +1,5 @@
-use metrics::counter::StdCounter;
-use metrics::gauge::StdGauge;
+use metrics::counter::CounterSnapshot;
+use metrics::gauge::GaugeSnapshot;
 use metrics::meter::MeterSnapshot;
 /// a Metric
 use histogram::Histogram;
@@ -15,8 +15,8 @@ impl Metric for Histogram {
     }
 }
 pub enum MetricValue {
-    Counter(StdCounter),
-    Gauge(StdGauge),
+    Counter(CounterSnapshot),
+    Gauge(GaugeSnapshot),
     Meter(MeterSnapshot),
     Histogram(Histogram),
 }

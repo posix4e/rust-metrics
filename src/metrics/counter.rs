@@ -6,11 +6,16 @@ pub struct StdCounter {
     pub value: f64,
 }
 
+#[derive(Debug)]
+pub struct CounterSnapshot {
+    pub value: f64,
+}
+
 pub trait Counter {
     fn clear(&mut self);
     fn inc(&mut self);
     fn add(&mut self, value: f64);
-    fn snapshot(&self) -> Self;
+    fn snapshot(&self) -> CounterSnapshot;
 }
 
 
@@ -30,8 +35,8 @@ impl Counter for StdCounter {
         self.value += value;
     }
 
-    fn snapshot(&self) -> StdCounter {
-        StdCounter { value: self.value }
+    fn snapshot(&self) -> CounterSnapshot {
+        CounterSnapshot { value: self.value }
     }
 }
 
@@ -53,25 +58,25 @@ mod test {
 
     #[test]
     fn a_counting_counter() {
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.add(1.0);
 
         assert_eq!(c.value, 1.0);
 
-        let mut c: StdCounter = StdCounter::new();
+        let mut c = StdCounter::new();
         c.inc();
 
         assert_eq!(c.value, 1.0);
     }
 
     #[test]
-    fn make_sure_we_can_actually_export_metrics() {
-        let c: StdCounter = StdCounter::new();
-        let mut c_snapshot = c.snapshot();
-
-        c_snapshot.add(1.0);
-
-        assert_eq!(c.value, 0.0);
-        assert_eq!(c_snapshot.value, 1.0);
+    fn validate_snapshots() {
+        let mut c = StdCounter::new();
+        let snapshot_1 = c.snapshot();
+        c.add(1.0);
+        let snapshot_2 = c.snapshot();
+        assert_eq!(c.value, 1.0);
+        assert_eq!(snapshot_1.value, 0.0);
+        assert_eq!(snapshot_2.value, 1.0);
     }
 }
