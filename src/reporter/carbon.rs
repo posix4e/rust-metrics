@@ -40,17 +40,17 @@ impl CarbonStream {
         }
     }
 
-    pub fn connect(&mut self) -> Result<String, Error> {
+    pub fn connect(&mut self) -> Result<(), Error> {
         let graphite_stream = try!(TcpStream::connect(&*self.host_and_port));
         self.graphite_stream = Some(graphite_stream);
-        Ok(String::from(""))
+        Ok(())
     }
 
     pub fn write(&mut self,
                  metric_path: String,
                  value: String,
                  timespec: Timespec)
-                 -> Result<String, Error> {
+                 -> Result<(), Error> {
         let seconds_in_ms = (timespec.sec * 1000) as u32;
         let nseconds_in_ms = (timespec.nsec / 1000) as u32;
         let timestamp = seconds_in_ms + nseconds_in_ms;
@@ -65,9 +65,9 @@ impl CarbonStream {
                 try!(self.write(metric_path, value, timespec));
             }
         }
-        Ok(String::from(""))
+        Ok(())
     }
-    fn reconnect_stream(&mut self) -> Result<String, Error> {
+    fn reconnect_stream(&mut self) -> Result<(), Error> {
         // TODO 123 is made up
         println!("Waiting 123ms and then reconnecting");
         thread::sleep(Duration::from_millis(123));
@@ -90,7 +90,7 @@ fn send_meter_metric(metric_name: &str,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
                      ts: Timespec)
-                     -> Result<String, Error> {
+                     -> Result<(), Error> {
 
     let count = meter.count.to_string();
     let m1_rate = meter.rates[0].to_string();
@@ -112,7 +112,7 @@ fn send_meter_metric(metric_name: &str,
     try!(carbon.write(prefix(format!("{}.mean", metric_name), prefix_str),
                       mean_rate,
                       ts));
-    Ok(String::from(""))
+    Ok(())
 }
 
 fn send_gauge_metric(metric_name: &str,
@@ -120,11 +120,11 @@ fn send_gauge_metric(metric_name: &str,
                      carbon: &mut CarbonStream,
                      prefix_str: &'static str,
                      ts: Timespec)
-                     -> Result<String, Error> {
+                     -> Result<(), Error> {
     try!(carbon.write(prefix(format!("{}", metric_name), prefix_str),
                       gauge.value.to_string(),
                       ts));
-    Ok(String::from(""))
+    Ok(())
 }
 
 fn send_counter_metric(metric_name: &str,
@@ -132,18 +132,18 @@ fn send_counter_metric(metric_name: &str,
                        carbon: &mut CarbonStream,
                        prefix_str: &'static str,
                        ts: Timespec)
-                       -> Result<String, Error> {
+                       -> Result<(), Error> {
     try!(carbon.write(prefix(format!("{}", metric_name), prefix_str),
                       counter.value.to_string(),
                       ts));
-    Ok(String::from(""))
+    Ok(())
 }
 fn send_histogram_metric(metric_name: &str,
                          histogram: &mut Histogram,
                          carbon: &mut CarbonStream,
                          prefix_str: &'static str,
                          ts: Timespec)
-                         -> Result<String, Error> {
+                         -> Result<(), Error> {
     let count = histogram.into_iter().count();
     // let sum = histogram.sum();
     // let mean = sum / count;
@@ -207,7 +207,7 @@ fn send_histogram_metric(metric_name: &str,
     try!(carbon.write(prefix(format!("{}.p99999", metric_name), prefix_str),
                       p99999.to_string(),
                       ts));
-    Ok(String::from(""))
+    Ok(())
 }
 
 impl CarbonReporter {
@@ -224,9 +224,7 @@ impl CarbonReporter {
         }
     }
 
-    fn report_to_carbon_continuously(self,
-                                     delay_ms: u64)
-                                     -> thread::JoinHandle<Result<String, Error>> {
+    fn report_to_carbon_continuously(self, delay_ms: u64) -> thread::JoinHandle<Result<(), Error>> {
         use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
 
         let prefix = self.prefix;
