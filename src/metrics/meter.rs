@@ -129,7 +129,7 @@ impl StdMeter {
         s.mean = s.count as f64 / diff.num_seconds() as f64;
     }
 
-    pub fn new() -> StdMeter {
+    pub fn new() -> Self {
         let data: MeterSnapshot = MeterSnapshot {
             count: 0,
             rates: [0.0, 0.0, 0.0],

@@ -54,7 +54,7 @@ impl Metric for StdCounter {
 }
 
 impl StdCounter {
-    pub fn new() -> StdCounter {
+    pub fn new() -> Self {
         StdCounter { value: 0.0 }
     }
 }

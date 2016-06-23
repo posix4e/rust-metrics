@@ -21,9 +21,7 @@ impl Reporter for ConsoleReporter {
 }
 
 impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>,
-               reporter_name: &'static str)
-               -> ConsoleReporter {
+    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> Self {
         ConsoleReporter {
             registry: registry,
             reporter_name: reporter_name,

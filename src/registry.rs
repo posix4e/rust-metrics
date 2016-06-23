@@ -47,7 +47,7 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
 }
 
 impl<'a> StdRegistry<'a> {
-    pub fn new_with_labels(labels: HashMap<String, String>) -> StdRegistry<'a> {
+    pub fn new_with_labels(labels: HashMap<String, String>) -> Self {
         StdRegistry {
             metrics: HashMap::new(),
             reporter: HashMap::new(),
@@ -55,7 +55,7 @@ impl<'a> StdRegistry<'a> {
         }
     }
 
-    pub fn new() -> StdRegistry<'a> {
+    pub fn new() -> Self {
         StdRegistry {
             metrics: HashMap::new(),
             reporter: HashMap::new(),

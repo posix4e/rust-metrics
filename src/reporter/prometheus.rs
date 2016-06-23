@@ -55,7 +55,7 @@ impl PrometheusReporter {
                reporter_name: &'static str,
                host_and_port: &'static str,
                prefix: &'static str)
-               -> PrometheusReporter {
+               -> Self {
         PrometheusReporter {
             host_and_port: host_and_port,
             prefix: prefix,

@@ -51,7 +51,7 @@ impl EWMA {
     }
 
     /// construct new by alpha
-    pub fn new_by_alpha(alpha: f64) -> EWMA {
+    pub fn new_by_alpha(alpha: f64) -> Self {
         EWMA {
             uncounted: AtomicUsize::new(0),
             alpha: alpha,
@@ -61,7 +61,7 @@ impl EWMA {
     }
 
     /// constructs a new EWMA for a n-minute moving average.
-    pub fn new(rate: f64) -> EWMA {
+    pub fn new(rate: f64) -> Self {
         let i = -5.0 / 60.0 / rate;
         EWMA::new_by_alpha(1.0 - i.exp())
     }

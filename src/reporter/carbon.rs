@@ -29,7 +29,7 @@ pub struct CarbonReporter {
 }
 
 impl CarbonStream {
-    pub fn new(host_and_port: String) -> CarbonStream {
+    pub fn new(host_and_port: String) -> Self {
         CarbonStream {
             host_and_port: host_and_port,
             graphite_stream: None,
@@ -211,7 +211,7 @@ impl CarbonReporter {
                reporter_name: &'static str,
                host_and_port: String,
                prefix: &'static str)
-               -> CarbonReporter {
+               -> Self {
         CarbonReporter {
             host_and_port: host_and_port,
             prefix: prefix,
