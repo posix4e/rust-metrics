@@ -9,7 +9,7 @@ use metrics::metrics::counter::*;
 use metrics::metrics::gauge::*;
 use metrics::metrics::meter::*;
 use metrics::registry::StdRegistry;
-use metrics::reporter::prometheus::PrometheusReporter;
+use metrics::reporter::PrometheusReporter;
 use std::sync::Arc;
 use std::collections::HashMap;
 use histogram::*;

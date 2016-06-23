@@ -3,7 +3,7 @@ use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
-use reporter::base::Reporter;
+use reporter::Reporter;
 use metrics::counter::CounterSnapshot;
 use metrics::gauge::GaugeSnapshot;
 use metrics::meter::MeterSnapshot;
@@ -255,13 +255,13 @@ impl CarbonReporter {
 
 #[cfg(test)]
 mod test {
-    use metrics::meter::{Meter, StdMeter};
+    use histogram::*;
     use metrics::counter::{Counter, StdCounter};
     use metrics::gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
     use registry::{Registry, StdRegistry};
-    use reporter::carbon::CarbonReporter;
     use std::sync::Arc;
-    use histogram::*;
+    use super::CarbonReporter;
 
     #[test]
     fn meter() {

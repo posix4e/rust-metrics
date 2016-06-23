@@ -9,7 +9,7 @@ use metrics::metrics::counter::*;
 use metrics::metrics::gauge::*;
 use metrics::metrics::meter::*;
 use metrics::registry::{Registry, StdRegistry};
-use metrics::reporter::carbon::CarbonReporter;
+use metrics::reporter::CarbonReporter;
 use std::sync::Arc;
 use histogram::*;
 use std::thread;

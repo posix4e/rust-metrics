@@ -1,5 +1,5 @@
 use registry::{Registry, StdRegistry};
-use reporter::base::Reporter;
+use reporter::Reporter;
 use std::time::Duration;
 use std::thread;
 use std::sync::Arc;
@@ -53,15 +53,15 @@ impl ConsoleReporter {
 #[cfg(test)]
 mod test {
 
-    use metrics::meter::{Meter, StdMeter};
+    use histogram::*;
     use metrics::counter::{Counter, StdCounter};
     use metrics::gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
     use registry::{Registry, StdRegistry};
-    use reporter::console::ConsoleReporter;
     use std::sync::Arc;
-    use std::time::Duration;
     use std::thread;
-    use histogram::*;
+    use std::time::Duration;
+    use super::ConsoleReporter;
 
     #[test]
     fn meter() {

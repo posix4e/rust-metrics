@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use metrics::metric::Metric;
-use reporter::base::Reporter;
+use reporter::Reporter;
 
 // TODO break out any notion of metrics. Instead we should have a notion of a collector.
 // A collector should be able to insert metrics, and a registry should not.

@@ -6,7 +6,7 @@
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
-use reporter::base::Reporter;
+use reporter::Reporter;
 use time;
 use promo_proto::MetricFamily;
 use router::Router;
@@ -160,16 +160,16 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
 
 #[cfg(test)]
 mod test {
-    use metrics::meter::{Meter, StdMeter};
+    use histogram::*;
     use metrics::counter::{Counter, StdCounter};
     use metrics::gauge::{Gauge, StdGauge};
+    use metrics::meter::{Meter, StdMeter};
     use registry::{Registry, StdRegistry};
-    use reporter::prometheus::PrometheusReporter;
-    use std::sync::Arc;
-    use std::time::Duration;
-    use std::thread;
-    use histogram::*;
     use std::collections::HashMap;
+    use std::sync::Arc;
+    use std::thread;
+    use std::time::Duration;
+    use super::PrometheusReporter;
 
     #[test]
     fn add_some_stats_and_slurp_them_with_http() {
