@@ -6,12 +6,14 @@ use time::get_time;
 /// It might be nice to make one built on atomics.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StdGauge {
+    /// The gauge value.
     pub value: f64,
 }
 
 /// A snapshot of the value of a `Gauge`.
 #[derive(Debug)]
 pub struct GaugeSnapshot {
+    /// The snapshot of the gauge value.
     pub value: f64,
 }
 

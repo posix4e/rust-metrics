@@ -1,4 +1,6 @@
-// A registry to store metrics in
+//! A registry to store metrics in
+
+#![allow(missing_docs)]
 
 use std::collections::HashMap;
 use metrics::Metric;

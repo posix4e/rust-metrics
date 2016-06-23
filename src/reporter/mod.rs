@@ -1,3 +1,7 @@
+//! Report metrics to a collector
+
+#![allow(missing_docs)]
+
 mod carbon;
 mod console;
 mod prometheus;

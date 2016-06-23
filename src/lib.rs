@@ -1,3 +1,15 @@
+//! Metrics
+//!
+//! Metrics are things you can use to safely & directly store metrics with
+//! little overhead. Metrics can be attached to a registry and that registry
+//! can be collected across a system. This registry also provides reporting
+//! services. Current reporters include:
+//!
+//! - [Prometheus](https://prometheus.io/)
+//! - Graphite/Carbon/Whisper
+//! - Console/Syslog/Journald (via stdout)
+
+#![warn(missing_docs)]
 #![deny(trivial_numeric_casts,
         unsafe_code, unstable_features,
         unused_import_braces, unused_qualifications)]

@@ -2,6 +2,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// An exponentially weighted moving average.
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct EWMA {
     uncounted: AtomicUsize, // This tracks uncounted events
@@ -10,16 +11,19 @@ pub struct EWMA {
     init: bool,
 }
 
+#[allow(missing_docs)]
 pub struct EWMASnapshot {
     value: f64,
 }
 
+#[allow(missing_docs)]
 impl EWMASnapshot {
     pub fn rate(&self) -> f64 {
         self.value
     }
 }
 
+#[allow(missing_docs)]
 impl EWMA {
     pub fn rate(&self) -> f64 {
         let r = self.rate.lock().unwrap();

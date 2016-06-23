@@ -6,12 +6,14 @@ use metrics::{Metric, MetricValue};
 /// if this weren't based on `f64`.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StdCounter {
+    /// The counter value.
     pub value: f64,
 }
 
 /// A snapshot of the current value of a `Counter`.
 #[derive(Debug)]
 pub struct CounterSnapshot {
+    /// The snapshot of the counter value.
     pub value: f64,
 }
 
@@ -54,6 +56,7 @@ impl Metric for StdCounter {
 }
 
 impl StdCounter {
+    /// Create a new `StdCounter`.
     pub fn new() -> Self {
         StdCounter { value: 0.0 }
     }

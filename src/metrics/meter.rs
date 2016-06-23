@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use metrics::{Metric, MetricValue};
 use std::sync::{Mutex, MutexGuard};
 use time::{get_time, Timespec};
