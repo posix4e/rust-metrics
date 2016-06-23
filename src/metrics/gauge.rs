@@ -4,16 +4,17 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use metrics::{Metric, MetricValue};
+use std::cell::Cell;
+use std::sync::Arc;
 use time::get_time;
 
 /// Naive implementation of a `Gauge`.
 ///
 /// It might be nice to make one built on atomics.
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Debug)]
 pub struct StdGauge {
     /// The gauge value.
-    pub value: f64,
+    pub value: Cell<f64>,
 }
 
 /// A snapshot of the value of a `Gauge`.
@@ -30,55 +31,56 @@ pub struct GaugeSnapshot {
 /// memory usage, but also "counts" that can go up and down.
 pub trait Gauge {
     /// Increment the gauge by 1.
-    fn inc(&mut self);
+    fn inc(&self);
     /// Decrement the gauge by 1.
-    fn dec(&mut self);
+    fn dec(&self);
     /// Increment the gauge by the given amount.
-    fn add(&mut self, value: f64);
+    fn add(&self, value: f64);
     /// Decrement the gauge by the given amount.
-    fn sub(&mut self, value: f64);
+    fn sub(&self, value: f64);
     /// Set the current value of the gauge.
-    fn set(&mut self, value: f64);
+    fn set(&self, value: f64);
     ///  Set the current value to the current timestamp.
-    fn set_to_current_time(&mut self);
+    fn set_to_current_time(&self);
     /// Take a snapshot of the current value for use with a `Reporter`.
     fn snapshot(&self) -> GaugeSnapshot;
 }
 
 impl Gauge for StdGauge {
-    fn inc(&mut self) {
-        self.value += 1.0;
+    fn inc(&self) {
+        self.value.set(self.value.get() + 1.0);
     }
 
-    fn dec(&mut self) {
-        self.value -= 1.0;
+    fn dec(&self) {
+        self.value.set(self.value.get() - 1.0);
     }
 
-    fn add(&mut self, value: f64) {
-        self.value += value;
+    fn add(&self, value: f64) {
+        self.value.set(self.value.get() + value);
         // TODO check for negative
     }
 
-    fn sub(&mut self, value: f64) {
-        self.value -= value;
+    fn sub(&self, value: f64) {
+        self.value.set(self.value.get() - value);
     }
 
-    fn set(&mut self, value: f64) {
-        self.value = value
+    fn set(&self, value: f64) {
+        self.value.set(value);
     }
 
-    fn set_to_current_time(&mut self) {
-        self.value = timestamp();
+    fn set_to_current_time(&self) {
+        self.value.set(timestamp());
     }
 
     fn snapshot(&self) -> GaugeSnapshot {
-        GaugeSnapshot { value: self.value }
+        GaugeSnapshot { value: self.value.get() }
     }
 }
 
-impl Metric for StdGauge {
-    fn export_metric(&self) -> MetricValue {
-        MetricValue::Gauge(self.snapshot())
+impl StdGauge {
+    /// Create a new `StdGauge`.
+    pub fn new() -> Arc<Self> {
+        Arc::new(StdGauge { value: Cell::new(0.0) })
     }
 }
 
@@ -94,12 +96,12 @@ mod test {
 
     #[test]
     fn create_and_snapshot() {
-        let mut g = StdGauge::default();
+        let g = StdGauge::new();
         let snapshot_1 = g.snapshot();
         g.set(10.0);
         let snapshot_2 = g.snapshot();
 
-        assert_eq!(g.value, 10.0);
+        assert_eq!(g.value.get(), 10.0);
         assert_eq!(snapshot_1.value, 0.0);
         assert_eq!(snapshot_2.value, 10.0);
     }

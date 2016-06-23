@@ -6,6 +6,8 @@
 
 //! Metrics
 
+use std::sync::Arc;
+
 mod counter;
 mod gauge;
 mod meter;
@@ -17,23 +19,15 @@ pub use self::meter::{Meter, MeterSnapshot, StdMeter};
 /// a Metric
 use histogram::Histogram;
 
-//  TODO rename to MetricSnapshot
 #[allow(missing_docs)]
-pub trait Metric: Send + Sync {
-    fn export_metric(&self) -> MetricValue;
-}
-
-#[allow(missing_docs)]
-impl Metric for Histogram {
-    fn export_metric(&self) -> MetricValue {
-        MetricValue::Histogram(self.clone())
-    }
-}
-
-#[allow(missing_docs)]
-pub enum MetricValue {
-    Counter(CounterSnapshot),
-    Gauge(GaugeSnapshot),
-    Meter(MeterSnapshot),
+pub enum Metric {
+    Counter(Arc<Counter>),
+    Gauge(Arc<Gauge>),
+    Meter(Box<Meter>),
     Histogram(Histogram),
 }
+
+#[allow(unsafe_code)]
+unsafe impl Send for Metric {}
+#[allow(unsafe_code)]
+unsafe impl Sync for Metric {}

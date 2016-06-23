@@ -20,7 +20,7 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
      let mut c = StdCounter::new();
      c.inc();
 
-     let mut g = StdGauge::default();
+     let mut g = StdGauge::new();
      g.set(1.2);
 
      let mut hc = HistogramConfig::new();
@@ -30,10 +30,10 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
      h.record(1, 1);
 
      let mut r = StdRegistry::new();
-     r.insert("meter1", m);
-     r.insert("counter1", c);
-     r.insert("gauge1", g);
-     r.insert("histogram", h);
+     r.insert("meter1", Metric::Meter(Box::new(m)));
+     r.insert("counter1", Metric::Counter(c.clone()));
+     r.insert("gauge1", Metric::Gauge(g.clone()));
+     r.insert("histogram", Metric::Histogram(h));
 
      let arc_registry = Arc::new(r);
      CarbonReporter::new(arc_registry.clone(),

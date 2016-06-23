@@ -11,8 +11,8 @@ extern crate histogram;
 
 use iron::prelude::*;
 use iron::status;
-use metrics::metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
-use metrics::registry::StdRegistry;
+use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
+use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::PrometheusReporter;
 use std::sync::Arc;
 use std::collections::HashMap;
@@ -24,10 +24,10 @@ fn main() {
     let m = StdMeter::new();
     m.mark(100);
 
-    let mut c = StdCounter::new();
+    let c = StdCounter::new();
     c.inc();
 
-    let mut g = StdGauge::default();
+    let g = StdGauge::new();
     g.set(1.2);
 
     let mut h = Histogram::configure()
@@ -40,11 +40,11 @@ fn main() {
 
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));
-    let r = StdRegistry::new_with_labels(labels);
-    // r.insert("meter1", m);
-    // r.insert("counter1", c);
-    // r.insert("gauge1", g);
-    // r.insert("histogram", h);
+    let mut r = StdRegistry::new_with_labels(labels);
+    r.insert("meter1", Metric::Meter(Box::new(m)));
+    r.insert("counter1", Metric::Counter(c.clone()));
+    r.insert("gauge1", Metric::Gauge(g.clone()));
+    r.insert("histogram", Metric::Histogram(h));
 
     let arc_registry = Arc::new(r);
     let reporter =
