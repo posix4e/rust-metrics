@@ -23,12 +23,6 @@ pub struct StdMeter {
 
 // A Meter trait
 pub trait Meter: Metric {
-    fn get_meter(&self) -> MeterSnapshot {
-        self.snapshot()
-    }
-
-    fn export_metric(&self) -> MetricValue;
-
     fn snapshot(&self) -> MeterSnapshot;
 
     fn mark(&self, n: i64);
@@ -43,10 +37,6 @@ pub trait Meter: Metric {
 }
 
 impl Meter for StdMeter {
-    fn export_metric(&self) -> MetricValue {
-        MetricValue::Meter(self.snapshot())
-    }
-
     fn snapshot(&self) -> MeterSnapshot {
         let s = self.data.lock().unwrap();
 
