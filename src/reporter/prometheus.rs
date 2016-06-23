@@ -9,6 +9,7 @@
 // We aren't collecting metrics properly we should be
 // on the regular collecting metrics, and snapshotting them
 // and sending them all up when Prometheus comes to scrape.
+use metrics::Metric;
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
@@ -27,7 +28,6 @@ use protobuf::Message;
 use protobuf::repeated::RepeatedField;
 use promo_proto::LabelPair;
 use std::collections::HashMap;
-use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
 
 #[derive(Copy, Clone)]
 struct HandlerStorage;
@@ -132,27 +132,29 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
         pb_metric.set_timestamp_ms(ts);
         pb_metric.set_label(to_repeated_fields_labels(registry.labels()));
 
-        match metric.export_metric() {
-            Counter(x) => {
+        match *metric {
+            Metric::Counter(ref x) => {
+                let snapshot = x.snapshot();
                 let mut counter = promo_proto::Counter::new();
-                counter.set_value(x.value);
+                counter.set_value(snapshot.value);
                 pb_metric.set_counter(counter);
                 metric_family.set_field_type(promo_proto::MetricType::COUNTER);
             }
-            Gauge(x) => {
+            Metric::Gauge(ref x) => {
+                let snapshot = x.snapshot();
                 let mut gauge = promo_proto::Gauge::new();
-                gauge.set_value(x.value);
+                gauge.set_value(snapshot.value);
                 pb_metric.set_gauge(gauge);
                 metric_family.set_field_type(promo_proto::MetricType::GAUGE);
 
             }
-            Meter(_) => {
+            Metric::Meter(_) => {
                 // TODO ask the Prometheus guys what we want to do
                 pb_metric.set_summary(promo_proto::Summary::new());
                 metric_family.set_field_type(promo_proto::MetricType::SUMMARY);
 
             }
-            Histogram(_) => {
+            Metric::Histogram(_) => {
                 pb_metric.set_histogram(promo_proto::Histogram::new());
                 metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
             }
@@ -167,7 +169,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
 #[cfg(test)]
 mod test {
     use histogram::*;
-    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
+    use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -181,10 +183,10 @@ mod test {
         let m = StdMeter::new();
         m.mark(100);
 
-        let mut c = StdCounter::new();
+        let c = StdCounter::new();
         c.inc();
 
-        let mut g = StdGauge::default();
+        let g = StdGauge::new();
         g.set(1.2);
 
         let mut h = Histogram::configure()
@@ -196,10 +198,10 @@ mod test {
         h.increment_by(1, 1).unwrap();
 
         let mut r = StdRegistry::new_with_labels(HashMap::new());
-        r.insert("meter1", m);
-        r.insert("counter1", c);
-        r.insert("gauge1", g);
-        r.insert("histogram", h);
+        r.insert("meter1", Metric::Meter(Box::new(m)));
+        r.insert("counter1", Metric::Counter(c.clone()));
+        r.insert("gauge1", Metric::Gauge(g.clone()));
+        r.insert("histogram", Metric::Histogram(h));
 
         let arc_registry = Arc::new(r);
         let reporter =

@@ -6,7 +6,6 @@
 
 #![allow(missing_docs)]
 
-use metrics::{Metric, MetricValue};
 use std::sync::{Mutex, MutexGuard};
 use time::{get_time, Timespec};
 use utils::EWMA;
@@ -30,7 +29,7 @@ pub struct StdMeter {
 }
 
 // A Meter trait
-pub trait Meter: Metric {
+pub trait Meter {
     fn snapshot(&self) -> MeterSnapshot;
 
     fn mark(&self, n: i64);
@@ -97,12 +96,6 @@ impl Meter for StdMeter {
         let s = self.data.lock().unwrap();
 
         s.count
-    }
-}
-
-impl Metric for StdMeter {
-    fn export_metric(&self) -> MetricValue {
-        MetricValue::Meter(self.snapshot())
     }
 }
 

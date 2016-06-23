@@ -18,13 +18,13 @@ pub trait Registry<'a>: Send + Sync {
     fn add_scheduled_reporter(&mut self, reporter: Box<Reporter>);
     fn get(&'a self, name: &'a str) -> &'a Metric;
     fn get_metrics_names(&self) -> Vec<&str>;
-    fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T);
+    fn insert(&mut self, name: &'a str, metric: Metric);
     fn labels(&self) -> HashMap<String, String>;
 }
 
 #[derive(Default)]
 pub struct StdRegistry<'a> {
-    metrics: HashMap<&'a str, Box<Metric + 'a>>,
+    metrics: HashMap<&'a str, Metric>,
     reporter: HashMap<&'a str, Box<Reporter>>,
     labels: HashMap<String, String>,
 }
@@ -37,12 +37,11 @@ impl<'a> Registry<'a> for StdRegistry<'a> {
     }
 
     fn get(&'a self, name: &'a str) -> &'a Metric {
-        &*self.metrics[name]
+        &self.metrics[name]
     }
 
-    fn insert<T: Metric + 'a>(&mut self, name: &'a str, metric: T) {
-        let boxed = Box::new(metric);
-        self.metrics.insert(name, boxed);
+    fn insert(&mut self, name: &'a str, metric: Metric) {
+        self.metrics.insert(name, metric);
     }
 
     fn get_metrics_names(&self) -> Vec<&str> {
@@ -74,7 +73,7 @@ impl<'a> StdRegistry<'a> {
 
 #[cfg(test)]
 mod test {
-    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
+    use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use histogram::*;
 
@@ -86,23 +85,23 @@ mod test {
         let mut r = StdRegistry::new();
         let m = StdMeter::new();
         m.mark(100);
-        r.insert("meter1", m);
+        r.insert("meter1", Metric::Meter(Box::new(m)));
     }
 
     #[test]
     fn gauge() {
         let mut r = StdRegistry::new();
-        let mut g: StdGauge = StdGauge { value: 0.0 };
+        let g = StdGauge::new();
         g.set(1.2);
-        r.insert("gauge1", g);
+        r.insert("gauge1", Metric::Gauge(g.clone()));
     }
 
     #[test]
     fn counter() {
         let mut r = StdRegistry::new();
-        let mut c: StdCounter = StdCounter::new();
+        let c = StdCounter::new();
         c.add(1.0);
-        r.insert("counter1", c);
+        r.insert("counter1", Metric::Counter(c.clone()));
     }
 
     #[test]
@@ -114,6 +113,6 @@ mod test {
             .build()
             .unwrap();
         h.increment_by(1, 1).unwrap();
-        r.insert("histogram", h);
+        r.insert("histogram", Metric::Histogram(h));
     }
 }

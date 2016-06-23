@@ -4,6 +4,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use metrics::Metric;
 use registry::{Registry, StdRegistry};
 use reporter::Reporter;
 use std::time::Duration;
@@ -29,23 +30,22 @@ impl ConsoleReporter {
         }
     }
     pub fn start(&self, delay_ms: u64) {
-        use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
         let registry = self.registry.clone();
         thread::spawn(move || {
             loop {
                 for metric_name in &registry.get_metrics_names() {
                     let metric = registry.get(metric_name);
-                    match metric.export_metric() {
-                        Meter(x) => {
-                            println!("{:?}", x);
+                    match *metric {
+                        Metric::Meter(ref x) => {
+                            println!("{:?}", x.snapshot());
                         }
-                        Gauge(x) => {
-                            println!("{:?}", x);
+                        Metric::Gauge(ref x) => {
+                            println!("{:?}", x.snapshot());
                         }
-                        Counter(x) => {
-                            println!("{:?}", x);
+                        Metric::Counter(ref x) => {
+                            println!("{:?}", x.snapshot());
                         }
-                        Histogram(x) => {
+                        Metric::Histogram(ref x) => {
                             println!("histogram{:?}", x);
                         }
                     }
@@ -60,7 +60,7 @@ impl ConsoleReporter {
 mod test {
 
     use histogram::*;
-    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
+    use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use std::sync::Arc;
     use std::thread;
@@ -72,10 +72,10 @@ mod test {
         let m = StdMeter::new();
         m.mark(100);
 
-        let mut c = StdCounter::new();
+        let c = StdCounter::new();
         c.inc();
 
-        let mut g = StdGauge::default();
+        let g = StdGauge::new();
         g.set(1.2);
 
         let mut h = Histogram::configure()
@@ -87,10 +87,10 @@ mod test {
         h.increment_by(1, 1).unwrap();
 
         let mut r = StdRegistry::new();
-        r.insert("meter1", m);
-        r.insert("counter1", c);
-        r.insert("gauge1", g);
-        r.insert("histogram", h);
+        r.insert("meter1", Metric::Meter(Box::new(m)));
+        r.insert("counter1", Metric::Counter(c.clone()));
+        r.insert("gauge1", Metric::Gauge(g.clone()));
+        r.insert("histogram", Metric::Histogram(h));
 
         let arc_registry = Arc::new(r);
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
