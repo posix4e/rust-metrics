@@ -7,12 +7,11 @@ extern crate histogram;
 extern crate iron;
 extern crate router;
 extern crate persistent;
-pub mod registry;
 
 pub mod metrics;
-
-// Reporter libraries
+pub mod registry;
 pub mod reporter;
+pub mod utils;
 
 extern crate protobuf; // depend on rust-protobuf runtime
 #[allow(unsafe_code)]

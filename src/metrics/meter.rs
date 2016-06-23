@@ -1,8 +1,7 @@
-use time::get_time;
-use time::Timespec;
-use std::sync::{Mutex, MutexGuard};
-use metrics::ewma::EWMA;
 use metrics::metric::{Metric, MetricValue};
+use std::sync::{Mutex, MutexGuard};
+use time::{get_time, Timespec};
+use utils::EWMA;
 
 const WINDOW: [f64; 3] = [1.0, 5.0, 15.0];
 
