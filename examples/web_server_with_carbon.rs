@@ -5,9 +5,7 @@ extern crate histogram;
 
 use iron::prelude::*;
 use iron::status;
-use metrics::metrics::counter::*;
-use metrics::metrics::gauge::*;
-use metrics::metrics::meter::*;
+use metrics::metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
 use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::CarbonReporter;
 use std::sync::Arc;

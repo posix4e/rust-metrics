@@ -1,4 +1,4 @@
-use metrics::metric::{Metric, MetricValue};
+use metrics::{Metric, MetricValue};
 
 /// Naive implementation of a `Counter`.
 ///

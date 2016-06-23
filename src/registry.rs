@@ -1,7 +1,7 @@
 // A registry to store metrics in
 
 use std::collections::HashMap;
-use metrics::metric::Metric;
+use metrics::Metric;
 use reporter::Reporter;
 
 // TODO break out any notion of metrics. Instead we should have a notion of a collector.
@@ -66,9 +66,7 @@ impl<'a> StdRegistry<'a> {
 
 #[cfg(test)]
 mod test {
-    use metrics::meter::{Meter, StdMeter};
-    use metrics::counter::{Counter, StdCounter};
-    use metrics::gauge::{Gauge, StdGauge};
+    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use histogram::*;
 

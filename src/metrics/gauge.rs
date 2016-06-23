@@ -1,4 +1,4 @@
-use metrics::metric::{Metric, MetricValue};
+use metrics::{Metric, MetricValue};
 use time::get_time;
 
 /// Naive implementation of a `Gauge`.

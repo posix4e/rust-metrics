@@ -1,4 +1,4 @@
-use metrics::metric::{Metric, MetricValue};
+use metrics::{Metric, MetricValue};
 use std::sync::{Mutex, MutexGuard};
 use time::{get_time, Timespec};
 use utils::EWMA;
@@ -44,9 +44,7 @@ pub trait Meter: Metric {
 
 impl Meter for StdMeter {
     fn export_metric(&self) -> MetricValue {
-        use metrics::metric::MetricValue::Meter;
-        let snapshot: MeterSnapshot = self.snapshot();
-        Meter(snapshot)
+        MetricValue::Meter(self.snapshot())
     }
 
     fn snapshot(&self) -> MeterSnapshot {
@@ -106,9 +104,7 @@ impl Meter for StdMeter {
 
 impl Metric for StdMeter {
     fn export_metric(&self) -> MetricValue {
-        use metrics::metric::MetricValue::Meter;
-        let snapshot: MeterSnapshot = self.snapshot();
-        Meter(snapshot)
+        MetricValue::Meter(self.snapshot())
     }
 }
 

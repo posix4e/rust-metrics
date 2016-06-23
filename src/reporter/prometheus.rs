@@ -21,7 +21,7 @@ use protobuf::Message;
 use protobuf::repeated::RepeatedField;
 use promo_proto::LabelPair;
 use std::collections::HashMap;
-use metrics::metric::MetricValue::{Counter, Gauge, Histogram, Meter};
+use metrics::MetricValue::{Counter, Gauge, Histogram, Meter};
 
 #[derive(Copy, Clone)]
 struct HandlerStorage;
@@ -161,9 +161,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
 #[cfg(test)]
 mod test {
     use histogram::*;
-    use metrics::counter::{Counter, StdCounter};
-    use metrics::gauge::{Gauge, StdGauge};
-    use metrics::meter::{Meter, StdMeter};
+    use metrics::{Counter, Gauge, Meter, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use std::collections::HashMap;
     use std::sync::Arc;
