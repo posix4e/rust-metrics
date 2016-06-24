@@ -23,7 +23,7 @@ use histogram::Histogram;
 pub enum Metric {
     Counter(Arc<Counter>),
     Gauge(Arc<Gauge>),
-    Meter(Box<Meter>),
+    Meter(Arc<Meter>),
     Histogram(Histogram),
 }
 

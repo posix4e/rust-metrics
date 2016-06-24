@@ -6,7 +6,7 @@
 
 #![allow(missing_docs)]
 
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 use time::{get_time, Timespec};
 use utils::EWMA;
 
@@ -20,11 +20,18 @@ pub struct MeterSnapshot {
     pub mean: f64,
 }
 
+#[derive(Debug)]
+struct StdMeterData {
+    count: i64,
+    rates: [f64; 3],
+    mean: f64,
+    ewma: [EWMA; 3],
+}
+
 // A StdMeter struct
 #[derive(Debug)]
 pub struct StdMeter {
-    data: Mutex<MeterSnapshot>,
-    ewma: [EWMA; 3],
+    data: Mutex<StdMeterData>,
     start: Timespec,
 }
 
@@ -34,7 +41,7 @@ pub trait Meter {
 
     fn mark(&self, n: i64);
 
-    fn tick(&mut self);
+    fn tick(&self);
 
     fn rate(&self, rate: f64) -> f64;
 
@@ -60,20 +67,20 @@ impl Meter for StdMeter {
         s.count += n;
 
         for i in 0..WINDOW.len() {
-            self.ewma[i].update(n as usize);
+            s.ewma[i].update(n as usize);
         }
 
-        self.update_snapshot(s);
+        self.update_data(s);
     }
 
-    fn tick(&mut self) {
-        let s = self.data.lock().unwrap();
+    fn tick(&self) {
+        let mut s = self.data.lock().unwrap();
 
         for i in 0..WINDOW.len() {
-            self.ewma[i].tick();
+            s.ewma[i].tick();
         }
 
-        self.update_snapshot(s);
+        self.update_data(s);
     }
 
     /// Return the given EWMA for a rate like 1, 5, 15 minutes
@@ -99,36 +106,26 @@ impl Meter for StdMeter {
     }
 }
 
-impl Default for StdMeter {
-    fn default() -> Self {
-        StdMeter::new()
-    }
-}
-
 impl StdMeter {
-    fn update_snapshot(&self, mut s: MutexGuard<MeterSnapshot>) {
+    fn update_data(&self, mut s: MutexGuard<StdMeterData>) {
         for i in 0..WINDOW.len() {
-            s.rates[i] = self.ewma[i].rate();
+            s.rates[i] = s.ewma[i].rate();
         }
 
         let diff = get_time() - self.start;
         s.mean = s.count as f64 / diff.num_seconds() as f64;
     }
 
-    pub fn new() -> Self {
-        let data: MeterSnapshot = MeterSnapshot {
-            count: 0,
-            rates: [0.0, 0.0, 0.0],
-            mean: 0.0,
-        };
-
-        let ewma: [EWMA; 3] = [EWMA::new(1.0), EWMA::new(5.0), EWMA::new(15.0)];
-
-        StdMeter {
-            data: Mutex::new(data),
-            ewma: ewma,
+    pub fn new() -> Arc<Self> {
+        Arc::new(StdMeter {
+            data: Mutex::new(StdMeterData {
+                count: 0,
+                rates: [0.0, 0.0, 0.0],
+                mean: 0.0,
+                ewma: [EWMA::new(1.0), EWMA::new(5.0), EWMA::new(15.0)],
+            }),
             start: get_time(),
-        }
+        })
     }
 }
 
@@ -171,7 +168,7 @@ mod test {
     // Test that decay works correctly
     #[test]
     fn decay() {
-        let mut m = StdMeter::new();
+        let m = StdMeter::new();
 
         m.tick();
     }

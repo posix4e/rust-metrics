@@ -85,7 +85,7 @@ mod test {
         let mut r = StdRegistry::new();
         let m = StdMeter::new();
         m.mark(100);
-        r.insert("meter1", Metric::Meter(Box::new(m)));
+        r.insert("meter1", Metric::Meter(m.clone()));
     }
 
     #[test]
