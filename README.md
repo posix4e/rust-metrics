@@ -30,7 +30,7 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
      h.record(1, 1);
 
      let mut r = StdRegistry::new();
-     r.insert("meter1", Metric::Meter(Box::new(m)));
+     r.insert("meter1", Metric::Meter(m.clone()));
      r.insert("counter1", Metric::Counter(c.clone()));
      r.insert("gauge1", Metric::Gauge(g.clone()));
      r.insert("histogram", Metric::Histogram(h));

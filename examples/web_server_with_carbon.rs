@@ -40,7 +40,7 @@ fn main() {
         h.increment_by(1, 1).unwrap();
 
         let mut r = StdRegistry::new();
-        r.insert("meter1", Metric::Meter(Box::new(m)));
+        r.insert("meter1", Metric::Meter(m.clone()));
         r.insert("counter1", Metric::Counter(c.clone()));
         r.insert("gauge1", Metric::Gauge(g.clone()));
         r.insert("histogram", Metric::Histogram(h));

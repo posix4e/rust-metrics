@@ -41,7 +41,7 @@ fn main() {
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));
     let mut r = StdRegistry::new_with_labels(labels);
-    r.insert("meter1", Metric::Meter(Box::new(m)));
+    r.insert("meter1", Metric::Meter(m.clone()));
     r.insert("counter1", Metric::Counter(c.clone()));
     r.insert("gauge1", Metric::Gauge(g.clone()));
     r.insert("histogram", Metric::Histogram(h));
