@@ -23,7 +23,7 @@ pub struct CounterSnapshot {
 
 /// `Counter` is a `Metric` that represents a single numerical value that can
 /// increases over time.
-pub trait Counter {
+pub trait Counter: Send + Sync {
     /// Clear the counter, setting the value to `0`.
     fn clear(&self);
     /// Increment the counter by 1.
