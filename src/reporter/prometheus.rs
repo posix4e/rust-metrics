@@ -136,7 +136,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
             Metric::Counter(ref x) => {
                 let snapshot = x.snapshot();
                 let mut counter = promo_proto::Counter::new();
-                counter.set_value(snapshot.value);
+                counter.set_value(snapshot.value as f64);
                 pb_metric.set_counter(counter);
                 metric_family.set_field_type(promo_proto::MetricType::COUNTER);
             }

@@ -8,20 +8,17 @@ use std::cell::Cell;
 use std::sync::Arc;
 
 /// Naive implementation of a `Counter`.
-///
-/// It might be nice to make one built on atomics. It would also be nice
-/// if this weren't based on `f64`.
 #[derive(Debug)]
 pub struct StdCounter {
     /// The counter value.
-    pub value: Cell<f64>,
+    pub value: Cell<usize>,
 }
 
 /// A snapshot of the current value of a `Counter`.
 #[derive(Debug)]
 pub struct CounterSnapshot {
     /// The snapshot of the counter value.
-    pub value: f64,
+    pub value: usize,
 }
 
 /// `Counter` is a `Metric` that represents a single numerical value that can
@@ -32,7 +29,7 @@ pub trait Counter {
     /// Increment the counter by 1.
     fn inc(&self);
     /// Increment the counter by the given amount. MUST check that v >= 0.
-    fn add(&self, value: f64);
+    fn add(&self, value: usize);
     /// Take a snapshot of the current value for use with a `Reporter`.
     fn snapshot(&self) -> CounterSnapshot;
 }
@@ -40,14 +37,14 @@ pub trait Counter {
 
 impl Counter for StdCounter {
     fn clear(&self) {
-        self.value.set(0.0);
+        self.value.set(0);
     }
 
     fn inc(&self) {
-        self.value.set(self.value.get() + 1.0);
+        self.value.set(self.value.get() + 1);
     }
 
-    fn add(&self, value: f64) {
+    fn add(&self, value: usize) {
         self.value.set(self.value.get() + value);
     }
 
@@ -59,7 +56,7 @@ impl Counter for StdCounter {
 impl StdCounter {
     /// Create a new `StdCounter`.
     pub fn new() -> Arc<Self> {
-        Arc::new(StdCounter { value: Cell::new(0.0) })
+        Arc::new(StdCounter { value: Cell::new(0) })
     }
 }
 
@@ -70,24 +67,24 @@ mod test {
     #[test]
     fn a_counting_counter() {
         let c = StdCounter::new();
-        c.add(1.0);
+        c.add(1);
 
-        assert_eq!(c.value.get(), 1.0);
+        assert_eq!(c.value.get(), 1);
 
         let c = StdCounter::new();
         c.inc();
 
-        assert_eq!(c.value.get(), 1.0);
+        assert_eq!(c.value.get(), 1);
     }
 
     #[test]
     fn validate_snapshots() {
         let c = StdCounter::new();
         let snapshot_1 = c.snapshot();
-        c.add(1.0);
+        c.add(1);
         let snapshot_2 = c.snapshot();
-        assert_eq!(c.value.get(), 1.0);
-        assert_eq!(snapshot_1.value, 0.0);
-        assert_eq!(snapshot_2.value, 1.0);
+        assert_eq!(c.value.get(), 1);
+        assert_eq!(snapshot_1.value, 0);
+        assert_eq!(snapshot_2.value, 1);
     }
 }

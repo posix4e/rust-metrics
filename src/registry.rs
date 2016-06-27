@@ -100,7 +100,7 @@ mod test {
     fn counter() {
         let mut r = StdRegistry::new();
         let c = StdCounter::new();
-        c.add(1.0);
+        c.add(1);
         r.insert("counter1", Metric::Counter(c.clone()));
     }
 
