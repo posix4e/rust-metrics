@@ -4,14 +4,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::cell::Cell;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 /// Naive implementation of a `Counter`.
 #[derive(Debug)]
 pub struct StdCounter {
     /// The counter value.
-    pub value: Cell<usize>,
+    pub value: AtomicUsize,
 }
 
 /// A snapshot of the current value of a `Counter`.
@@ -37,31 +37,32 @@ pub trait Counter {
 
 impl Counter for StdCounter {
     fn clear(&self) {
-        self.value.set(0);
+        self.value.store(0, Ordering::Relaxed);
     }
 
     fn inc(&self) {
-        self.value.set(self.value.get() + 1);
+        self.value.fetch_add(1, Ordering::Relaxed);
     }
 
     fn add(&self, value: usize) {
-        self.value.set(self.value.get() + value);
+        self.value.fetch_add(value, Ordering::Relaxed);
     }
 
     fn snapshot(&self) -> CounterSnapshot {
-        CounterSnapshot { value: self.value.get() }
+        CounterSnapshot { value: self.value.load(Ordering::Relaxed) }
     }
 }
 
 impl StdCounter {
     /// Create a new `StdCounter`.
     pub fn new() -> Arc<Self> {
-        Arc::new(StdCounter { value: Cell::new(0) })
+        Arc::new(StdCounter { value: AtomicUsize::new(0) })
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::sync::atomic::Ordering;
     use super::*;
 
     #[test]
@@ -69,12 +70,12 @@ mod test {
         let c = StdCounter::new();
         c.add(1);
 
-        assert_eq!(c.value.get(), 1);
+        assert_eq!(c.value.load(Ordering::Relaxed), 1);
 
         let c = StdCounter::new();
         c.inc();
 
-        assert_eq!(c.value.get(), 1);
+        assert_eq!(c.value.load(Ordering::Relaxed), 1);
     }
 
     #[test]
@@ -83,7 +84,7 @@ mod test {
         let snapshot_1 = c.snapshot();
         c.add(1);
         let snapshot_2 = c.snapshot();
-        assert_eq!(c.value.get(), 1);
+        assert_eq!(c.value.load(Ordering::Relaxed), 1);
         assert_eq!(snapshot_1.value, 0);
         assert_eq!(snapshot_2.value, 1);
     }
