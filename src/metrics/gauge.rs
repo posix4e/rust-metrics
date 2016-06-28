@@ -6,7 +6,6 @@
 
 use std::cell::Cell;
 use std::sync::Arc;
-use time::get_time;
 
 /// Naive implementation of a `Gauge`.
 ///
@@ -40,8 +39,6 @@ pub trait Gauge {
     fn sub(&self, value: f64);
     /// Set the current value of the gauge.
     fn set(&self, value: f64);
-    ///  Set the current value to the current timestamp.
-    fn set_to_current_time(&self);
     /// Take a snapshot of the current value for use with a `Reporter`.
     fn snapshot(&self) -> GaugeSnapshot;
 }
@@ -68,10 +65,6 @@ impl Gauge for StdGauge {
         self.value.set(value);
     }
 
-    fn set_to_current_time(&self) {
-        self.value.set(timestamp());
-    }
-
     fn snapshot(&self) -> GaugeSnapshot {
         GaugeSnapshot { value: self.value.get() }
     }
@@ -82,12 +75,6 @@ impl StdGauge {
     pub fn new() -> Arc<Self> {
         Arc::new(StdGauge { value: Cell::new(0.0) })
     }
-}
-
-fn timestamp() -> f64 {
-    let timespec = get_time();
-    // 1459440009.113178
-    timespec.sec as f64 + (timespec.nsec as f64 / 1000.0 / 1000.0 / 1000.0)
 }
 
 #[cfg(test)]
