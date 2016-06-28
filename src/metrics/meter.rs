@@ -36,7 +36,7 @@ pub struct StdMeter {
 }
 
 // A Meter trait
-pub trait Meter {
+pub trait Meter: Send + Sync {
     fn snapshot(&self) -> MeterSnapshot;
 
     fn mark(&self, n: i64);
