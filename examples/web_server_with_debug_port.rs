@@ -28,7 +28,7 @@ fn main() {
     c.inc();
 
     let g = StdGauge::new();
-    g.set(1.2);
+    g.set(32);
 
     let mut h = Histogram::configure()
         .max_value(100)

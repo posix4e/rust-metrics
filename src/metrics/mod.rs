@@ -26,8 +26,3 @@ pub enum Metric {
     Meter(Arc<Meter>),
     Histogram(Histogram),
 }
-
-#[allow(unsafe_code)]
-unsafe impl Send for Metric {}
-#[allow(unsafe_code)]
-unsafe impl Sync for Metric {}

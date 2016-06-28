@@ -92,7 +92,7 @@ mod test {
     fn gauge() {
         let mut r = StdRegistry::new();
         let g = StdGauge::new();
-        g.set(1.2);
+        g.set(3);
         r.insert("gauge1", Metric::Gauge(g.clone()));
     }
 

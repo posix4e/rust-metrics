@@ -143,7 +143,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
             Metric::Gauge(ref x) => {
                 let snapshot = x.snapshot();
                 let mut gauge = promo_proto::Gauge::new();
-                gauge.set_value(snapshot.value);
+                gauge.set_value(snapshot.value as f64);
                 pb_metric.set_gauge(gauge);
                 metric_family.set_field_type(promo_proto::MetricType::GAUGE);
 
@@ -187,7 +187,7 @@ mod test {
         c.inc();
 
         let g = StdGauge::new();
-        g.set(1.2);
+        g.set(1);
 
         let mut h = Histogram::configure()
             .max_value(100)
