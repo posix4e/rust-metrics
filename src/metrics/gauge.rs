@@ -26,7 +26,7 @@ pub struct GaugeSnapshot {
 ///
 /// A `Gauge` is typically used for measured values like temperatures or current
 /// memory usage, but also "counts" that can go up and down.
-pub trait Gauge {
+pub trait Gauge: Send + Sync {
     /// Increment the gauge by 1.
     fn inc(&self);
     /// Decrement the gauge by 1.
