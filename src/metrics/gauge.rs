@@ -4,16 +4,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::cell::Cell;
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::Arc;
 
 /// Naive implementation of a `Gauge`.
-///
-/// It might be nice to make one built on atomics.
 #[derive(Debug)]
 pub struct StdGauge {
     /// The gauge value.
-    pub value: Cell<isize>,
+    pub value: AtomicIsize,
 }
 
 /// A snapshot of the value of a `Gauge`.
@@ -45,40 +43,41 @@ pub trait Gauge {
 
 impl Gauge for StdGauge {
     fn inc(&self) {
-        self.value.set(self.value.get() + 1);
+        self.value.fetch_add(1, Ordering::Relaxed);
     }
 
     fn dec(&self) {
-        self.value.set(self.value.get() - 1);
+        self.value.fetch_sub(1, Ordering::Relaxed);
     }
 
     fn add(&self, value: isize) {
-        self.value.set(self.value.get() + value);
+        self.value.fetch_add(value, Ordering::Relaxed);
         // TODO check for negative
     }
 
     fn sub(&self, value: isize) {
-        self.value.set(self.value.get() - value);
+        self.value.fetch_sub(value, Ordering::Relaxed);
     }
 
     fn set(&self, value: isize) {
-        self.value.set(value);
+        self.value.store(value, Ordering::Relaxed);
     }
 
     fn snapshot(&self) -> GaugeSnapshot {
-        GaugeSnapshot { value: self.value.get() }
+        GaugeSnapshot { value: self.value.load(Ordering::Relaxed) }
     }
 }
 
 impl StdGauge {
     /// Create a new `StdGauge`.
     pub fn new() -> Arc<Self> {
-        Arc::new(StdGauge { value: Cell::new(0) })
+        Arc::new(StdGauge { value: AtomicIsize::new(0) })
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::sync::atomic::Ordering;
     use super::*;
 
     #[test]
@@ -88,7 +87,7 @@ mod test {
         g.set(10);
         let snapshot_2 = g.snapshot();
 
-        assert_eq!(g.value.get(), 10);
+        assert_eq!(g.value.load(Ordering::Relaxed), 10);
         assert_eq!(snapshot_1.value, 0);
         assert_eq!(snapshot_2.value, 10);
     }
