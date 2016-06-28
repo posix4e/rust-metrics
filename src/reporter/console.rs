@@ -76,7 +76,7 @@ mod test {
         c.inc();
 
         let g = StdGauge::new();
-        g.set(1.2);
+        g.set(2);
 
         let mut h = Histogram::configure()
             .max_value(100)
@@ -95,7 +95,7 @@ mod test {
         let arc_registry = Arc::new(r);
         let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
         reporter.start(1);
-        g.set(1.4);
+        g.set(4);
         thread::sleep(Duration::from_millis(200));
         println!("poplopit");
 

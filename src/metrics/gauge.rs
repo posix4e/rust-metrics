@@ -13,14 +13,14 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct StdGauge {
     /// The gauge value.
-    pub value: Cell<f64>,
+    pub value: Cell<isize>,
 }
 
 /// A snapshot of the value of a `Gauge`.
 #[derive(Debug)]
 pub struct GaugeSnapshot {
     /// The snapshot of the gauge value.
-    pub value: f64,
+    pub value: isize,
 }
 
 /// `Gauge` is a `Metric` that represents a single numerical value that can
@@ -34,34 +34,34 @@ pub trait Gauge {
     /// Decrement the gauge by 1.
     fn dec(&self);
     /// Increment the gauge by the given amount.
-    fn add(&self, value: f64);
+    fn add(&self, value: isize);
     /// Decrement the gauge by the given amount.
-    fn sub(&self, value: f64);
+    fn sub(&self, value: isize);
     /// Set the current value of the gauge.
-    fn set(&self, value: f64);
+    fn set(&self, value: isize);
     /// Take a snapshot of the current value for use with a `Reporter`.
     fn snapshot(&self) -> GaugeSnapshot;
 }
 
 impl Gauge for StdGauge {
     fn inc(&self) {
-        self.value.set(self.value.get() + 1.0);
+        self.value.set(self.value.get() + 1);
     }
 
     fn dec(&self) {
-        self.value.set(self.value.get() - 1.0);
+        self.value.set(self.value.get() - 1);
     }
 
-    fn add(&self, value: f64) {
+    fn add(&self, value: isize) {
         self.value.set(self.value.get() + value);
         // TODO check for negative
     }
 
-    fn sub(&self, value: f64) {
+    fn sub(&self, value: isize) {
         self.value.set(self.value.get() - value);
     }
 
-    fn set(&self, value: f64) {
+    fn set(&self, value: isize) {
         self.value.set(value);
     }
 
@@ -73,7 +73,7 @@ impl Gauge for StdGauge {
 impl StdGauge {
     /// Create a new `StdGauge`.
     pub fn new() -> Arc<Self> {
-        Arc::new(StdGauge { value: Cell::new(0.0) })
+        Arc::new(StdGauge { value: Cell::new(0) })
     }
 }
 
@@ -85,11 +85,11 @@ mod test {
     fn create_and_snapshot() {
         let g = StdGauge::new();
         let snapshot_1 = g.snapshot();
-        g.set(10.0);
+        g.set(10);
         let snapshot_2 = g.snapshot();
 
-        assert_eq!(g.value.get(), 10.0);
-        assert_eq!(snapshot_1.value, 0.0);
-        assert_eq!(snapshot_2.value, 10.0);
+        assert_eq!(g.value.get(), 10);
+        assert_eq!(snapshot_1.value, 0);
+        assert_eq!(snapshot_2.value, 10);
     }
 }

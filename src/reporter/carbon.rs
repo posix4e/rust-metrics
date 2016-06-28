@@ -276,7 +276,7 @@ mod test {
         c.inc();
 
         let g = StdGauge::new();
-        g.set(1.2);
+        g.set(2);
 
         let mut h = Histogram::configure()
             .max_value(100)
