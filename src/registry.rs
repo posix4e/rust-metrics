@@ -86,6 +86,12 @@ mod test {
         let m = StdMeter::new();
         m.mark(100);
         r.insert("meter1", Metric::Meter(m.clone()));
+        m.mark(200);
+        if let Metric::Meter(ref meter) = *r.get("meter1") {
+            assert_eq!(meter.snapshot().count, 300);
+        } else {
+            panic!("We didn't get a meter back.");
+        }
     }
 
     #[test]
@@ -94,6 +100,12 @@ mod test {
         let g = StdGauge::new();
         g.set(3);
         r.insert("gauge1", Metric::Gauge(g.clone()));
+        g.set(5);
+        if let Metric::Gauge(ref gauge) = *r.get("gauge1") {
+            assert_eq!(gauge.snapshot().value, 5);
+        } else {
+            panic!("We didn't get a gauge back.");
+        }
     }
 
     #[test]
@@ -102,6 +114,12 @@ mod test {
         let c = StdCounter::new();
         c.add(1);
         r.insert("counter1", Metric::Counter(c.clone()));
+        c.inc();
+        if let Metric::Counter(ref counter) = *r.get("counter1") {
+            assert_eq!(counter.snapshot().value, 2);
+        } else {
+            panic!("We didn't get a counter back.");
+        }
     }
 
     #[test]
