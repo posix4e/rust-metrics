@@ -168,7 +168,7 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
 
 #[cfg(test)]
 mod test {
-    use histogram::*;
+    use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use std::collections::HashMap;

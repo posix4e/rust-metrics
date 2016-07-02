@@ -59,7 +59,7 @@ impl ConsoleReporter {
 #[cfg(test)]
 mod test {
 
-    use histogram::*;
+    use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
     use std::sync::Arc;

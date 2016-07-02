@@ -16,7 +16,7 @@ use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::PrometheusReporter;
 use std::sync::Arc;
 use std::collections::HashMap;
-use histogram::*;
+use histogram::Histogram;
 
 fn main() {
     println!("WebServer Starting");

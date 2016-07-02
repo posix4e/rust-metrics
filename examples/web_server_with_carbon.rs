@@ -15,7 +15,7 @@ use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdM
 use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::CarbonReporter;
 use std::sync::Arc;
-use histogram::*;
+use histogram::Histogram;
 use std::thread;
 
 fn main() {

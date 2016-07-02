@@ -75,7 +75,7 @@ impl<'a> StdRegistry<'a> {
 mod test {
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use registry::{Registry, StdRegistry};
-    use histogram::*;
+    use histogram::Histogram;
 
 
     // TODO add labels tests
