@@ -11,7 +11,7 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct StdGauge {
     /// The gauge value.
-    pub value: AtomicIsize,
+    value: AtomicIsize,
 }
 
 /// A snapshot of the value of a `Gauge`.
@@ -77,7 +77,6 @@ impl StdGauge {
 
 #[cfg(test)]
 mod test {
-    use std::sync::atomic::Ordering;
     use super::*;
 
     #[test]
@@ -87,7 +86,6 @@ mod test {
         g.set(10);
         let snapshot_2 = g.snapshot();
 
-        assert_eq!(g.value.load(Ordering::Relaxed), 10);
         assert_eq!(snapshot_1.value, 0);
         assert_eq!(snapshot_2.value, 10);
     }

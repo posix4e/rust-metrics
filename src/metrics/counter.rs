@@ -11,7 +11,7 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct StdCounter {
     /// The counter value.
-    pub value: AtomicUsize,
+    value: AtomicUsize,
 }
 
 /// A snapshot of the current value of a `Counter`.
@@ -62,7 +62,6 @@ impl StdCounter {
 
 #[cfg(test)]
 mod test {
-    use std::sync::atomic::Ordering;
     use super::*;
 
     #[test]
@@ -70,12 +69,12 @@ mod test {
         let c = StdCounter::new();
         c.add(1);
 
-        assert_eq!(c.value.load(Ordering::Relaxed), 1);
+        assert_eq!(c.snapshot().value, 1);
 
         let c = StdCounter::new();
         c.inc();
 
-        assert_eq!(c.value.load(Ordering::Relaxed), 1);
+        assert_eq!(c.snapshot().value, 1);
     }
 
     #[test]
@@ -84,7 +83,6 @@ mod test {
         let snapshot_1 = c.snapshot();
         c.add(1);
         let snapshot_2 = c.snapshot();
-        assert_eq!(c.value.load(Ordering::Relaxed), 1);
         assert_eq!(snapshot_1.value, 0);
         assert_eq!(snapshot_2.value, 1);
     }
