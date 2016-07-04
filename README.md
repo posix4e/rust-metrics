@@ -1,6 +1,6 @@
 # rust-metrics
 [![Linux Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
-
+[![Kanban](https://img.shields.io/github/issues/posix4e/rust-metrics.svg?label=HuBoard)](https://huboard.com/posix4e/rust-metrics#/?repo=[%22huboard%22])
 
 Metrics are things you can use to safely & directly store metrics with little overhead. Metrics
 can be attached to a registry and that registry can be collected across a system. This registry
