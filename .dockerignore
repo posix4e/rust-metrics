@@ -2,3 +2,4 @@ target
 target-install
 src/promo_proto.rs
 .git
+*.bk
