@@ -16,10 +16,10 @@ time = "0.1.35"
 histogram =  "0.6.1"
 log = "0.3.6"
 iron = "0.3.0"
-router = "0.1."
+router = "0.1.1"
 
 # should be a dev dependency but this speeds up docker
 # We should double check the version
-hyper = "0.9.6"
+hyper = "0.9.9"
 protobuf = "1.0.21"
-persistent = "0.0.6"
+persistent = "0.1.0"
