@@ -1,0 +1,3 @@
+#!/bin/sh
+set -ex
+cargo run --example web_server_with_stdout_logging
