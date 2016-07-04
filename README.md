@@ -67,6 +67,8 @@ extern crate metrics
 * **webserver_with_carbon** Starts a webserver with a carbon reporter
 * **start_carbon_example** Use docker-compose to start graphite/carbon/whisper and hook it up to webserver_with_carbon
 
+Many of these will only run if prometheus support is enabled
+
 ## TBD
 
 - [ ] C ffi
@@ -110,6 +112,7 @@ To work on this crate without **build_docker**:
 
     ```
     cargo build # to build the code
+    cargo build --features "prometheus" # To build code with prometheus support
     cargo test # to run the tests
     ```
 

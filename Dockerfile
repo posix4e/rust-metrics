@@ -28,9 +28,9 @@ COPY src/ /rust-metrics/src/
 RUN touch /rust-metrics/src/*
 
 WORKDIR /rust-metrics/
-RUN cargo build
+RUN cargo build --verbose --features "prometheus"
 COPY examples/ /rust-metrics/examples/
 COPY bin/ /rust-metrics/bin/
-RUN cargo test
+RUN cargo test --features "prometheus"
 
 ENTRYPOINT env PATH=$PATH:/rust-metrics/bin/ /bin/bash
