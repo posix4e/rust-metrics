@@ -22,15 +22,20 @@
 
 extern crate time;
 extern crate histogram;
-extern crate iron;
-extern crate router;
-extern crate persistent;
 
 pub mod metrics;
 pub mod registry;
 pub mod reporter;
 pub mod utils;
 
+#[cfg(prometheus)]
+extern crate iron;
+#[cfg(prometheus)]
+extern crate router;
+#[cfg(prometheus)]
+extern crate persistent;
+#[cfg(prometheus)]
 extern crate protobuf; // depend on rust-protobuf runtime
 #[allow(unsafe_code)]
+#[cfg(prometheus)]
 mod promo_proto; // add generated crate
