@@ -73,8 +73,7 @@ Many of these will only run if prometheus support is enabled
 
 - [ ] C ffi
 - [ ] js ffi
-- [ ] Prometheus enabled
-- [ ] Make prometheus optional
+- [ ] Prometheus
 - [ ] Tested in Production
 
 ## Development
