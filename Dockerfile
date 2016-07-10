@@ -12,7 +12,7 @@ WORKDIR /rust-metrics/
 # Cache rust package list
 ### Just for rust package cacheing!
 RUN mkdir -p src; touch src/lib.rs
-RUN cargo build
+RUN cargo build --verbose --features "prometheus"
 RUN rm -rf src
 WORKDIR /
 
