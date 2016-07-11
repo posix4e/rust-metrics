@@ -28,14 +28,14 @@ pub mod registry;
 pub mod reporter;
 pub mod utils;
 
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 extern crate iron;
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 extern crate router;
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 extern crate persistent;
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 extern crate protobuf; // depend on rust-protobuf runtime
 #[allow(unsafe_code)]
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 mod promo_proto; // add generated crate
