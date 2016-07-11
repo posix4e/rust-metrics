@@ -10,12 +10,12 @@
 
 mod carbon;
 mod console;
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 mod prometheus;
 
 pub use self::carbon::CarbonReporter;
 pub use self::console::ConsoleReporter;
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 pub use self::prometheus::PrometheusReporter;
 
 pub trait Reporter: Send + Sync {

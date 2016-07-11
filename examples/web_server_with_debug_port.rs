@@ -18,9 +18,9 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use histogram::Histogram;
 
-#[cfg(not(prometheus))]
+#[cfg(not(feature = "prometheus"))]
 fn main () { }
-#[cfg(prometheus)]
+#[cfg(feature = "prometheus")]
 fn main() {
     use metrics::reporter::PrometheusReporter;
         println!("WebServer Starting");
