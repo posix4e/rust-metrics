@@ -21,6 +21,7 @@ use iron;
 use iron::typemap::Key;
 use iron::prelude::*;
 use iron::status;
+use iron::mime::Mime;
 
 use promo_proto;
 use persistent::Read;
@@ -90,8 +91,13 @@ fn timestamp() -> f64 {
     timespec.sec as f64 + (timespec.nsec as f64 / 1000.0 / 1000.0 / 1000.0)
 }
 
+// refer to https://prometheus.io/docs/instrumenting/exposition_formats/
+const CONTENT_TYPE: &'static str = "application/vnd.google.protobuf; \
+                                    proto=io.prometheus.client.MetricFamily; encoding=delimited";
+
 fn handler(req: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok,
+    Ok(Response::with((CONTENT_TYPE.parse::<Mime>().unwrap(),
+                       status::Ok,
                        families_to_u8(to_pba(req.get::<Read<HandlerStorage>>().unwrap())))))
 }
 
