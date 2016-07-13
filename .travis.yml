@@ -1,11 +1,5 @@
 language: rust
 rust: stable
-addons:
-  apt:
-    packages:
-      - protobuf-compiler
-before_install:
-  - cargo install protobuf
-  - bash ./bin/generate_pb
+
 script:
   - cargo test --features "prometheus"
