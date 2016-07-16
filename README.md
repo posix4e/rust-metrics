@@ -89,7 +89,8 @@ To work on this crate without **build_docker**:
     brew install protobuf
     ```
 
-    On Ubuntu, `protobuf-compiler` package can be installed:
+    On Ubuntu, `protobuf-compiler` package can be installed, and a more complete
+list of dependencies can be found in the travis file:
 
     ```
     apt-get install protobuf-compiler
@@ -102,11 +103,6 @@ To work on this crate without **build_docker**:
 
     and make sure the resulting binary in `$HOME/.cargo/bin` is in your path.
 
-- Run this script to generate the protobuf `.rs` files:
-
-    ```
-    ./bin/generate_pb
-    ```
 
 - Then you should be able to use cargo:
 

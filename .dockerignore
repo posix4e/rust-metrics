@@ -1,5 +1,6 @@
 target
 target-install
 src/promo_proto.rs
+protobufs/target
 .git
 *.bk

@@ -9,25 +9,25 @@
 // We aren't collecting metrics properly we should be
 // on the regular collecting metrics, and snapshotting them
 // and sending them all up when Prometheus comes to scrape.
-use metrics::Metric;
 use registry::{Registry, StdRegistry};
 use std::thread;
 use std::sync::Arc;
 use reporter::Reporter;
 use time;
-use promo_proto::MetricFamily;
 use router::Router;
 use iron;
 use iron::typemap::Key;
 use iron::prelude::*;
 use iron::status;
 use iron::mime::Mime;
-
-use promo_proto;
 use persistent::Read;
+
 use protobuf::Message;
 use protobuf::repeated::RepeatedField;
-use promo_proto::LabelPair;
+
+use metrics::Metric;
+use protobufs;
+use protobufs::prometheus::LabelPair;
 use std::collections::HashMap;
 
 #[derive(Copy, Clone)]
@@ -101,7 +101,7 @@ fn handler(req: &mut Request) -> IronResult<Response> {
                        families_to_u8(to_pba(req.get::<Read<HandlerStorage>>().unwrap())))))
 }
 
-fn families_to_u8(metric_families: Vec<MetricFamily>) -> Vec<u8> {
+fn families_to_u8(metric_families: Vec<protobufs::prometheus::MetricFamily>) -> Vec<u8> {
     let mut buf = Vec::new();
     for family in metric_families {
         family.write_length_delimited_to_writer(&mut buf).unwrap();
@@ -125,12 +125,12 @@ fn to_repeated_fields_labels(labels: HashMap<String, String>) -> RepeatedField<L
 // and serde once nightly is stable. I'd consider setting a feature flag but
 // it still might increase complexity to deploy
 // To an array of MetricFamily
-fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
+fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<protobufs::prometheus::MetricFamily> {
     let mut metric_families = Vec::new();
     let metric_names = registry.get_metrics_names();
     for metric_by_name in metric_names {
-        let mut metric_family = MetricFamily::new();
-        let mut pb_metric = promo_proto::Metric::new();
+        let mut metric_family = protobufs::prometheus::MetricFamily::new();
+        let mut pb_metric = protobufs::prometheus::Metric::new();
         let metric = registry.get(metric_by_name);
         let formated_metric = format!("{}_{}_{}", "application_name", metric_by_name, "bytes");
         metric_family.set_name(String::from(formated_metric));
@@ -141,28 +141,28 @@ fn to_pba(registry: Arc<Arc<StdRegistry<'static>>>) -> Vec<MetricFamily> {
         match *metric {
             Metric::Counter(ref x) => {
                 let snapshot = x.snapshot();
-                let mut counter = promo_proto::Counter::new();
+                let mut counter = protobufs::prometheus::Counter::new();
                 counter.set_value(snapshot.value as f64);
                 pb_metric.set_counter(counter);
-                metric_family.set_field_type(promo_proto::MetricType::COUNTER);
+                metric_family.set_field_type(protobufs::prometheus::MetricType::COUNTER);
             }
             Metric::Gauge(ref x) => {
                 let snapshot = x.snapshot();
-                let mut gauge = promo_proto::Gauge::new();
+                let mut gauge = protobufs::prometheus::Gauge::new();
                 gauge.set_value(snapshot.value as f64);
                 pb_metric.set_gauge(gauge);
-                metric_family.set_field_type(promo_proto::MetricType::GAUGE);
+                metric_family.set_field_type(protobufs::prometheus::MetricType::GAUGE);
 
             }
             Metric::Meter(_) => {
                 // TODO ask the Prometheus guys what we want to do
-                pb_metric.set_summary(promo_proto::Summary::new());
-                metric_family.set_field_type(promo_proto::MetricType::SUMMARY);
+                pb_metric.set_summary(protobufs::prometheus::Summary::new());
+                metric_family.set_field_type(protobufs::prometheus::MetricType::SUMMARY);
 
             }
             Metric::Histogram(_) => {
-                pb_metric.set_histogram(promo_proto::Histogram::new());
-                metric_family.set_field_type(promo_proto::MetricType::HISTOGRAM);
+                pb_metric.set_histogram(protobufs::prometheus::Histogram::new());
+                metric_family.set_field_type(protobufs::prometheus::MetricType::HISTOGRAM);
             }
         }
 

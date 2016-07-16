@@ -38,4 +38,4 @@ extern crate persistent;
 extern crate protobuf; // depend on rust-protobuf runtime
 #[allow(unsafe_code)]
 #[cfg(feature = "prometheus")]
-mod promo_proto; // add generated crate
+extern crate protobufs; // add generated crate
