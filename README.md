@@ -30,17 +30,14 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
 
      h.record(1, 1);
 
-     let mut r = StdRegistry::new();
-     r.insert("meter1", Metric::Meter(m.clone()));
-     r.insert("counter1", Metric::Counter(c.clone()));
-     r.insert("gauge1", Metric::Gauge(g.clone()));
-     r.insert("histogram", Metric::Histogram(h));
+     let r = CarbonReporter::new("test",
+                                 "localhost:0".to_string(),
+                                 "asd.asdf");
+     r.add("meter1", Metric::Meter(m.clone()));
+     r.add("counter1", Metric::Counter(c.clone()));
+     r.add("gauge1", Metric::Gauge(g.clone()));
+     r.add("histogram", Metric::Histogram(h));
 
-     let arc_registry = Arc::new(r);
-     CarbonReporter::new(arc_registry.clone(),
-                         "test",
-                         "localhost:0".to_string(),
-                         "asd.asdf");
 ```
 
 ## Usage

@@ -13,9 +13,7 @@ extern crate histogram;
 use iron::prelude::*;
 use iron::status;
 use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
-use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::CarbonReporter;
-use std::sync::Arc;
 use histogram::Histogram;
 use std::thread;
 
@@ -40,18 +38,15 @@ fn main() {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut r = StdRegistry::new();
-        r.insert("meter1", Metric::Meter(m.clone()));
-        r.insert("counter1", Metric::Counter(c.clone()));
-        r.insert("gauge1", Metric::Gauge(g.clone()));
-        r.insert("histogram", Metric::Histogram(h));
+        let mut reporter =
+            CarbonReporter::new("test", "carbon_graphite:2003".to_string(), "asd.asdf");
+        reporter.add("meter1", Metric::Meter(m.clone()));
+        reporter.add("counter1", Metric::Counter(c.clone()));
+        reporter.add("gauge1", Metric::Gauge(g.clone()));
+        reporter.add("histogram", Metric::Histogram(h));
 
-        let arc_registry = Arc::new(r);
-        let reporter = CarbonReporter::new(arc_registry.clone(),
-                                           "test",
-                                           "carbon_graphite:2003".to_string(),
-                                           "asd.asdf");
         reporter.start(5);
+
         loop {
             c.inc()
         }

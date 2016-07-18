@@ -7,9 +7,7 @@ extern crate histogram;
 use iron::prelude::*;
 use iron::status;
 use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
-use metrics::registry::{Registry, StdRegistry};
 use metrics::reporter::ConsoleReporter;
-use std::sync::Arc;
 use histogram::*;
 use std::thread;
 
@@ -28,15 +26,11 @@ fn main() {
         let mut h = Histogram::configure().max_value(100).precision(1).build().unwrap();
         h.increment_by(1, 1).unwrap();
 
-
-        let mut r = StdRegistry::new();
-        r.insert("meter1", Metric::Meter(m.clone()));
-        r.insert("counter1", Metric::Counter(c.clone()));
-        r.insert("gauge1", Metric::Gauge(g.clone()));
-        r.insert("histogram", Metric::Histogram(h));
-
-        let arc_registry = Arc::new(r);
-        let reporter = ConsoleReporter::new(arc_registry, "test");
+        let mut reporter = ConsoleReporter::new("test");
+        reporter.add(Metric::Meter(m.clone()));
+        reporter.add(Metric::Counter(c.clone()));
+        reporter.add(Metric::Gauge(g.clone()));
+        reporter.add(Metric::Histogram(h));
         reporter.start(500);
         loop {
             c.inc()

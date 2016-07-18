@@ -7,9 +7,9 @@
 //! Metrics
 //!
 //! Metrics are things you can use to safely & directly store metrics with
-//! little overhead. Metrics can be attached to a registry and that registry
-//! can be collected across a system. This registry also provides reporting
-//! services. Current reporters include:
+//! little overhead. Metrics can be attached to a reporter.
+//!
+//! Current reporters include:
 //!
 //! - [Prometheus](https://prometheus.io/)
 //! - Graphite/Carbon/Whisper
@@ -24,7 +24,6 @@ extern crate time;
 extern crate histogram;
 
 pub mod metrics;
-pub mod registry;
 pub mod reporter;
 pub mod utils;
 
