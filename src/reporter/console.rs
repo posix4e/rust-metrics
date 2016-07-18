@@ -5,14 +5,12 @@
 // except according to those terms.
 
 use metrics::Metric;
-use registry::{Registry, StdRegistry};
 use reporter::Reporter;
 use std::time::Duration;
 use std::thread;
-use std::sync::Arc;
 
 pub struct ConsoleReporter {
-    registry: Arc<StdRegistry<'static>>,
+    metrics: Vec<Metric>,
     reporter_name: &'static str,
 }
 
@@ -23,18 +21,21 @@ impl Reporter for ConsoleReporter {
 }
 
 impl ConsoleReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>, reporter_name: &'static str) -> Self {
+    pub fn new(reporter_name: &'static str) -> Self {
         ConsoleReporter {
-            registry: registry,
+            metrics: vec![],
             reporter_name: reporter_name,
         }
     }
-    pub fn start(&self, delay_ms: u64) {
-        let registry = self.registry.clone();
+
+    pub fn add(&mut self, metric: Metric) {
+        self.metrics.push(metric);
+    }
+
+    pub fn start(self, delay_ms: u64) {
         thread::spawn(move || {
             loop {
-                for metric_name in &registry.get_metrics_names() {
-                    let metric = registry.get(metric_name);
+                for metric in &self.metrics {
                     match *metric {
                         Metric::Meter(ref x) => {
                             println!("{:?}", x.snapshot());
@@ -61,8 +62,6 @@ mod test {
 
     use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
-    use registry::{Registry, StdRegistry};
-    use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
     use super::ConsoleReporter;
@@ -86,18 +85,14 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut r = StdRegistry::new();
-        r.insert("meter1", Metric::Meter(m.clone()));
-        r.insert("counter1", Metric::Counter(c.clone()));
-        r.insert("gauge1", Metric::Gauge(g.clone()));
-        r.insert("histogram", Metric::Histogram(h));
-
-        let arc_registry = Arc::new(r);
-        let reporter = ConsoleReporter::new(arc_registry.clone(), "test");
+        let mut reporter = ConsoleReporter::new("test");
+        reporter.add(Metric::Meter(m.clone()));
+        reporter.add(Metric::Counter(c.clone()));
+        reporter.add(Metric::Gauge(g.clone()));
+        reporter.add(Metric::Histogram(h));
         reporter.start(1);
         g.set(4);
         thread::sleep(Duration::from_millis(200));
         println!("poplopit");
-
     }
 }

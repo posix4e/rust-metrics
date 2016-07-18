@@ -13,8 +13,6 @@ extern crate histogram;
 use iron::prelude::*;
 use iron::status;
 use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
-use metrics::registry::{Registry, StdRegistry};
-use std::sync::Arc;
 use std::collections::HashMap;
 use histogram::Histogram;
 

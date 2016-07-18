@@ -5,10 +5,8 @@
 // except according to those terms.
 
 // CarbonReporter sends a message to a carbon end point at a regular basis.
-use registry::{Registry, StdRegistry};
 use std::time::Duration;
 use std::thread;
-use std::sync::Arc;
 use reporter::Reporter;
 use metrics::{CounterSnapshot, GaugeSnapshot, MeterSnapshot, Metric};
 use histogram::Histogram;
@@ -17,6 +15,12 @@ use time::Timespec;
 use std::net::TcpStream;
 use std::io::Write;
 use std::io::Error;
+
+
+struct CarbonMetricEntry {
+    metric_name: &'static str,
+    metric: Metric,
+}
 
 struct CarbonStream {
     graphite_stream: Option<TcpStream>,
@@ -27,8 +31,8 @@ struct CarbonStream {
 //
 pub struct CarbonReporter {
     host_and_port: String,
+    metrics: Vec<CarbonMetricEntry>,
     prefix: &'static str,
-    registry: Arc<StdRegistry<'static>>,
     reporter_name: &'static str,
 }
 
@@ -211,29 +215,32 @@ fn send_histogram_metric(metric_name: &str,
 }
 
 impl CarbonReporter {
-    pub fn new(registry: Arc<StdRegistry<'static>>,
-               reporter_name: &'static str,
-               host_and_port: String,
-               prefix: &'static str)
-               -> Self {
+    pub fn new(reporter_name: &'static str, host_and_port: String, prefix: &'static str) -> Self {
         CarbonReporter {
             host_and_port: host_and_port,
+            metrics: vec![],
             prefix: prefix,
-            registry: registry,
             reporter_name: reporter_name,
         }
+    }
+
+    pub fn add(&mut self, metric_name: &'static str, metric: Metric) {
+        self.metrics.push(CarbonMetricEntry {
+            metric_name: metric_name,
+            metric: metric,
+        });
     }
 
     fn report_to_carbon_continuously(self, delay_ms: u64) -> thread::JoinHandle<Result<(), Error>> {
         let prefix = self.prefix;
         let host_and_port = self.host_and_port.clone();
         let mut carbon = CarbonStream::new(host_and_port);
-        let registry = self.registry.clone();
         thread::spawn(move || {
             loop {
                 let ts = time::now().to_timespec();
-                for metric_name in &registry.get_metrics_names() {
-                    let metric = registry.get(metric_name);
+                for entry in &self.metrics {
+                    let metric_name = &entry.metric_name;
+                    let metric = &entry.metric;
                     try!(match *metric {
                         Metric::Meter(ref x) => {
                             send_meter_metric(metric_name, x.snapshot(), &mut carbon, prefix, ts)
@@ -263,8 +270,6 @@ impl CarbonReporter {
 mod test {
     use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
-    use registry::{Registry, StdRegistry};
-    use std::sync::Arc;
     use super::CarbonReporter;
 
     #[test]
@@ -286,16 +291,10 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut r = StdRegistry::new();
-        r.insert("meter1", Metric::Meter(m.clone()));
-        r.insert("counter1", Metric::Counter(c.clone()));
-        r.insert("gauge1", Metric::Gauge(g.clone()));
-        r.insert("histogram", Metric::Histogram(h));
-
-        let arc_registry = Arc::new(r);
-        CarbonReporter::new(arc_registry.clone(),
-                            "test",
-                            "localhost:0".to_string(),
-                            "asd.asdf");
+        let mut reporter = CarbonReporter::new("test", "localhost:0".to_string(), "asd.asdf");
+        reporter.add("meter1", Metric::Meter(m.clone()));
+        reporter.add("counter1", Metric::Counter(c.clone()));
+        reporter.add("gauge1", Metric::Gauge(g.clone()));
+        reporter.add("histogram", Metric::Histogram(h));
     }
 }
