@@ -62,7 +62,6 @@ extern crate metrics
 
 
 ## TBD
-- [ ] Iron integration
 - [ ] C ffi
 - [ ] js ffi
 - [ ] Prometheus Reporter Integration

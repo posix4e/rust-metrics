@@ -12,13 +12,14 @@ keywords = ["metrics", "graphite", "ganglia", "opentsdb", "prometheus"]
 license = "MIT/Apache-2.0"
 
 [features]
-prometheus = [ "prometheus_reporter" ]
+prometheus = [ "prometheus_reporter", "protobuf" ]
 
 [dependencies]
 time = "0.1.35"
 histogram =  "0.6.1"
 log = "0.3.6"
 prometheus_reporter = { path = "prometheus_reporter" , optional = true }
+protobuf = { version="1.0.23", optional = true }
 
 [dev-dependencies]
 # Our example is a webserver hence iron and hyper

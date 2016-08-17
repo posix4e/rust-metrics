@@ -21,7 +21,6 @@ RUN rm -rf src
 COPY src/ /rust-metrics/src/
 RUN touch /rust-metrics/src/*
 
-RUN cargo build --verbose --features "prometheus"
 COPY examples/ /rust-metrics/examples/
 COPY bin/ /rust-metrics/bin/
 RUN cargo test --verbose --features "prometheus"
