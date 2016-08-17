@@ -23,6 +23,8 @@ hyper =  { version="*"}
 persistent = { version="*"}
 protobuf = { version="*"}
 router = { version="*"}
+lru-cache = { version="0.0.7" }
+
 
 [dev-dependencies]
 # Our example is a webserver hence iron and hyper

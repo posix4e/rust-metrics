@@ -3,3 +3,4 @@ rust: stable
 
 script:
   - cargo test --features "prometheus"
+  - (cd prometheus_reporter && cargo test --verbose)

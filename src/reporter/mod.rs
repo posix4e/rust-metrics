@@ -14,6 +14,12 @@ mod console;
 pub use self::carbon::CarbonReporter;
 pub use self::console::ConsoleReporter;
 
+#[cfg(feature = "prometheus")]
+mod prometheus;
+
+#[cfg(feature = "prometheus")]
+pub use self::prometheus::PrometheusReporter;
+
 pub trait Reporter: Send + Sync {
     fn get_unique_reporter_name(&self) -> &'static str;
 }
