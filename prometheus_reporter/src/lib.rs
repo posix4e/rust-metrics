@@ -25,7 +25,7 @@ use iron::status;
 use persistent::Read;
 use lru_cache::LruCache;
 use protobuf::Message;
-use std::sync::{Arc,RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread;
 
 // http handler storage
@@ -108,7 +108,7 @@ impl PrometheusReporter {
                 thread::spawn(move || iron);
                 Ok("go")
             }
-            Err(y) => Err(format!("Unable to start iron: {}", y))
+            Err(y) => Err(format!("Unable to start iron: {}", y)),
         }
     }
 }

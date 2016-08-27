@@ -14,20 +14,12 @@ license = "MIT/Apache-2.0"
 [dependencies]
 time = "0.1.35"
 log = "0.3.6"
-metrics = "*"
 
 # should be a dev dependency but this speeds up docker
 # We should double check the version
-iron = { version="*"}
-hyper =  { version="*"}
-persistent = { version="*"}
-protobuf = { version="*"}
-router = { version="*"}
+iron = { version="0.4.0" }
+hyper =  { version="0.9.10" }
+persistent = { version="0.2.0"}
+protobuf = { version="1.0.24"}
+router = { version="0.2.0"}
 lru-cache = { version="0.0.7" }
-
-
-[dev-dependencies]
-# Our example is a webserver hence iron and hyper
-iron = { version="*"}
-hyper =  { version="*" }
-histogram = { version="*" }
