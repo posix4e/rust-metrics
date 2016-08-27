@@ -41,17 +41,24 @@ impl PrometheusReporter {
         }
     }
 
-    pub fn add(&mut self, name: &'static str, metric: Metric, labels: HashMap<String, String>) {
+    pub fn add(&mut self,
+               name: &'static str,
+               metric: Metric,
+               labels: HashMap<String, String>)
+               -> Result<(), String> {
         // TODO return error
         match self.tx {
             Some(ref mut tx) => {
-                tx.send(PrometheusMetricEntry {
+                match tx.send(PrometheusMetricEntry {
                     name: name,
                     metric: metric,
                     labels: labels,
-                });
+                }) {
+                    Ok(x) => Ok(x),
+                    Err(y) => Err(format!("Unable to send {}", y)),
+                }
             }
-            None => {}//Err("Please start the reporter before trying to add to it");
+            None => Err(format!("Please start the reporter before trying to add to it")),
         }
     }
 
@@ -83,8 +90,7 @@ fn to_repeated_fields_labels(labels: HashMap<String, String>)
     RepeatedField::from_vec(repeated_fields)
 }
 
-fn make_metric(name: &'static str,
-               metric: &Metric,
+fn make_metric(metric: &Metric,
                labels: &HashMap<String, String>)
                -> (promo_proto::Metric, promo_proto::MetricType) {
 
@@ -139,16 +145,14 @@ fn collect_to_send(metric_entries: &mpsc::Receiver<PrometheusMetricEntry>)
         // TODO check for 0 length
 
         let ref e1: PrometheusMetricEntry = metric_entries[0];
-        let (_, pb_metric_type) = make_metric(e1.name, &e1.metric, &e1.labels);
+        let (_, pb_metric_type) = make_metric(&e1.metric, &e1.labels);
 
         let mut family = promo_proto::MetricFamily::new();
         let mut pb_metrics = Vec::new();
 
         for metric_entry in metric_entries {
             // TODO maybe don't assume they have the same type
-            let (pb_metric, _) = make_metric(metric_entry.name,
-                                             &metric_entry.metric,
-                                             &metric_entry.labels);
+            let (pb_metric, _) = make_metric(&metric_entry.metric, &metric_entry.labels);
             pb_metrics.push(pb_metric);
         }
 
