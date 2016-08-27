@@ -7,22 +7,20 @@
 /// An example of sending data to a Prometheus server with a local webserver
 
 extern crate iron;
-extern crate metrics;
+//extern crate metrics;
 extern crate histogram;
 
 use iron::prelude::*;
 use iron::status;
 use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
+//use metrics::*;
 use std::collections::HashMap;
-use histogram::Histogram;
+//use histogram::Histogram;
 
-#[cfg(not(feature = "prometheus"))]
-fn main() {}
-#[cfg(feature = "prometheus")]
 fn main() {
-    use metrics::reporter::PrometheusReporter;
     println!("WebServer Starting");
     extern crate hyper;
+/*    use metrics::reporter::PrometheusReporter;
     let m = StdMeter::new();
     m.mark(100);
 
@@ -48,10 +46,10 @@ fn main() {
     r.insert("gauge1", Metric::Gauge(g.clone()));
     r.insert("histogram", Metric::Histogram(h));
 
-    let arc_registry = Arc::new(r);
     let reporter =
         PrometheusReporter::new(arc_registry.clone(), "test", "0.0.0.0:9090", "asd.asdf");
     reporter.start();
+    */
     Iron::new(|_: &mut Request| Ok(Response::with(status::NotFound)))
         .http("0.0.0.0:3000")
         .unwrap();

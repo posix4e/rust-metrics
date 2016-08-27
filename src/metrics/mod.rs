@@ -20,7 +20,6 @@ pub use self::meter::{Meter, MeterSnapshot, StdMeter};
 use histogram::Histogram;
 
 #[allow(missing_docs)]
-#[derive(Clone)]
 pub enum Metric {
     Counter(Arc<Counter>),
     Gauge(Arc<Gauge>),

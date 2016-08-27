@@ -1,12 +1,5 @@
 language: rust
 rust: stable
-addons:
-  apt:
-    packages:
-      - libprotobuf-dev
-      - libprotoc-dev
-      - pkg-config
-      - protobuf-compiler
 
 script:
   - cargo test --features "prometheus"
