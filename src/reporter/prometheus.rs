@@ -30,13 +30,15 @@ struct PrometheusMetricEntry {
 //
 pub struct PrometheusReporter {
     reporter_name: &'static str,
+    host_and_port: &'static str,
     tx: Option<mpsc::Sender<PrometheusMetricEntry>>,
 }
 
 impl PrometheusReporter {
-    pub fn new(reporter_name: &'static str) -> Self {
+    pub fn new(reporter_name: &'static str, host_and_port: &'static str) -> Self {
         PrometheusReporter {
             reporter_name: reporter_name,
+            host_and_port: host_and_port,
             tx: None,
         }
     }
@@ -65,9 +67,9 @@ impl PrometheusReporter {
     pub fn start(&mut self, delay_ms: u64) {
         let (tx, rx) = mpsc::channel();
         self.tx = Some(tx);
+        let host_and_port = self.host_and_port.clone();
         thread::spawn(move || {
-            // TODO programmable port
-            let mut prometheus_reporter = Pr::new("0.0.0.0:80");
+            let mut prometheus_reporter = Pr::new(host_and_port);
             prometheus_reporter.start().unwrap();
             loop {
                 prometheus_reporter.add(collect_to_send(&rx));
@@ -115,7 +117,6 @@ fn make_metric(metric: &Metric,
             (pb_metric, promo_proto::MetricType::GAUGE)
         }
         Metric::Meter(_) => {
-            // TODO ask the Prometheus guys what we want to do
             pb_metric.set_summary(promo_proto::Summary::new());
             (pb_metric, promo_proto::MetricType::SUMMARY)
 
@@ -172,7 +173,6 @@ mod test {
     use std::collections::HashMap;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use super::PrometheusReporter;
-    use std::thread;
 
     #[test]
     fn meter() {
@@ -193,7 +193,7 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut reporter = PrometheusReporter::new("test");
+        let mut reporter = PrometheusReporter::new("test", "0.0.0.0:80");
         reporter.start(1024);
         let labels = HashMap::new();
         reporter.add("meter1", Metric::Meter(m.clone()), labels.clone());
