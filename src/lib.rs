@@ -11,7 +11,6 @@
 //!
 //! Current reporters include:
 //!
-//! - [Prometheus](https://prometheus.io/)
 //! - Graphite/Carbon/Whisper
 //! - Console/Syslog/Journald (via stdout)
 
@@ -26,15 +25,3 @@ extern crate histogram;
 pub mod metrics;
 pub mod reporter;
 pub mod utils;
-
-#[cfg(feature = "prometheus")]
-extern crate iron;
-#[cfg(feature = "prometheus")]
-extern crate router;
-#[cfg(feature = "prometheus")]
-extern crate persistent;
-#[cfg(feature = "prometheus")]
-extern crate protobuf; // depend on rust-protobuf runtime
-#[allow(unsafe_code)]
-#[cfg(feature = "prometheus")]
-extern crate protobufs; // add generated crate

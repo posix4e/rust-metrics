@@ -1,0 +1,31 @@
+[package]
+name = "prometheus_reporter"
+version = "0.0.1"
+authors = ["Alex Newman <posix4e@gmail.com>"]
+description = "Coda Hale style metrics for rust"
+
+documentation = "https://github.com/posix4e/rust-metrics/"
+homepage = "https://github.com/posix4e/rust-metrics/"
+repository = "https://github.com/posix4e/rust-metrics/"
+readme = "README.md"
+keywords = ["metrics", "graphite", "ganglia", "opentsdb", "prometheus" ]
+license = "MIT/Apache-2.0"
+
+[dependencies]
+time = "0.1.35"
+log = "0.3.6"
+metrics = "*"
+
+# should be a dev dependency but this speeds up docker
+# We should double check the version
+iron = { version="*"}
+hyper =  { version="*"}
+persistent = { version="*"}
+protobuf = { version="*"}
+router = { version="*"}
+
+[dev-dependencies]
+# Our example is a webserver hence iron and hyper
+iron = { version="*"}
+hyper =  { version="*" }
+histogram = { version="*" }

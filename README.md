@@ -7,9 +7,9 @@ Metrics are things you can use to safely & directly store metrics with little ov
 can be attached to a registry and that registry can be collected across a system. This registry
 also provides reporting services. Current reporters include:
 
-- [Prometheus](https://prometheus.io/)
 - Graphite/Carbon/Whisper
 - Console/Syslog/Journald (via stdout)
+- Integration with included [prometheues reporter](prometheus_reporter)
 
 Contact us on #rust-metrics on Mozilla IRC.
 
@@ -41,8 +41,6 @@ fn make_a_bunch_of_metrics_store_them_and_start_sending_them_at_a_regular_interv
 ```
 
 ## Usage
-
-
 Add this to your `Cargo.toml`:
 
 ```toml
@@ -57,57 +55,23 @@ extern crate metrics
 ## Provided scripts in bin/
 
 * **build_docker** This builds the default docker image
-* **generate_pb** Generates the prometheus protocol buffer code
 * **run_docker** This will run the  docker container once it's been built (or download the last one i pushed)
-* **start_docker** Use docker_compose  to launch prometheus, carbon/graphite and clients which send them data
-* **webserver_with_prometheus** Starts a webserver which runs with a prometheus reporter
-* **start_prometheus_example** Use docker-compose to start a prometheus server & hook it up to webserver_with_prometheus
+* **start_docker** Use docker_compose  carbon/graphite and clients which send them data
 * **webserver_with_carbon** Starts a webserver with a carbon reporter
 * **start_carbon_example** Use docker-compose to start graphite/carbon/whisper and hook it up to webserver_with_carbon
 
-Many of these will only run if prometheus support is enabled
 
 ## TBD
-- [ ] New per metric, label API
+- [ ] Iron integration
 - [ ] C ffi
 - [ ] js ffi
-- [ ] Prometheus
+- [ ] Prometheus Reporter Integration
 - [ ] Tested in Production
 
 ## Development
-
+This crate includes a Docker designed for development.
 To work on this crate without **build_docker**:
-
-- Install protobuf for `protoc` binary:
-
-    On OS X [Homebrew](https://github.com/Homebrew/homebrew) can be used:
-
-    ```
-    brew install protobuf
-    ```
-
-    On Ubuntu, `protobuf-compiler` package can be installed, and a more complete
-list of dependencies can be found in the travis file:
-
-    ```
-    apt-get install protobuf-compiler
-    ```
-- Install the rust `protoc` plugin:
-
-    ```
-    cargo install protobuf
-    ```
-
-    and make sure the resulting binary in `$HOME/.cargo/bin` is in your path.
-
-
-- Then you should be able to use cargo:
-
-    ```
-    cargo build # to build the code
-    cargo build --features "prometheus" # To build code with prometheus support
-    cargo test # to run the tests
-    ```
+We use cargo for development.
 
 ## License
 
