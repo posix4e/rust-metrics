@@ -17,7 +17,6 @@ RUN cargo build --verbose
 RUN rm -rf src
 COPY src src/
 
-COPY examples/ /prometheus-reporter/examples/
 RUN RUST_BACKTRACE=1 cargo test --verbose  -- --nocapture
 
 ENTRYPOINT env PATH=$PATH:/prometheus-reporter/bin/ /bin/bash
