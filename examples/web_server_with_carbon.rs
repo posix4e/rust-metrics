@@ -38,6 +38,7 @@ fn main() {
 
         h.increment_by(1, 1).unwrap();
 
+        println!("Starting carbon recorder at carbon_graphite:2003");
         let mut reporter =
             CarbonReporter::new("test", "carbon_graphite:2003".to_string(), "asd.asdf");
         reporter.add("meter1", Metric::Meter(m.clone()));
