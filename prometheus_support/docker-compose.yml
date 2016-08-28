@@ -7,7 +7,7 @@ services:
     ports:
       - "3000:3000"
     expose:
-      - "9090"
+      - "8080"
 
   prometheus:
     build: .

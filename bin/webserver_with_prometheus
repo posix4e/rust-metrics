@@ -1,3 +1,3 @@
 #!/bin/sh
 set -ex
-cargo run --example web_server_with_debug_port
+cargo run --features prometheus --example web_server_with_debug_port

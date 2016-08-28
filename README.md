@@ -15,14 +15,32 @@ Contact us on #rust-metrics on Mozilla IRC.
 
 ```rust
 ...
-     let r = CarbonReporter::new("test",
-                                 "localhost:0".to_string(),
-                                 "asd.asdf");
-     r.add("meter1", Metric::Meter(m.clone()));
-     r.add("counter1", Metric::Counter(c.clone()));
-     r.add("gauge1", Metric::Gauge(g.clone()));
-     r.add("histogram", Metric::Histogram(h));
+        let m = StdMeter::new();
+        m.mark(100);
+
+        let c = StdCounter::new();
+        c.inc();
+
+        let g = StdGauge::new();
+        g.set(2);
+
+        let mut h = Histogram::configure()
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
+
+        h.increment_by(1, 1).unwrap();
+
+        let mut reporter = CarbonReporter::new("test", "localhost:0".to_string(), "asd.asdf");
+
+	reporter.start(5);
+
+        loop {
+            c.inc()
+        }
 ```
+
 
 ## Usage
 
