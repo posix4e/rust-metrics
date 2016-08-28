@@ -33,15 +33,12 @@ Contact us on #rust-metrics on Mozilla IRC.
         h.increment_by(1, 1).unwrap();
 
         let mut reporter = CarbonReporter::new("test", "localhost:0".to_string(), "asd.asdf");
+        reporter.start(5);
         reporter.add("meter1", Metric::Meter(m.clone()));
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
         reporter.add("histogram", Metric::Histogram(h));
-	reporter.start(5);
-
-        loop {
-            c.inc()
-        }
+        loop {    c.inc()}
 ```
 
 
