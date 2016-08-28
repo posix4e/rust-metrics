@@ -12,4 +12,4 @@ scrape_configs:
     static_configs: 
       - 
         targets: 
-          - "local_webserver:9090"
+          - "local_webserver:8080"

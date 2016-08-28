@@ -165,7 +165,7 @@ mod test {
         thread::sleep(Duration::from_millis(1024));
         reporter.add(vec![]);
         let client = hyper::client::Client::new();
-        client.get("http://127.0.0.1:8080").send().unwrap();
+        let foo = client.get("http://127.0.0.1:8080").send().unwrap();
     }
 
 }
