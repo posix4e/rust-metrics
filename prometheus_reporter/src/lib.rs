@@ -141,7 +141,8 @@ mod test {
     fn a_label_pair() -> RepeatedField<promo_proto::LabelPair> {
         let mut label_pair = promo_proto::LabelPair::new();
         // The name and value alas are the names of the
-        // protobuf fields in the pair in prometheus.
+        // protobuf fields in the pair in prometheus protobuf spec
+        // Thes undescriptive names are part of the protocol alas.
         label_pair.set_name("name".to_string());
         label_pair.set_value("value".to_string());
         RepeatedField::from_vec(vec![label_pair])
@@ -159,7 +160,6 @@ mod test {
 
     #[test]
     fn add_some_stats_and_slurp_them_with_http() {
-        // Shouldn't need a mutex but oh well
         let mut reporter = PrometheusReporter::new("0.0.0.0:8080");
         reporter.start().unwrap();
         thread::sleep(Duration::from_millis(1024));
