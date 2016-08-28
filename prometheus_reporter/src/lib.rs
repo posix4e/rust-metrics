@@ -22,7 +22,6 @@ use router::Router;
 use iron::typemap::Key;
 use iron::prelude::*;
 use iron::status;
-use persistent::Read;
 use lru_cache::LruCache;
 use protobuf::Message;
 use std::sync::{Arc, RwLock};
@@ -54,7 +53,7 @@ fn families_to_u8(metric_families: Vec<(&i64, &promo_proto::MetricFamily)>) -> V
 }
 
 fn handler(req: &mut Request) -> IronResult<Response> {
-    match req.get::<Read<HandlerStorage>>() {
+    match req.get::<persistent::Read<HandlerStorage>>() {
         Ok(ts_and_metrics) => {
             // TODO catch unwrap
             let serialized: Vec<u8> =
@@ -100,7 +99,7 @@ impl PrometheusReporter {
         let mut router = Router::new();
         router.get("/metrics", handler);
         let mut chain = Chain::new(router);
-        chain.link_before(Read::<HandlerStorage>::one(self.cache.clone()));
+        chain.link_before(persistent::Read::<HandlerStorage>::one(self.cache.clone()));
         // TODO get rid of the unwrap
 
         match Iron::new(chain).http(self.host_and_port) {
@@ -121,6 +120,7 @@ mod test {
     use std::thread;
     use std::time::Duration;
     use protobuf::repeated::RepeatedField;
+    use std::io::Read;
     use super::*;
 
     fn a_metric_family() -> promo_proto::MetricFamily {
@@ -163,9 +163,13 @@ mod test {
         let mut reporter = PrometheusReporter::new("0.0.0.0:8080");
         reporter.start().unwrap();
         thread::sleep(Duration::from_millis(1024));
-        reporter.add(vec![]);
+        reporter.add(vec![a_metric_family()]);
         let client = hyper::client::Client::new();
-        let foo = client.get("http://127.0.0.1:8080").send().unwrap();
+        let mut res = client.get("http://127.0.0.1:8080/metrics").send().unwrap();
+        assert_eq!(res.status, hyper::Ok);
+        let mut buffer = Vec::new();
+        let size_of_buffer = res.read_to_end(&mut buffer).unwrap();
+        println!("{:?} size:{} ", buffer, size_of_buffer);
+        assert_eq!(size_of_buffer, 53);
     }
-
 }
