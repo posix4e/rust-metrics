@@ -132,7 +132,7 @@ fn collect_to_send(metric_entries: &mpsc::Receiver<PrometheusMetricEntry>)
                    -> Vec<promo_proto::MetricFamily> {
     let mut entries_group = HashMap::<&'static str, Vec<PrometheusMetricEntry>>::new();
 
-    // Group them by name TODO we shold include tags and types in the grouping
+    // Group them by name TODO we should include tags and types in the grouping
     for entry in metric_entries {
         let name = entry.name;
         let mut entries = entries_group.remove(name).unwrap_or(vec![]);
