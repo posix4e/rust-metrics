@@ -70,10 +70,9 @@ extern crate metrics
 Many of these will only run if prometheus support is enabled
 
 ## TBD
-- [ ] New per metric, label API
 - [ ] C ffi
 - [ ] js ffi
-- [ ] Prometheus
+- [ ] Multi Reporter with thresholding
 - [ ] Tested in Production
 
 ## Local Development
