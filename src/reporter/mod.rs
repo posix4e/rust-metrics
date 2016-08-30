@@ -20,6 +20,7 @@ mod prometheus;
 #[cfg(feature = "prometheus")]
 pub use self::prometheus::PrometheusReporter;
 
-pub trait Reporter: Send + Sync {
+// Todo create sync wrappers with mutexes.
+pub trait Reporter: Send {
     fn get_unique_reporter_name(&self) -> &'static str;
 }

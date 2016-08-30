@@ -40,13 +40,11 @@ fn main() {
 
         println!("Starting carbon recorder at carbon_graphite:2003");
         let mut reporter =
-            CarbonReporter::new("test", "carbon_graphite:2003".to_string(), "asd.asdf");
+            CarbonReporter::new("test", "carbon_graphite:2003".to_string(), "asd.asdf",1024);
         reporter.add("meter1", Metric::Meter(m.clone()));
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
         reporter.add("histogram", Metric::Histogram(h));
-
-        reporter.start(5);
 
         loop {
             c.inc()

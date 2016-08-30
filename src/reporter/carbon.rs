@@ -15,6 +15,7 @@ use time::Timespec;
 use std::net::TcpStream;
 use std::io::Write;
 use std::io::Error;
+use std::sync::mpsc;
 
 
 struct CarbonMetricEntry {
@@ -31,7 +32,7 @@ struct CarbonStream {
 //
 pub struct CarbonReporter {
     host_and_port: String,
-    metrics: Vec<CarbonMetricEntry>,
+    metrics: mpsc::Sender<CarbonMetricEntry>,
     prefix: &'static str,
     reporter_name: &'static str,
 }
@@ -215,30 +216,40 @@ fn send_histogram_metric(metric_name: &str,
 }
 
 impl CarbonReporter {
-    pub fn new(reporter_name: &'static str, host_and_port: String, prefix: &'static str) -> Self {
-        CarbonReporter {
+    pub fn new(reporter_name: &'static str,
+               host_and_port: String,
+               prefix: &'static str,
+               aggregation_timer: u64)
+               -> Self {
+        let (tx, rx) = mpsc::channel();
+        let mut carbon_reporter = CarbonReporter {
             host_and_port: host_and_port,
-            metrics: vec![],
+            metrics: tx,
             prefix: prefix,
             reporter_name: reporter_name,
-        }
+        };
+        // Todo store join handle
+        carbon_reporter.report_to_carbon_continuously(aggregation_timer,rx);
+        carbon_reporter
     }
 
-    pub fn add(&mut self, metric_name: &'static str, metric: Metric) {
-        self.metrics.push(CarbonMetricEntry {
+    pub fn add(&mut self, metric_name: &'static str, metric: Metric)  {
+        // TODO return error
+        self.metrics.send(CarbonMetricEntry {
             metric_name: metric_name,
-            metric: metric,
-        });
+            metric: metric 
+        }).unwrap();
     }
 
-    fn report_to_carbon_continuously(self, delay_ms: u64) -> thread::JoinHandle<Result<(), Error>> {
+    fn report_to_carbon_continuously(&mut self, delay_ms: u64, rx: mpsc::Receiver<CarbonMetricEntry>)
+                                     -> thread::JoinHandle<Result<(), Error>> {
         let prefix = self.prefix;
         let host_and_port = self.host_and_port.clone();
         let mut carbon = CarbonStream::new(host_and_port);
         thread::spawn(move || {
             loop {
                 let ts = time::now().to_timespec();
-                for entry in &self.metrics {
+                for entry in &rx {
                     let metric_name = &entry.metric_name;
                     let metric = &entry.metric;
                     try!(match *metric {
@@ -259,10 +270,6 @@ impl CarbonReporter {
                 thread::sleep(Duration::from_millis(delay_ms));
             }
         })
-    }
-
-    pub fn start(self, delay_ms: u64) {
-        self.report_to_carbon_continuously(delay_ms);
     }
 }
 
@@ -291,7 +298,7 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut reporter = CarbonReporter::new("test", "localhost:0".to_string(), "asd.asdf");
+        let mut reporter = CarbonReporter::new("test", "localhost:0".to_string(), "asd.asdf", 1024);
         reporter.add("meter1", Metric::Meter(m.clone()));
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
