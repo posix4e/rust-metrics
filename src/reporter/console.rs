@@ -6,11 +6,13 @@
 
 use metrics::Metric;
 use reporter::Reporter;
+use std::sync::Arc;
 use std::time::Duration;
 use std::thread;
+use std::sync::mpsc;
 
 pub struct ConsoleReporter {
-    metrics: Vec<Metric>,
+    metrics: mpsc::Sender<Option<Metric>>,
     reporter_name: &'static str,
 }
 
@@ -21,39 +23,49 @@ impl Reporter for ConsoleReporter {
 }
 
 impl ConsoleReporter {
-    pub fn new(reporter_name: &'static str) -> Self {
-        ConsoleReporter {
-            metrics: vec![],
-            reporter_name: reporter_name,
-        }
+    pub fn new(reporter_name: &'static str, delay_ms: u64) -> Self {
+        let (tx, rx) = mpsc::channel();
+        let reporter = ConsoleReporter {
+            metrics: tx,
+            reporter_name: reporter_name
+        };
+
+        thread::spawn(move || {
+            let mut stop = false;
+            while !stop {
+                for metric in &rx {
+                    match metric {
+                        Some(metric) => {
+                            match metric {
+                                Metric::Meter(ref x) => {
+                                    println!("{:?}", x.snapshot());
+                                }
+                                Metric::Gauge(ref x) => {
+                                    println!("{:?}", x.snapshot());
+                                }
+                                Metric::Counter(ref x) => {
+                                    println!("{:?}", x.snapshot());
+                                }
+                                Metric::Histogram(ref x) => {
+                                    println!("histogram{:?}", x);
+                                }
+                            }
+                        }
+                        None => stop = true,
+                    }
+
+                    thread::sleep(Duration::from_millis(delay_ms));
+                }
+            }
+        });
+        reporter
     }
 
     pub fn add(&mut self, metric: Metric) {
-        self.metrics.push(metric);
+        self.metrics.send(Some(metric));
     }
-
-    pub fn start(self, delay_ms: u64) {
-        thread::spawn(move || {
-            loop {
-                for metric in &self.metrics {
-                    match *metric {
-                        Metric::Meter(ref x) => {
-                            println!("{:?}", x.snapshot());
-                        }
-                        Metric::Gauge(ref x) => {
-                            println!("{:?}", x.snapshot());
-                        }
-                        Metric::Counter(ref x) => {
-                            println!("{:?}", x.snapshot());
-                        }
-                        Metric::Histogram(ref x) => {
-                            println!("histogram{:?}", x);
-                        }
-                    }
-                }
-                thread::sleep(Duration::from_millis(delay_ms));
-            }
-        });
+    pub fn stop(&mut self) {
+        self.metrics.send(None);
     }
 }
 
@@ -85,14 +97,13 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut reporter = ConsoleReporter::new("test");
+        let mut reporter = ConsoleReporter::new("test", 1);
         reporter.add(Metric::Meter(m.clone()));
         reporter.add(Metric::Counter(c.clone()));
         reporter.add(Metric::Gauge(g.clone()));
         reporter.add(Metric::Histogram(h));
-        reporter.start(1);
         g.set(4);
         thread::sleep(Duration::from_millis(200));
-        println!("poplopit");
+        reporter.stop();
     }
 }
