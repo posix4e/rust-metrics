@@ -14,15 +14,16 @@ COPY prometheus_reporter/src /rust-metrics/prometheus_reporter/src/
 # Cache rust package list
 ### Just for rust package cacheing!
 RUN mkdir -p src; touch src/lib.rs
-RUN cargo build --verbose --features "prometheus"
+RUN cargo test --verbose --features prometheus
 RUN rm -rf src
 
 # Actually move the source in place
 COPY src/ /rust-metrics/src/
 RUN touch /rust-metrics/src/*
+RUN cargo build --verbose  --features prometheus
 
 COPY examples/ /rust-metrics/examples/
 COPY bin/ /rust-metrics/bin/
-RUN cargo test --verbose --features "prometheus"
+RUN cargo test --verbose  --features prometheus
 
 ENTRYPOINT env PATH=$PATH:/rust-metrics/bin/ /bin/bash

@@ -12,9 +12,10 @@ use metrics::{CounterSnapshot, GaugeSnapshot, MeterSnapshot, Metric};
 use histogram::Histogram;
 use time;
 use time::Timespec;
-use std::net::TcpStream;
 use std::io::Write;
 use std::io::Error;
+use std::sync::mpsc;
+use std::net::TcpStream;
 
 
 struct CarbonMetricEntry {
@@ -24,20 +25,20 @@ struct CarbonMetricEntry {
 
 struct CarbonStream {
     graphite_stream: Option<TcpStream>,
-    host_and_port: String,
+    host_and_port: &'static str,
 }
 
 // TODO perhaps we autodiscover the host and port
 //
 pub struct CarbonReporter {
-    host_and_port: String,
-    metrics: Vec<CarbonMetricEntry>,
+    host_and_port: &'static str,
+    metrics: mpsc::Sender<Option<CarbonMetricEntry>>,
     prefix: &'static str,
     reporter_name: &'static str,
 }
 
 impl CarbonStream {
-    pub fn new(host_and_port: String) -> Self {
+    pub fn new(host_and_port: &'static str) -> Self {
         CarbonStream {
             host_and_port: host_and_port,
             graphite_stream: None,
@@ -45,7 +46,7 @@ impl CarbonStream {
     }
 
     pub fn connect(&mut self) -> Result<(), Error> {
-        let graphite_stream = try!(TcpStream::connect(&*self.host_and_port));
+        let graphite_stream = try!(TcpStream::connect(self.host_and_port));
         self.graphite_stream = Some(graphite_stream);
         Ok(())
     }
@@ -215,54 +216,83 @@ fn send_histogram_metric(metric_name: &str,
 }
 
 impl CarbonReporter {
-    pub fn new(reporter_name: &'static str, host_and_port: String, prefix: &'static str) -> Self {
-        CarbonReporter {
+    pub fn new(reporter_name: &'static str,
+               host_and_port: &'static str,
+               prefix: &'static str,
+               aggregation_timer: u64)
+               -> Self {
+        let (tx, rx) = mpsc::channel();
+        let mut carbon_reporter = CarbonReporter {
             host_and_port: host_and_port,
-            metrics: vec![],
+            metrics: tx,
             prefix: prefix,
             reporter_name: reporter_name,
-        }
+        };
+        carbon_reporter.report_to_carbon_continuously(aggregation_timer, rx);
+        carbon_reporter
     }
 
     pub fn add(&mut self, metric_name: &'static str, metric: Metric) {
-        self.metrics.push(CarbonMetricEntry {
-            metric_name: metric_name,
-            metric: metric,
-        });
+        // TODO return error
+        self.metrics
+            .send(Some(CarbonMetricEntry {
+                metric_name: metric_name,
+                metric: metric,
+            }))
+            .unwrap();
     }
+    pub fn stop(&mut self) { self.metrics.send(None);}
 
-    fn report_to_carbon_continuously(self, delay_ms: u64) -> thread::JoinHandle<Result<(), Error>> {
+    fn report_to_carbon_continuously(&mut self,
+                                     delay_ms: u64,
+                                     rx: mpsc::Receiver<Option<CarbonMetricEntry>>) {
         let prefix = self.prefix;
         let host_and_port = self.host_and_port.clone();
         let mut carbon = CarbonStream::new(host_and_port);
         thread::spawn(move || {
-            loop {
+            let mut stop = false;
+            while !stop {
                 let ts = time::now().to_timespec();
-                for entry in &self.metrics {
-                    let metric_name = &entry.metric_name;
-                    let metric = &entry.metric;
-                    try!(match *metric {
-                        Metric::Meter(ref x) => {
-                            send_meter_metric(metric_name, x.snapshot(), &mut carbon, prefix, ts)
+                for entry in &rx {
+                    match entry {
+                        Some(entry) => {
+                            let metric_name = &entry.metric_name;
+                            let metric = &entry.metric;
+                            match *metric {
+                                Metric::Meter(ref x) => {
+                                    send_meter_metric(metric_name,
+                                                      x.snapshot(),
+                                                      &mut carbon,
+                                                      prefix,
+                                                      ts)
+                                }
+                                Metric::Gauge(ref x) => {
+                                    send_gauge_metric(metric_name,
+                                                      x.snapshot(),
+                                                      &mut carbon,
+                                                      prefix,
+                                                      ts)
+                                }
+                                Metric::Counter(ref x) => {
+                                    send_counter_metric(metric_name,
+                                                        x.snapshot(),
+                                                        &mut carbon,
+                                                        prefix,
+                                                        ts)
+                                }
+                                Metric::Histogram(ref x) => {
+                                    send_histogram_metric(metric_name, &x, &mut carbon, prefix, ts)
+                                }
+                            };
+                            // TODO handle errors somehow
                         }
-                        Metric::Gauge(ref x) => {
-                            send_gauge_metric(metric_name, x.snapshot(), &mut carbon, prefix, ts)
-                        }
-                        Metric::Counter(ref x) => {
-                            send_counter_metric(metric_name, x.snapshot(), &mut carbon, prefix, ts)
-                        }
-                        Metric::Histogram(ref x) => {
-                            send_histogram_metric(metric_name, &x, &mut carbon, prefix, ts)
-                        }
-                    });
-                }
-                thread::sleep(Duration::from_millis(delay_ms));
-            }
-        })
-    }
+                        None => stop = true,
+                    }
 
-    pub fn start(self, delay_ms: u64) {
-        self.report_to_carbon_continuously(delay_ms);
+                    thread::sleep(Duration::from_millis(delay_ms));
+                }
+            }
+        });
     }
 }
 
@@ -270,7 +300,10 @@ impl CarbonReporter {
 mod test {
     use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
+    use std::net::TcpListener;
     use super::CarbonReporter;
+    use std::time::Duration;
+    use std::thread;
 
     #[test]
     fn meter() {
@@ -291,10 +324,13 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut reporter = CarbonReporter::new("test", "localhost:0".to_string(), "asd.asdf");
+        let test_port = "127.0.0.1:34254";
+        let listener = TcpListener::bind(test_port).unwrap();
+        let mut reporter = CarbonReporter::new("test", test_port, "asd.asdf", 1024);
         reporter.add("meter1", Metric::Meter(m.clone()));
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
         reporter.add("histogram", Metric::Histogram(h));
+        reporter.stop();
     }
 }

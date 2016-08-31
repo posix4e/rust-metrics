@@ -26,12 +26,11 @@ fn main() {
         let mut h = Histogram::configure().max_value(100).precision(1).build().unwrap();
         h.increment_by(1, 1).unwrap();
 
-        let mut reporter = ConsoleReporter::new("test");
+        let mut reporter = ConsoleReporter::new("test",100);
         reporter.add(Metric::Meter(m.clone()));
         reporter.add(Metric::Counter(c.clone()));
         reporter.add(Metric::Gauge(g.clone()));
         reporter.add(Metric::Histogram(h));
-        reporter.start(500);
         loop {
             c.inc()
         }

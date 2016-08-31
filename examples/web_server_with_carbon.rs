@@ -9,6 +9,7 @@
 extern crate iron;
 extern crate metrics;
 extern crate histogram;
+extern crate hyper;
 
 use iron::prelude::*;
 use iron::status;
@@ -19,7 +20,6 @@ use std::thread;
 
 fn main() {
     println!("WebServer Starting");
-    extern crate hyper;
     thread::spawn(|| {
         let m = StdMeter::new();
         m.mark(100);
@@ -40,17 +40,13 @@ fn main() {
 
         println!("Starting carbon recorder at carbon_graphite:2003");
         let mut reporter =
-            CarbonReporter::new("test", "carbon_graphite:2003".to_string(), "asd.asdf");
+            CarbonReporter::new("test", "carbon_graphite:2003", "asd.asdf",1024);
         reporter.add("meter1", Metric::Meter(m.clone()));
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
         reporter.add("histogram", Metric::Histogram(h));
 
-        reporter.start(5);
-
-        loop {
-            c.inc()
-        }
+        loop { c.inc() }
     });
     Iron::new(|_: &mut Request| Ok(Response::with(status::NotFound)))
         .http("0.0.0.0:3000")
