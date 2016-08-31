@@ -73,6 +73,7 @@ Many of these will only run if prometheus support is enabled
 - [ ] C ffi
 - [ ] js ffi
 - [ ] Multi Reporter with thresholding
+- [ ] Switch to https://github.com/pingcap/rust-prometheus
 - [ ] Tested in Production
 
 ## Local Development
@@ -84,7 +85,7 @@ Many of these will only run if prometheus support is enabled
 
 To use prometheus you will might need to read [these directions](prometheus_reporter/README.md)
 ```
-    cargo build --features "prometheus" # To build code with prometheus support
+    cargo build --features "withprometheus" # To build code with prometheus support
 ```
 ## License
 
