@@ -76,6 +76,7 @@ Many of these will only run if prometheus support is enabled
 - [ ] Multi Reporter with thresholding
 - [ ] Switch to https://github.com/pingcap/rust-prometheus
 - [ ] Tested in Production at Scale on AWS (10k-20k) vms
+- [ ] Metrics Benchmark
 
 ## Local Development
 
