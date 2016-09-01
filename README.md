@@ -38,7 +38,8 @@ Contact us on #rust-metrics on Mozilla IRC.
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
         reporter.add("histogram", Metric::Histogram(h));
-        loop {    c.inc()}
+        while ... {    c.inc()}
+        reporter.stop();
 ```
 
 
