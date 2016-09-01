@@ -85,7 +85,7 @@ Many of these will only run if prometheus support is enabled
 
 To use prometheus you will might need to read [these directions](prometheus_reporter/README.md)
 ```
-    cargo build --features "withprometheus" # To build code with prometheus support
+    cargo build --features "prometheus" # To build code with prometheus support
 ```
 ## License
 
