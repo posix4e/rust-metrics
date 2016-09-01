@@ -6,13 +6,12 @@
 
 use metrics::Metric;
 use reporter::Reporter;
-use std::sync::Arc;
 use std::time::Duration;
 use std::thread;
 use std::sync::mpsc;
 
 pub struct ConsoleReporter {
-    metrics: mpsc::Sender<Option<Metric>>,
+    metrics: mpsc::Sender<Result<Metric, &'static str>>,
     reporter_name: &'static str,
 }
 
@@ -27,7 +26,7 @@ impl ConsoleReporter {
         let (tx, rx) = mpsc::channel();
         let reporter = ConsoleReporter {
             metrics: tx,
-            reporter_name: reporter_name
+            reporter_name: reporter_name,
         };
 
         thread::spawn(move || {
@@ -35,7 +34,7 @@ impl ConsoleReporter {
             while !stop {
                 for metric in &rx {
                     match metric {
-                        Some(metric) => {
+                        Ok(metric) => {
                             match metric {
                                 Metric::Meter(ref x) => {
                                     println!("{:?}", x.snapshot());
@@ -51,7 +50,11 @@ impl ConsoleReporter {
                                 }
                             }
                         }
-                        None => stop = true,
+                        // Todo log the error somehow
+                        Err(e) => {
+                            println!("Stopping reporter because..:{}", e);
+                            stop = true;
+                        }
                     }
 
                     thread::sleep(Duration::from_millis(delay_ms));
@@ -62,10 +65,10 @@ impl ConsoleReporter {
     }
 
     pub fn add(&mut self, metric: Metric) {
-        self.metrics.send(Some(metric));
+        self.metrics.send(Ok(metric));
     }
     pub fn stop(&mut self) {
-        self.metrics.send(None);
+        self.metrics.send(Err("stop"));
     }
 }
 

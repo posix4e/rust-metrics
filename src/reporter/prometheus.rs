@@ -31,51 +31,51 @@ struct PrometheusMetricEntry {
 pub struct PrometheusReporter {
     reporter_name: &'static str,
     host_and_port: &'static str,
-    tx: Option<mpsc::Sender<PrometheusMetricEntry>>,
+    tx: mpsc::Sender<Result<PrometheusMetricEntry, &'static str>>,
 }
 
 impl PrometheusReporter {
-    pub fn new(reporter_name: &'static str, host_and_port: &'static str) -> Self {
-        PrometheusReporter {
+    pub fn new(reporter_name: &'static str, host_and_port: &'static str, delay_ms: u64) -> Self {
+        let (tx, rx) = mpsc::channel();
+        let reporter = PrometheusReporter {
             reporter_name: reporter_name,
             host_and_port: host_and_port,
-            tx: None,
-        }
-    }
-
-    pub fn add(&mut self,
-               name: &'static str,
-               metric: Metric,
-               labels: HashMap<String, String>)
-               -> Result<(), String> {
-        // TODO return error
-        match self.tx {
-            Some(ref mut tx) => {
-                match tx.send(PrometheusMetricEntry {
-                    name: name,
-                    metric: metric,
-                    labels: labels,
-                }) {
-                    Ok(x) => Ok(x),
-                    Err(y) => Err(format!("Unable to send {}", y)),
-                }
-            }
-            None => Err(format!("Please start the reporter before trying to add to it")),
-        }
-    }
-
-    pub fn start(&mut self, delay_ms: u64) {
-        let (tx, rx) = mpsc::channel();
-        self.tx = Some(tx);
-        let host_and_port = self.host_and_port.clone();
+            tx: tx,
+        };
         thread::spawn(move || {
+            let mut stop = false;
             let mut prometheus_reporter = Pr::new(host_and_port);
             prometheus_reporter.start().unwrap();
-            loop {
-                prometheus_reporter.add(collect_to_send(&rx));
+            while !stop {
+                match collect_to_send(&rx) {
+                    Ok(metrics) => {
+                        prometheus_reporter.add(metrics);
+                    }
+                    Err(e) => {
+                        println!("Stopping reporter because...:{}", e);
+                        stop = true;
+                    }
+                }
                 thread::sleep(Duration::from_millis(delay_ms));
             }
         });
+        reporter
+    }
+
+    pub fn add(&mut self, name: &'static str, metric: Metric, labels: HashMap<String, String>) {
+        // TODO return error
+        let ref mut tx = &self.tx;
+        tx.send(Ok(PrometheusMetricEntry {
+                name: name,
+                metric: metric,
+                labels: labels,
+            }))
+            .unwrap();
+    }
+    pub fn stop(&mut self) {
+        // TODO return error
+        let ref mut tx = &self.tx;
+        tx.send(Err("Stopping")).unwrap();
     }
 }
 
@@ -128,18 +128,24 @@ fn make_metric(metric: &Metric,
     }
 }
 
-fn collect_to_send(metric_entries: &mpsc::Receiver<PrometheusMetricEntry>)
-                   -> Vec<promo_proto::MetricFamily> {
+fn collect_to_send(metric_entries: &mpsc::Receiver<Result<PrometheusMetricEntry, &'static str>>)
+                   -> Result<Vec<promo_proto::MetricFamily>, &'static str> {
     let mut entries_group = HashMap::<&'static str, Vec<PrometheusMetricEntry>>::new();
 
     // Group them by name TODO we should include tags and types in the grouping
-    for entry in metric_entries {
+    for _entry in metric_entries {
+        let entry = try!(_entry);
         let name = entry.name;
         let mut entries = entries_group.remove(name).unwrap_or(vec![]);
         entries.push(entry);
         entries_group.insert(name, entries);
     }
+    Ok(metric_entries_to_family(entries_group))
 
+}
+
+fn metric_entries_to_family(entries_group: HashMap<&'static str, Vec<PrometheusMetricEntry>>)
+                            -> Vec<promo_proto::MetricFamily> {
     let mut families = Vec::new();
     for (name, metric_entries) in &entries_group {
         let formatted_metric = format!("{}_{}_{}", "application_name", name, "bytes");
@@ -193,12 +199,12 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let mut reporter = PrometheusReporter::new("test", "0.0.0.0:80");
-        reporter.start(1024);
+        let mut reporter = PrometheusReporter::new("test", "0.0.0.0:80", 1024);
         let labels = HashMap::new();
         reporter.add("meter1", Metric::Meter(m.clone()), labels.clone());
         reporter.add("counter1", Metric::Counter(c.clone()), labels.clone());
         reporter.add("gauge1", Metric::Gauge(g.clone()), labels.clone());
         reporter.add("histogram", Metric::Histogram(h), labels);
+        reporter.stop();
     }
 }

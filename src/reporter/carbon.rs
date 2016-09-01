@@ -32,7 +32,7 @@ struct CarbonStream {
 //
 pub struct CarbonReporter {
     host_and_port: &'static str,
-    metrics: mpsc::Sender<Option<CarbonMetricEntry>>,
+    metrics: mpsc::Sender<Result<CarbonMetricEntry, &'static str>>,
     prefix: &'static str,
     reporter_name: &'static str,
 }
@@ -235,17 +235,20 @@ impl CarbonReporter {
     pub fn add(&mut self, metric_name: &'static str, metric: Metric) {
         // TODO return error
         self.metrics
-            .send(Some(CarbonMetricEntry {
+            .send(Ok(CarbonMetricEntry {
                 metric_name: metric_name,
                 metric: metric,
             }))
             .unwrap();
     }
-    pub fn stop(&mut self) { self.metrics.send(None);}
+
+    pub fn stop(&mut self) {
+        self.metrics.send(Err("stop")).unwrap();
+    }
 
     fn report_to_carbon_continuously(&mut self,
                                      delay_ms: u64,
-                                     rx: mpsc::Receiver<Option<CarbonMetricEntry>>) {
+                                     rx: mpsc::Receiver<Result<CarbonMetricEntry, &'static str>>) {
         let prefix = self.prefix;
         let host_and_port = self.host_and_port.clone();
         let mut carbon = CarbonStream::new(host_and_port);
@@ -255,7 +258,7 @@ impl CarbonReporter {
                 let ts = time::now().to_timespec();
                 for entry in &rx {
                     match entry {
-                        Some(entry) => {
+                        Ok(entry) => {
                             let metric_name = &entry.metric_name;
                             let metric = &entry.metric;
                             match *metric {
@@ -286,7 +289,10 @@ impl CarbonReporter {
                             };
                             // TODO handle errors somehow
                         }
-                        None => stop = true,
+                        Err(e) => {
+                            println!("Stopping reporter because..:{}", e);
+                            stop = true;
+                        }
                     }
 
                     thread::sleep(Duration::from_millis(delay_ms));

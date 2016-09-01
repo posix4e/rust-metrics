@@ -44,8 +44,7 @@ fn main() {
     let mut labels = HashMap::new();
     labels.insert(String::from("test"), String::from("test"));
     let mut reporter =
-        PrometheusReporter::new("test", "0.0.0.0:8080");
-    reporter.start(1024);
+        PrometheusReporter::new("test", "0.0.0.0:8080", 1024);
     reporter.add("meter1", Metric::Meter(m.clone()), labels.clone());
     reporter.add("counter1", Metric::Counter(c.clone()), labels.clone());
     reporter.add("gauge1", Metric::Gauge(g.clone()), labels.clone());
