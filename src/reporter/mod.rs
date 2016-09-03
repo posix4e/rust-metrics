@@ -22,5 +22,6 @@ pub use self::prometheus::PrometheusReporter;
 
 // Todo create sync wrappers with mutexes.
 pub trait Reporter: Send {
-    fn get_unique_reporter_name(&self) -> &'static str;
+    fn get_unique_reporter_name(&self) -> &str;
+    fn stop(&mut self);
 }

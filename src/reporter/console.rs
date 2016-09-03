@@ -12,21 +12,27 @@ use std::sync::mpsc;
 
 pub struct ConsoleReporter {
     metrics: mpsc::Sender<Result<Metric, &'static str>>,
-    reporter_name: &'static str,
+    reporter_name: String,
 }
 
 impl Reporter for ConsoleReporter {
-    fn get_unique_reporter_name(&self) -> &'static str {
-        self.reporter_name
+    fn get_unique_reporter_name(&self) -> &str {
+        &(*self.reporter_name)
+    }
+    fn stop(&mut self) {
+        match self.metrics.send(Err("stop")) {
+            Ok(_) => {}
+            Err(x) => println!("Unable to stop reporter: {}", x),
+        }
     }
 }
 
 impl ConsoleReporter {
-    pub fn new(reporter_name: &'static str, delay_ms: u64) -> Self {
+    pub fn new<S: Into<String>>(reporter_name: S, delay_ms: u64) -> Self {
         let (tx, rx) = mpsc::channel();
         let reporter = ConsoleReporter {
             metrics: tx,
-            reporter_name: reporter_name,
+            reporter_name: reporter_name.into(),
         };
 
         thread::spawn(move || {
@@ -65,10 +71,10 @@ impl ConsoleReporter {
     }
 
     pub fn add(&mut self, metric: Metric) {
-        self.metrics.send(Ok(metric));
-    }
-    pub fn stop(&mut self) {
-        self.metrics.send(Err("stop"));
+        match self.metrics.send(Ok(metric)) {
+            Ok(_) => {}
+            Err(x) => println!("Unable to send metric reporter{}", x),
+        }
     }
 }
 
@@ -80,6 +86,7 @@ mod test {
     use std::thread;
     use std::time::Duration;
     use super::ConsoleReporter;
+    use reporter::Reporter;
 
     #[test]
     fn meter() {

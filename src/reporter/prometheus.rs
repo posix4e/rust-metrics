@@ -18,6 +18,7 @@ use metrics::Metric;
 use time;
 use std::collections::HashMap;
 use std::sync::mpsc;
+use reporter::Reporter;
 use self::protobuf::repeated::RepeatedField;
 
 struct PrometheusMetricEntry {
@@ -30,8 +31,19 @@ struct PrometheusMetricEntry {
 //
 pub struct PrometheusReporter {
     reporter_name: &'static str,
-    host_and_port: &'static str,
+    host_and_prt: &'static str,
     tx: mpsc::Sender<Result<PrometheusMetricEntry, &'static str>>,
+}
+impl Reporter for PrometheusReporter {
+    fn get_unique_reporter_name(&self) -> &str {
+        &(*self.reporter_name)
+    }
+    fn stop(&mut self) {
+        match self.tx.send(Err("stop")) {
+            Ok(_) => {}
+            Err(x) => println!("Unable to stop reporter"),
+        }
+    }
 }
 
 impl PrometheusReporter {
@@ -45,7 +57,6 @@ impl PrometheusReporter {
         thread::spawn(move || {
             let mut stop = false;
             let mut prometheus_reporter = Pr::new(host_and_port);
-            prometheus_reporter.start().unwrap();
             while !stop {
                 match collect_to_send(&rx) {
                     Ok(metrics) => {
@@ -65,17 +76,14 @@ impl PrometheusReporter {
     pub fn add(&mut self, name: &'static str, metric: Metric, labels: HashMap<String, String>) {
         // TODO return error
         let ref mut tx = &self.tx;
-        tx.send(Ok(PrometheusMetricEntry {
-                name: name,
-                metric: metric,
-                labels: labels,
-            }))
-            .unwrap();
-    }
-    pub fn stop(&mut self) {
-        // TODO return error
-        let ref mut tx = &self.tx;
-        tx.send(Err("Stopping")).unwrap();
+        match tx.send(Ok(PrometheusMetricEntry {
+            name: name,
+            metric: metric,
+            labels: labels,
+        })) {
+            Ok(_) => {}
+            Err(x) => println!("Unable to stop reporter: {}", x),
+        }
     }
 }
 
@@ -179,6 +187,7 @@ mod test {
     use std::collections::HashMap;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use super::PrometheusReporter;
+    use reporter::Reporter;
 
     #[test]
     fn meter() {
