@@ -36,7 +36,8 @@ Contact us on #rust-metrics on Mozilla IRC.
         reporter.add("meter1", Metric::Meter(m.clone()));
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
-        reporter.add("histogram", Metric::Histogram(h));
+	// Add a histogram with labels even though they ignored in this reporter
+        reporter.addL("histogram", Metric::Histogram(h), Some(HashMap::new()));
         while ... {    c.inc()}
         reporter.stop();
 ```
