@@ -17,6 +17,7 @@ use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdM
 use metrics::reporter::CarbonReporter;
 use histogram::Histogram;
 use std::thread;
+use metrics::reporter::Reporter;
 
 fn main() {
     println!("WebServer Starting");

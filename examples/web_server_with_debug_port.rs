@@ -16,6 +16,7 @@ use iron::status;
 use metrics::metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
 use std::collections::HashMap;
 use histogram::Histogram;
+use metrics::reporter::Reporter;
 
 #[cfg(not(feature = "prometheus"))]
 fn main() {}
@@ -41,14 +42,15 @@ fn main() {
 
     h.increment_by(1, 1).unwrap();
 
-    let mut labels = HashMap::new();
-    labels.insert(String::from("test"), String::from("test"));
+    let mut _labels = HashMap::new();
+    _labels.insert(String::from("test"), String::from("test"));
+    let labels = Some(_labels);
     let mut reporter =
         PrometheusReporter::new("test", "0.0.0.0:8080", 1024);
-    reporter.add("meter1", Metric::Meter(m.clone()), labels.clone());
-    reporter.add("counter1", Metric::Counter(c.clone()), labels.clone());
-    reporter.add("gauge1", Metric::Gauge(g.clone()), labels.clone());
-    reporter.add("histogram", Metric::Histogram(h), labels.clone());
+    reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone());
+    reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone());
+    reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone());
+    reporter.addl("histogram", Metric::Histogram(h), labels.clone());
     Iron::new(|_: &mut Request| Ok(Response::with(status::NotFound)))
         .http("0.0.0.0:3000")
         .unwrap();

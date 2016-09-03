@@ -9,66 +9,76 @@ use reporter::Reporter;
 use std::time::Duration;
 use std::thread;
 use std::sync::mpsc;
+use std::collections::HashMap;
 
 pub struct ConsoleReporter {
-    metrics: mpsc::Sender<Result<Metric, &'static str>>,
-    reporter_name: &'static str,
+    metrics: mpsc::Sender<Result<(String, Metric, Option<HashMap<String, String>>), &'static str>>,
+    reporter_name: String,
+    join_handle: thread::JoinHandle<Result<(), String>>,
 }
 
 impl Reporter for ConsoleReporter {
-    fn get_unique_reporter_name(&self) -> &'static str {
-        self.reporter_name
+    fn get_unique_reporter_name(&self) -> &str {
+        &(*self.reporter_name)
+    }
+    fn stop(self) -> Result<thread::JoinHandle<Result<(), String>>, String> {
+        match self.metrics.send(Err("stop")) {
+            Ok(_) => Ok(self.join_handle),
+            Err(x) => Err(format!("Unable to stop reporter: {}", x)),
+        }
+    }
+    fn addl<S: Into<String>>(&mut self,
+                             name: S,
+                             metric: Metric,
+                             labels: Option<HashMap<String, String>>)
+                             -> Result<(), String> {
+        match self.metrics.send(Ok((name.into(), metric, labels))) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to send metric reporter{}", x)),
+        }
     }
 }
 
 impl ConsoleReporter {
-    pub fn new(reporter_name: &'static str, delay_ms: u64) -> Self {
+    pub fn new<S: Into<String>>(reporter_name: S, delay_ms: u64) -> Self {
         let (tx, rx) = mpsc::channel();
-        let reporter = ConsoleReporter {
+        ConsoleReporter {
             metrics: tx,
-            reporter_name: reporter_name,
-        };
-
-        thread::spawn(move || {
-            let mut stop = false;
-            while !stop {
-                for metric in &rx {
-                    match metric {
-                        Ok(metric) => {
-                            match metric {
-                                Metric::Meter(ref x) => {
-                                    println!("{:?}", x.snapshot());
-                                }
-                                Metric::Gauge(ref x) => {
-                                    println!("{:?}", x.snapshot());
-                                }
-                                Metric::Counter(ref x) => {
-                                    println!("{:?}", x.snapshot());
-                                }
-                                Metric::Histogram(ref x) => {
-                                    println!("histogram{:?}", x);
+            reporter_name: reporter_name.into(),
+            join_handle: thread::spawn(move || {
+                let mut stop = false;
+                while !stop {
+                    for metric in &rx {
+                        match metric {
+                            Ok((name, metric, labels)) => {
+                                println!("name: {} labels: {:?}", name, labels);
+                                match metric {
+                                    Metric::Meter(ref x) => {
+                                        println!("{:?}", x.snapshot());
+                                    }
+                                    Metric::Gauge(ref x) => {
+                                        println!("{:?}", x.snapshot());
+                                    }
+                                    Metric::Counter(ref x) => {
+                                        println!("{:?}", x.snapshot());
+                                    }
+                                    Metric::Histogram(ref x) => {
+                                        println!("histogram{:?}", x);
+                                    }
                                 }
                             }
+                            // Todo log the error somehow
+                            Err(e) => {
+                                println!("Stopping reporter because..:{}", e);
+                                stop = true;
+                            }
                         }
-                        // Todo log the error somehow
-                        Err(e) => {
-                            println!("Stopping reporter because..:{}", e);
-                            stop = true;
-                        }
+                        thread::sleep(Duration::from_millis(delay_ms));
                     }
-
-                    thread::sleep(Duration::from_millis(delay_ms));
                 }
-            }
-        });
-        reporter
-    }
-
-    pub fn add(&mut self, metric: Metric) {
-        self.metrics.send(Ok(metric));
-    }
-    pub fn stop(&mut self) {
-        self.metrics.send(Err("stop"));
+                Ok(())
+            }),
+        }
     }
 }
 
@@ -80,6 +90,7 @@ mod test {
     use std::thread;
     use std::time::Duration;
     use super::ConsoleReporter;
+    use reporter::Reporter;
 
     #[test]
     fn meter() {
@@ -101,12 +112,11 @@ mod test {
         h.increment_by(1, 1).unwrap();
 
         let mut reporter = ConsoleReporter::new("test", 1);
-        reporter.add(Metric::Meter(m.clone()));
-        reporter.add(Metric::Counter(c.clone()));
-        reporter.add(Metric::Gauge(g.clone()));
-        reporter.add(Metric::Histogram(h));
+        reporter.add("meter", Metric::Meter(m.clone()));
+        reporter.add("clone", Metric::Counter(c.clone()));
+        reporter.add("gauge", Metric::Gauge(g.clone()));
+        reporter.add("histo", Metric::Histogram(h));
         g.set(4);
-        thread::sleep(Duration::from_millis(200));
-        reporter.stop();
+        reporter.stop().unwrap().join().unwrap().unwrap();
     }
 }

@@ -67,17 +67,28 @@ fn handler(req: &mut Request) -> IronResult<Response> {
 
 // TODO perhaps we autodiscover the host and port
 pub struct PrometheusReporter {
-    cache: Arc<RwLock<LruCache<i64, promo_proto::MetricFamily>>>,
-    host_and_port: &'static str,
+    cache: Arc<RwLock<LruCache<i64, promo_proto::MetricFamily>>>
 }
 
 impl PrometheusReporter {
     pub fn new(host_and_port: &'static str) -> Self {
-        PrometheusReporter {
+        let reporter = PrometheusReporter {
             // TODO make it configurable
-            cache: Arc::new(RwLock::new(LruCache::new(86400))),
-            host_and_port: host_and_port,
-        }
+            cache: Arc::new(RwLock::new(LruCache::new(86400)))
+        };
+        let mut router = Router::new();
+        router.get("/metrics", handler);
+        let mut chain = Chain::new(router);
+        chain.link_before(persistent::Read::<HandlerStorage>::one(reporter.cache.clone()));
+        // TODO get rid of the unwrap
+
+        thread::spawn(move ||{
+            match Iron::new(chain).http(host_and_port) {
+                Ok(_) => {}
+                Err(x) => panic!("Unable to start prometheus reporter {}",x),
+            }
+        });
+        reporter
     }
     // TODO require start before add
     pub fn add(&mut self, metric_families: Vec<promo_proto::MetricFamily>) -> Result<i64, String> {
@@ -92,22 +103,6 @@ impl PrometheusReporter {
                 Ok(counter)
             }
             Err(y) => Err(format!("Unable to add {}", y)),
-        }
-    }
-
-    pub fn start(&self) -> Result<&str, String> {
-        let mut router = Router::new();
-        router.get("/metrics", handler);
-        let mut chain = Chain::new(router);
-        chain.link_before(persistent::Read::<HandlerStorage>::one(self.cache.clone()));
-        // TODO get rid of the unwrap
-
-        match Iron::new(chain).http(self.host_and_port) {
-            Ok(iron) => {
-                thread::spawn(move || iron);
-                Ok("go")
-            }
-            Err(y) => Err(format!("Unable to start iron: {}", y)),
         }
     }
 }
@@ -161,7 +156,6 @@ mod test {
     #[test]
     fn add_some_stats_and_slurp_them_with_http() {
         let mut reporter = PrometheusReporter::new("0.0.0.0:8080");
-        reporter.start().unwrap();
         thread::sleep(Duration::from_millis(1024));
         reporter.add(vec![a_metric_family()]);
         let client = hyper::client::Client::new();

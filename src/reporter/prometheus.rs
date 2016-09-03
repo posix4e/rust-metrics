@@ -18,10 +18,11 @@ use metrics::Metric;
 use time;
 use std::collections::HashMap;
 use std::sync::mpsc;
+use reporter::Reporter;
 use self::protobuf::repeated::RepeatedField;
 
 struct PrometheusMetricEntry {
-    name: &'static str,
+    name: String,
     metric: Metric,
     labels: HashMap<String, String>,
 }
@@ -30,52 +31,60 @@ struct PrometheusMetricEntry {
 //
 pub struct PrometheusReporter {
     reporter_name: &'static str,
-    host_and_port: &'static str,
     tx: mpsc::Sender<Result<PrometheusMetricEntry, &'static str>>,
+    join_handle: thread::JoinHandle<Result<(), String>>,
+}
+impl Reporter for PrometheusReporter {
+    fn get_unique_reporter_name(&self) -> &str {
+        &(*self.reporter_name)
+    }
+    fn stop(self) -> Result<thread::JoinHandle<Result<(), String>>, String> {
+        match self.tx.send(Err("stop")) {
+            Ok(_) => Ok(self.join_handle),
+            Err(x) => Err(format!("Unable to stop reporter:{}", x)),
+        }
+    }
+    fn addl<S: Into<String>>(&mut self,
+                             name: S,
+                             metric: Metric,
+                             labels: Option<HashMap<String, String>>)
+                             -> Result<(), String> {
+        // TODO return error
+        let ref mut tx = &self.tx;
+        match tx.send(Ok(PrometheusMetricEntry {
+            name: name.into(),
+            metric: metric,
+            labels: labels.unwrap_or(HashMap::new()),
+        })) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to stop reporter: {}", x)),
+        }
+    }
 }
 
 impl PrometheusReporter {
     pub fn new(reporter_name: &'static str, host_and_port: &'static str, delay_ms: u64) -> Self {
         let (tx, rx) = mpsc::channel();
-        let reporter = PrometheusReporter {
+        PrometheusReporter {
             reporter_name: reporter_name,
-            host_and_port: host_and_port,
             tx: tx,
-        };
-        thread::spawn(move || {
-            let mut stop = false;
-            let mut prometheus_reporter = Pr::new(host_and_port);
-            prometheus_reporter.start().unwrap();
-            while !stop {
-                match collect_to_send(&rx) {
-                    Ok(metrics) => {
-                        prometheus_reporter.add(metrics);
+            join_handle: thread::spawn(move || {
+                let mut stop = false;
+                let mut prometheus_reporter = Pr::new(host_and_port);
+                while !stop {
+                    match collect_to_send(&rx) {
+                        // Unwraping is always dangerouns. In this case our prometheus reporter is
+                        // overwhelmed by metrics
+                        Ok(metrics) => {
+                            try!(prometheus_reporter.add(metrics));
+                        }
+                        Err(_) => stop = true,
                     }
-                    Err(e) => {
-                        println!("Stopping reporter because...:{}", e);
-                        stop = true;
-                    }
+                    thread::sleep(Duration::from_millis(delay_ms));
                 }
-                thread::sleep(Duration::from_millis(delay_ms));
-            }
-        });
-        reporter
-    }
-
-    pub fn add(&mut self, name: &'static str, metric: Metric, labels: HashMap<String, String>) {
-        // TODO return error
-        let ref mut tx = &self.tx;
-        tx.send(Ok(PrometheusMetricEntry {
-                name: name,
-                metric: metric,
-                labels: labels,
-            }))
-            .unwrap();
-    }
-    pub fn stop(&mut self) {
-        // TODO return error
-        let ref mut tx = &self.tx;
-        tx.send(Err("Stopping")).unwrap();
+                Ok(())
+            }),
+        }
     }
 }
 
@@ -130,13 +139,13 @@ fn make_metric(metric: &Metric,
 
 fn collect_to_send(metric_entries: &mpsc::Receiver<Result<PrometheusMetricEntry, &'static str>>)
                    -> Result<Vec<promo_proto::MetricFamily>, &'static str> {
-    let mut entries_group = HashMap::<&'static str, Vec<PrometheusMetricEntry>>::new();
+    let mut entries_group = HashMap::<String, Vec<PrometheusMetricEntry>>::new();
 
     // Group them by name TODO we should include tags and types in the grouping
     for _entry in metric_entries {
         let entry = try!(_entry);
-        let name = entry.name;
-        let mut entries = entries_group.remove(name).unwrap_or(vec![]);
+        let name = entry.name.clone();
+        let mut entries = entries_group.remove(&name).unwrap_or(vec![]);
         entries.push(entry);
         entries_group.insert(name, entries);
     }
@@ -144,7 +153,7 @@ fn collect_to_send(metric_entries: &mpsc::Receiver<Result<PrometheusMetricEntry,
 
 }
 
-fn metric_entries_to_family(entries_group: HashMap<&'static str, Vec<PrometheusMetricEntry>>)
+fn metric_entries_to_family(entries_group: HashMap<String, Vec<PrometheusMetricEntry>>)
                             -> Vec<promo_proto::MetricFamily> {
     let mut families = Vec::new();
     for (name, metric_entries) in &entries_group {
@@ -179,6 +188,7 @@ mod test {
     use std::collections::HashMap;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use super::PrometheusReporter;
+    use reporter::Reporter;
 
     #[test]
     fn meter() {
@@ -200,11 +210,11 @@ mod test {
         h.increment_by(1, 1).unwrap();
 
         let mut reporter = PrometheusReporter::new("test", "0.0.0.0:80", 1024);
-        let labels = HashMap::new();
-        reporter.add("meter1", Metric::Meter(m.clone()), labels.clone());
-        reporter.add("counter1", Metric::Counter(c.clone()), labels.clone());
-        reporter.add("gauge1", Metric::Gauge(g.clone()), labels.clone());
-        reporter.add("histogram", Metric::Histogram(h), labels);
-        reporter.stop();
+        let labels = Some(HashMap::new());
+        reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone());
+        reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone());
+        reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone());
+        reporter.addl("histogram", Metric::Histogram(h), labels);
+        reporter.stop().unwrap().join().unwrap().unwrap();
     }
 }

@@ -2,5 +2,6 @@ language: rust
 rust: stable
 
 script:
-  - cargo test --features "prometheus"
+  - cargo install rustfmt clippy
   - (cd prometheus_reporter && cargo test --verbose)
+  - cargo test --features "prometheus"

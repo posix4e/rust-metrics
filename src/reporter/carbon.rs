@@ -1,4 +1,4 @@
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+/// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
@@ -16,58 +16,57 @@ use std::io::Write;
 use std::io::Error;
 use std::sync::mpsc;
 use std::net::TcpStream;
-
+use std::collections::HashMap;
 
 struct CarbonMetricEntry {
-    metric_name: &'static str,
+    metric_name: String,
     metric: Metric,
 }
 
 struct CarbonStream {
     graphite_stream: Option<TcpStream>,
-    host_and_port: &'static str,
+    host_and_port: String,
 }
 
 // TODO perhaps we autodiscover the host and port
 //
 pub struct CarbonReporter {
-    host_and_port: &'static str,
     metrics: mpsc::Sender<Result<CarbonMetricEntry, &'static str>>,
-    prefix: &'static str,
-    reporter_name: &'static str,
+    reporter_name: String,
+    join_handle: thread::JoinHandle<Result<(), String>>,
 }
 
 impl CarbonStream {
-    pub fn new(host_and_port: &'static str) -> Self {
+    pub fn new<S: Into<String>>(host_and_port: S) -> Self {
         CarbonStream {
-            host_and_port: host_and_port,
+            host_and_port: host_and_port.into(),
             graphite_stream: None,
         }
     }
 
     pub fn connect(&mut self) -> Result<(), Error> {
-        let graphite_stream = try!(TcpStream::connect(self.host_and_port));
+        let graphite_stream = try!(TcpStream::connect(&(*self.host_and_port)));
         self.graphite_stream = Some(graphite_stream);
         Ok(())
     }
 
-    pub fn write(&mut self,
-                 metric_path: String,
-                 value: String,
-                 timespec: Timespec)
-                 -> Result<(), Error> {
+    pub fn write<S: Into<String>>(&mut self,
+                                  metric_path: S,
+                                  value: S,
+                                  timespec: Timespec)
+                                  -> Result<(), Error> {
         let seconds_in_ms = (timespec.sec * 1000) as u32;
         let nseconds_in_ms = (timespec.nsec / 1000) as u32;
         let timestamp = seconds_in_ms + nseconds_in_ms;
         match self.graphite_stream {
             Some(ref mut stream) => {
-                let carbon_command = format!("{} {} {}\n", metric_path, value, timestamp)
-                    .into_bytes();
+                let carbon_command =
+                    format!("{} {} {}\n", metric_path.into(), value.into(), timestamp).into_bytes();
                 try!(stream.write_all(&carbon_command));
             }
             None => {
                 try!(self.reconnect_stream());
-                try!(self.write(metric_path, value, timespec));
+                try!(self.write(metric_path.into(), value.into(), timespec));
             }
         }
         Ok(())
@@ -81,21 +80,43 @@ impl CarbonStream {
 }
 
 impl Reporter for CarbonReporter {
-    fn get_unique_reporter_name(&self) -> &'static str {
-        self.reporter_name
+    fn get_unique_reporter_name(&self) -> &str {
+        &self.reporter_name
+    }
+    fn stop(self) -> Result<thread::JoinHandle<Result<(), String>>, String> {
+        match self.metrics.send(Err("stop")) {
+            Ok(_) => Ok(self.join_handle),
+            Err(x) => Err(format!("Unable to stop reporter {}", x)),
+        }
+    }
+    fn addl<S: Into<String>>(&mut self,
+                             name: S,
+                             metric: Metric,
+                             labels: Option<HashMap<String, String>>)
+                             -> Result<(), String> {
+        // Todo maybe do something about the labels
+        match self.metrics
+            .send(Ok(CarbonMetricEntry {
+                metric_name: name.into(),
+                metric: metric,
+            })) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to send metric reporter{}", x)),
+        }
     }
 }
 
-fn prefix(metric_line: String, prefix_str: &'static str) -> String {
+fn prefix(metric_line: String, prefix_str: &str) -> String {
     format!("{}.{}", prefix_str, metric_line)
 }
 
 fn send_meter_metric(metric_name: &str,
                      meter: MeterSnapshot,
                      carbon: &mut CarbonStream,
-                     prefix_str: &'static str,
+                     prefix_string: String,
                      ts: Timespec)
                      -> Result<(), Error> {
+    let prefix_str = &(*prefix_string);
 
     let count = meter.count.to_string();
     let m1_rate = meter.rates[0].to_string();
@@ -123,9 +144,10 @@ fn send_meter_metric(metric_name: &str,
 fn send_gauge_metric(metric_name: &str,
                      gauge: GaugeSnapshot,
                      carbon: &mut CarbonStream,
-                     prefix_str: &'static str,
+                     prefix_string: String,
                      ts: Timespec)
                      -> Result<(), Error> {
+    let prefix_str = &(*prefix_string);
     try!(carbon.write(prefix(format!("{}", metric_name), prefix_str),
                       gauge.value.to_string(),
                       ts));
@@ -135,9 +157,10 @@ fn send_gauge_metric(metric_name: &str,
 fn send_counter_metric(metric_name: &str,
                        counter: CounterSnapshot,
                        carbon: &mut CarbonStream,
-                       prefix_str: &'static str,
+                       prefix_string: String,
                        ts: Timespec)
                        -> Result<(), Error> {
+    let prefix_str = &(*prefix_string);
     try!(carbon.write(prefix(format!("{}", metric_name), prefix_str),
                       counter.value.to_string(),
                       ts));
@@ -146,12 +169,11 @@ fn send_counter_metric(metric_name: &str,
 fn send_histogram_metric(metric_name: &str,
                          histogram: &Histogram,
                          carbon: &mut CarbonStream,
-                         prefix_str: &'static str,
+                         prefix_string: String,
                          ts: Timespec)
                          -> Result<(), Error> {
+    let prefix_str = &(*prefix_string);
     let count = histogram.into_iter().count();
-    // let sum = histogram.sum();
-    // let mean = sum / count;
     let max = histogram.percentile(100.0).unwrap();
     let min = histogram.percentile(0.0).unwrap();
 
@@ -216,91 +238,83 @@ fn send_histogram_metric(metric_name: &str,
 }
 
 impl CarbonReporter {
-    pub fn new(reporter_name: &'static str,
-               host_and_port: &'static str,
-               prefix: &'static str,
-               aggregation_timer: u64)
-               -> Self {
+    pub fn new<S1: Into<String>, S2: Into<String>, S3: Into<String>>(reporter_name: S1,
+                                                                     host_and_port: S2,
+                                                                     prefix: S3,
+                                                                     aggregation_timer: u64)
+                                                                     -> Self {
         let (tx, rx) = mpsc::channel();
-        let mut carbon_reporter = CarbonReporter {
-            host_and_port: host_and_port,
+        let hp = host_and_port.into();
+        let pr = prefix.into();
+        let rn = reporter_name.into();
+
+        CarbonReporter {
             metrics: tx,
-            prefix: prefix,
-            reporter_name: reporter_name,
-        };
-        carbon_reporter.report_to_carbon_continuously(aggregation_timer, rx);
-        carbon_reporter
-    }
-
-    pub fn add(&mut self, metric_name: &'static str, metric: Metric) {
-        // TODO return error
-        self.metrics
-            .send(Ok(CarbonMetricEntry {
-                metric_name: metric_name,
-                metric: metric,
-            }))
-            .unwrap();
-    }
-
-    pub fn stop(&mut self) {
-        self.metrics.send(Err("stop")).unwrap();
-    }
-
-    fn report_to_carbon_continuously(&mut self,
-                                     delay_ms: u64,
-                                     rx: mpsc::Receiver<Result<CarbonMetricEntry, &'static str>>) {
-        let prefix = self.prefix;
-        let host_and_port = self.host_and_port.clone();
-        let mut carbon = CarbonStream::new(host_and_port);
-        thread::spawn(move || {
-            let mut stop = false;
-            while !stop {
-                let ts = time::now().to_timespec();
-                for entry in &rx {
-                    match entry {
-                        Ok(entry) => {
-                            let metric_name = &entry.metric_name;
-                            let metric = &entry.metric;
-                            match *metric {
-                                Metric::Meter(ref x) => {
-                                    send_meter_metric(metric_name,
-                                                      x.snapshot(),
-                                                      &mut carbon,
-                                                      prefix,
-                                                      ts)
-                                }
-                                Metric::Gauge(ref x) => {
-                                    send_gauge_metric(metric_name,
-                                                      x.snapshot(),
-                                                      &mut carbon,
-                                                      prefix,
-                                                      ts)
-                                }
-                                Metric::Counter(ref x) => {
-                                    send_counter_metric(metric_name,
-                                                        x.snapshot(),
-                                                        &mut carbon,
-                                                        prefix,
-                                                        ts)
-                                }
-                                Metric::Histogram(ref x) => {
-                                    send_histogram_metric(metric_name, &x, &mut carbon, prefix, ts)
-                                }
-                            };
-                            // TODO handle errors somehow
-                        }
-                        Err(e) => {
-                            println!("Stopping reporter because..:{}", e);
-                            stop = true;
-                        }
-                    }
-
-                    thread::sleep(Duration::from_millis(delay_ms));
-                }
-            }
-        });
+            reporter_name: rn.clone(),
+            join_handle: report_to_carbon_continuously(pr, hp, aggregation_timer, rx),
+        }
     }
 }
+fn report_to_carbon_continuously(prefix: String,
+                                 host_and_port: String,
+                                 delay_ms: u64,
+                                 rx: mpsc::Receiver<Result<CarbonMetricEntry, &'static str>>)
+                                 -> thread::JoinHandle<Result<(), String>> {
+    thread::spawn(move || {
+        let mut carbon = CarbonStream::new(host_and_port);
+        let mut stop = false;
+
+        while !stop {
+            let ts = time::now().to_timespec();
+
+            for entry in &rx {
+                match entry {
+                    Ok(entry) => {
+                        let metric_name = &entry.metric_name;
+                        let metric = &entry.metric;
+                        // Maybe one day we can do more to handle this failure
+                        match *metric {
+                            Metric::Meter(ref x) => {
+                                send_meter_metric(metric_name,
+                                                  x.snapshot(),
+                                                  &mut carbon,
+                                                  prefix.clone(),
+                                                  ts)
+                            }
+                            Metric::Gauge(ref x) => {
+                                send_gauge_metric(metric_name,
+                                                  x.snapshot(),
+                                                  &mut carbon,
+                                                  prefix.clone(),
+                                                  ts)
+                            }
+                            Metric::Counter(ref x) => {
+                                send_counter_metric(metric_name,
+                                                    x.snapshot(),
+                                                    &mut carbon,
+                                                    prefix.clone(),
+                                                    ts)
+                            }
+                            Metric::Histogram(ref x) => {
+                                send_histogram_metric(metric_name,
+                                                      &x,
+                                                      &mut carbon,
+                                                      prefix.clone(),
+                                                      ts)
+                            }
+                        };
+                        // TODO handle errors somehow
+                        thread::sleep(Duration::from_millis(delay_ms));
+                    }
+                    Err(_) => stop = true,
+                }
+            }
+        }
+        Ok(())
+    })
+}
+
+
 
 #[cfg(test)]
 mod test {
@@ -308,8 +322,7 @@ mod test {
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
     use std::net::TcpListener;
     use super::CarbonReporter;
-    use std::time::Duration;
-    use std::thread;
+    use reporter::Reporter;
 
     #[test]
     fn meter() {
@@ -337,6 +350,6 @@ mod test {
         reporter.add("counter1", Metric::Counter(c.clone()));
         reporter.add("gauge1", Metric::Gauge(g.clone()));
         reporter.add("histogram", Metric::Histogram(h));
-        reporter.stop();
+        reporter.stop().unwrap().join().unwrap().unwrap();
     }
 }

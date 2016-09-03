@@ -19,8 +19,23 @@ mod prometheus;
 
 #[cfg(feature = "prometheus")]
 pub use self::prometheus::PrometheusReporter;
+use std::thread::JoinHandle;
+use super::metrics::Metric;
+use std::collections::HashMap;
 
 // Todo create sync wrappers with mutexes.
+// Currently our only reporter runs as a seperate thread so stop returns its handler
+// In future versions we wont be so specific
 pub trait Reporter: Send {
-    fn get_unique_reporter_name(&self) -> &'static str;
+    fn get_unique_reporter_name(&self) -> &str;
+    fn stop(self) -> Result<JoinHandle<Result<(), String>>, String>;
+
+    fn addl<S: Into<String>>(&mut self,
+                             name: S,
+                             metric: Metric,
+                             labels: Option<HashMap<String, String>>)
+                             -> Result<(), String>;
+    fn add<S: Into<String>>(&mut self, name: S, metric: Metric) -> Result<(), String> {
+        self.addl(name, metric, None)
+    }
 }
