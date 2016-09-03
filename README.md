@@ -47,9 +47,13 @@ Contact us on #rust-metrics on Mozilla IRC.
 
 
 Add this to your `Cargo.toml`:
-
+push only
 ```toml
-"metrics" = "*"
+metrics =  { version="0.2.0" }
+```
+prometheus pull support
+```toml
+metrics =  { version="0.2.0", features=["prometheus"] }
 ```
 
 And add this to your crate root:
