@@ -55,27 +55,15 @@ impl CarbonStream {
                                   value: S,
                                   timespec: Timespec)
                                   -> Result<(), Error> {
-        let seconds_in_ms = (timespec.sec * 1000) as u32;
-        let nseconds_in_ms = (timespec.nsec / 1000) as u32;
-        let timestamp = seconds_in_ms + nseconds_in_ms;
-        match self.graphite_stream {
-            Some(ref mut stream) => {
-                let carbon_command =
-                    format!("{} {} {}\n", metric_path.into(), value.into(), timestamp).into_bytes();
-                try!(stream.write_all(&carbon_command));
-            }
-            None => {
-                try!(self.reconnect_stream());
-                try!(self.write(metric_path.into(), value.into(), timespec));
-            }
+        if self.graphite_stream.is_none() {
+            try!(self.connect());
+        }
+        if let Some(ref mut stream) = self.graphite_stream {
+            let carbon_command =
+                format!("{} {} {}\n", metric_path.into(), value.into(), timespec.sec).into_bytes();
+            try!(stream.write_all(&carbon_command));
         }
         Ok(())
-    }
-    fn reconnect_stream(&mut self) -> Result<(), Error> {
-        // TODO 123 is made up
-        println!("Waiting 123ms and then reconnecting");
-        thread::sleep(Duration::from_millis(123));
-        self.connect()
     }
 }
 
@@ -263,51 +251,57 @@ fn report_to_carbon_continuously(prefix: String,
     thread::spawn(move || {
         let mut carbon = CarbonStream::new(host_and_port);
         let mut stop = false;
+        let mut metrics = vec!();
 
         while !stop {
-            let ts = time::now().to_timespec();
-
-            for entry in &rx {
-                match entry {
-                    Ok(entry) => {
-                        let metric_name = &entry.metric_name;
-                        let metric = &entry.metric;
-                        // Maybe one day we can do more to handle this failure
-                        match *metric {
-                            Metric::Meter(ref x) => {
-                                send_meter_metric(metric_name,
-                                                  x.snapshot(),
-                                                  &mut carbon,
-                                                  prefix.clone(),
-                                                  ts)
-                            }
-                            Metric::Gauge(ref x) => {
-                                send_gauge_metric(metric_name,
-                                                  x.snapshot(),
-                                                  &mut carbon,
-                                                  prefix.clone(),
-                                                  ts)
-                            }
-                            Metric::Counter(ref x) => {
-                                send_counter_metric(metric_name,
-                                                    x.snapshot(),
-                                                    &mut carbon,
-                                                    prefix.clone(),
-                                                    ts)
-                            }
-                            Metric::Histogram(ref x) => {
-                                send_histogram_metric(metric_name,
-                                                      &x,
-                                                      &mut carbon,
-                                                      prefix.clone(),
-                                                      ts)
-                            }
-                        };
-                        // TODO handle errors somehow
-                        thread::sleep(Duration::from_millis(delay_ms));
-                    }
+            while let Ok(msg) = rx.try_recv() {
+                match msg {
+                    Ok(metric) => metrics.push(metric),
                     Err(_) => stop = true,
                 }
+            }
+            let ts = time::get_time();
+            let delay_ms = delay_ms as i64;
+            let next_tick_ms = (ts.sec * 1000 / delay_ms + 1) * delay_ms;
+            let next_tick = Timespec {
+                sec: (next_tick_ms / 1000),
+                nsec: ((next_tick_ms % 1000) * 1_000_000) as i32,
+            };
+            thread::sleep((next_tick - time::get_time()).to_std().unwrap());
+            for entry in &metrics {
+                let metric_name = &entry.metric_name;
+                let metric = &entry.metric;
+                // Maybe one day we can do more to handle this failure
+                match *metric {
+                    Metric::Meter(ref x) => {
+                        send_meter_metric(metric_name,
+                                          x.snapshot(),
+                                          &mut carbon,
+                                          prefix.clone(),
+                                          ts)
+                    }
+                    Metric::Gauge(ref x) => {
+                        send_gauge_metric(metric_name,
+                                          x.snapshot(),
+                                          &mut carbon,
+                                          prefix.clone(),
+                                          ts)
+                    }
+                    Metric::Counter(ref x) => {
+                        send_counter_metric(metric_name,
+                                            x.snapshot(),
+                                            &mut carbon,
+                                            prefix.clone(),
+                                            ts)
+                    }
+                    Metric::Histogram(ref x) => {
+                        send_histogram_metric(metric_name,
+                                              &x,
+                                              &mut carbon,
+                                              prefix.clone(),
+                                              ts)
+                    }
+                };
             }
         }
         Ok(())
