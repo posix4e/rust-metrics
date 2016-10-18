@@ -262,12 +262,12 @@ fn report_to_carbon_continuously(prefix: String,
             }
             let ts = time::get_time();
             let delay_ms = delay_ms as i64;
-            let next_tick_ms = (ts.sec * 1000 / delay_ms + 1) * delay_ms;
+            let next_tick_ms = ((ts.sec * 1000 + ts.nsec as i64 / 1_000_000)/ delay_ms + 1) * delay_ms;
             let next_tick = Timespec {
                 sec: (next_tick_ms / 1000),
                 nsec: ((next_tick_ms % 1000) * 1_000_000) as i32,
             };
-            thread::sleep((next_tick - time::get_time()).to_std().unwrap());
+            thread::sleep((next_tick - ts).to_std().unwrap());
             for entry in &metrics {
                 let metric_name = &entry.metric_name;
                 let metric = &entry.metric;
