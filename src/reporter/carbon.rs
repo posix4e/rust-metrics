@@ -5,7 +5,6 @@
 // except according to those terms.
 
 // CarbonReporter sends a message to a carbon end point at a regular basis.
-use std::time::Duration;
 use std::thread;
 use reporter::Reporter;
 use metrics::{CounterSnapshot, GaugeSnapshot, MeterSnapshot, Metric};
@@ -80,7 +79,7 @@ impl Reporter for CarbonReporter {
     fn addl<S: Into<String>>(&mut self,
                              name: S,
                              metric: Metric,
-                             labels: Option<HashMap<String, String>>)
+                             _labels: Option<HashMap<String, String>>)
                              -> Result<(), String> {
         // Todo maybe do something about the labels
         match self.metrics
@@ -272,7 +271,7 @@ fn report_to_carbon_continuously(prefix: String,
                 let metric_name = &entry.metric_name;
                 let metric = &entry.metric;
                 // Maybe one day we can do more to handle this failure
-                match *metric {
+                let result = match *metric {
                     Metric::Meter(ref x) => {
                         send_meter_metric(metric_name,
                                           x.snapshot(),
@@ -302,6 +301,10 @@ fn report_to_carbon_continuously(prefix: String,
                                               ts)
                     }
                 };
+                // if an error happens, just stop and wait for next loop.
+                if let Err(_) = result {
+                    break;
+                }
             }
         }
         Ok(())
@@ -314,12 +317,18 @@ fn report_to_carbon_continuously(prefix: String,
 mod test {
     use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
+    use std::collections::HashSet;
+    use std::io::BufRead;
+    use std::io::BufReader;
     use std::net::TcpListener;
+    use std::thread;
+    use std::time::Duration;
     use super::CarbonReporter;
     use reporter::Reporter;
+    use time;
 
     #[test]
-    fn meter() {
+    fn reporter() {
         let m = StdMeter::new();
         m.mark(100);
 
@@ -337,13 +346,39 @@ mod test {
 
         h.increment_by(1, 1).unwrap();
 
-        let test_port = "127.0.0.1:34254";
-        let listener = TcpListener::bind(test_port).unwrap();
-        let mut reporter = CarbonReporter::new("test", test_port, "asd.asdf", 1024);
-        reporter.add("meter1", Metric::Meter(m.clone()));
-        reporter.add("counter1", Metric::Counter(c.clone()));
-        reporter.add("gauge1", Metric::Gauge(g.clone()));
-        reporter.add("histogram", Metric::Histogram(h));
+        let test_host_and_port = "127.0.0.1:34254";
+        let listener = TcpListener::bind(test_host_and_port).unwrap();
+        let mut reporter = CarbonReporter::new("test", test_host_and_port, "asd.asdf", 1000);
+        reporter.add("meter1", Metric::Meter(m.clone())).unwrap();
+        reporter.add("counter1", Metric::Counter(c.clone())).unwrap();
+        reporter.add("gauge1", Metric::Gauge(g.clone())).unwrap();
+        reporter.add("histogram", Metric::Histogram(h)).unwrap();
+
+        let stream = listener.incoming().next().expect("client did not show up").unwrap();
+        let buffer = BufReader::new(stream);
+        thread::sleep(Duration::from_secs(2));
         reporter.stop().unwrap().join().unwrap().unwrap();
+
+        let lines:Vec<String> = buffer.lines().map(|l| l.unwrap()).collect();
+        let now = time::get_time();
+
+        // graphite protocol is: "prefix.and.value.name <value> <tm is secs>\n"
+        for line in &lines {
+            let line = line.to_string();
+            let tokens:Vec<&str> = line.split(" ").collect();
+            assert_eq!(tokens.len(), 3);
+
+            assert!(tokens[1].parse::<f64>().is_ok());
+
+            let ts:isize = tokens[2].parse().unwrap();
+            assert!((ts-now.sec as isize).abs() < 10);
+        }
+
+        let metrics_seen:HashSet<String> = lines.iter().map(|x| x.split(" ").next().unwrap().into()).collect();
+        assert!(metrics_seen.iter().all(|m| m.starts_with("asd.asdf")));
+        assert!(metrics_seen.contains("asd.asdf.gauge1"));
+        assert!(metrics_seen.contains("asd.asdf.counter1"));
+        assert!(metrics_seen.contains("asd.asdf.meter1.count"));
+        assert!(metrics_seen.contains("asd.asdf.histogram.p95"));
     }
 }
