@@ -26,6 +26,12 @@ use std::collections::HashMap;
 // Todo create sync wrappers with mutexes.
 // Currently our only reporter runs as a seperate thread so stop returns its handler
 // In future versions we wont be so specific
+
+enum ReporterMsg {
+    AddMetric(String, Metric, Option<HashMap<String, String>>),
+    RemoveMetric(String),
+}
+
 pub trait Reporter: Send {
     fn get_unique_reporter_name(&self) -> &str;
     fn stop(self) -> Result<JoinHandle<Result<(), String>>, String>;
@@ -35,6 +41,9 @@ pub trait Reporter: Send {
                              metric: Metric,
                              labels: Option<HashMap<String, String>>)
                              -> Result<(), String>;
+    // This will be added once it is implemented for prometheus
+    // fn remove <S: Into<String>>(&mut self, name: S) -> Result<(), String>;
+
     fn add<S: Into<String>>(&mut self, name: S, metric: Metric) -> Result<(), String> {
         self.addl(name, metric, None)
     }

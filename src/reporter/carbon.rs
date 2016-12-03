@@ -6,7 +6,7 @@
 
 // CarbonReporter sends a message to a carbon end point at a regular basis.
 use std::thread;
-use reporter::Reporter;
+use reporter::{Reporter, ReporterMsg};
 use metrics::{CounterSnapshot, GaugeSnapshot, MeterSnapshot, Metric};
 use histogram::Histogram;
 use time;
@@ -30,7 +30,7 @@ struct CarbonStream {
 // TODO perhaps we autodiscover the host and port
 //
 pub struct CarbonReporter {
-    metrics: mpsc::Sender<Result<CarbonMetricEntry, &'static str>>,
+    metrics: mpsc::Sender<Result<ReporterMsg, &'static str>>,
     reporter_name: String,
     join_handle: thread::JoinHandle<Result<(), String>>,
 }
@@ -58,8 +58,11 @@ impl CarbonStream {
             try!(self.connect());
         }
         if let Some(ref mut stream) = self.graphite_stream {
-            let carbon_command =
-                format!("{} {} {}\n", metric_path.into(), value.into(), timespec.sec).into_bytes();
+            let carbon_command = format!("{} {} {}\n",
+                                         metric_path.into(),
+                                         value.into(),
+                                         timespec.sec)
+                                     .into_bytes();
             try!(stream.write_all(&carbon_command));
         }
         Ok(())
@@ -83,10 +86,7 @@ impl Reporter for CarbonReporter {
                              -> Result<(), String> {
         // Todo maybe do something about the labels
         match self.metrics
-            .send(Ok(CarbonMetricEntry {
-                metric_name: name.into(),
-                metric: metric,
-            })) {
+                  .send(Ok(ReporterMsg::AddMetric(name.into(), metric, None))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to send metric reporter{}", x)),
         }
@@ -241,33 +241,51 @@ impl CarbonReporter {
             join_handle: report_to_carbon_continuously(pr, hp, aggregation_timer, rx),
         }
     }
+
+    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
+        match self.metrics
+                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to remove metric {}", x)),
+        }
+    }
 }
 fn report_to_carbon_continuously(prefix: String,
                                  host_and_port: String,
                                  delay_ms: u64,
-                                 rx: mpsc::Receiver<Result<CarbonMetricEntry, &'static str>>)
+                                 rx: mpsc::Receiver<Result<ReporterMsg, &'static str>>)
                                  -> thread::JoinHandle<Result<(), String>> {
     thread::spawn(move || {
         let mut carbon = CarbonStream::new(host_and_port);
         let mut stop = false;
-        let mut metrics = vec!();
+        let mut metrics = HashMap::new();
 
         while !stop {
             while let Ok(msg) = rx.try_recv() {
                 match msg {
-                    Ok(metric) => metrics.push(metric),
+                    Ok(ReporterMsg::AddMetric(name, metric, _)) => {
+                        metrics.insert(name.clone(),
+                                       CarbonMetricEntry {
+                                           metric_name: name,
+                                           metric: metric,
+                                       });
+                    }
+                    Ok(ReporterMsg::RemoveMetric(name)) => {
+                        metrics.remove(&name);
+                    }
                     Err(_) => stop = true,
                 }
             }
             let ts = time::get_time();
             let delay_ms = delay_ms as i64;
-            let next_tick_ms = ((ts.sec * 1000 + ts.nsec as i64 / 1_000_000)/ delay_ms + 1) * delay_ms;
+            let next_tick_ms = ((ts.sec * 1000 + ts.nsec as i64 / 1_000_000) / delay_ms + 1) *
+                               delay_ms;
             let next_tick = Timespec {
                 sec: (next_tick_ms / 1000),
                 nsec: ((next_tick_ms % 1000) * 1_000_000) as i32,
             };
             thread::sleep((next_tick - ts).to_std().unwrap());
-            for entry in &metrics {
+            for (_, entry) in &metrics {
                 let metric_name = &entry.metric_name;
                 let metric = &entry.metric;
                 // Maybe one day we can do more to handle this failure
@@ -294,11 +312,7 @@ fn report_to_carbon_continuously(prefix: String,
                                             ts)
                     }
                     Metric::Histogram(ref x) => {
-                        send_histogram_metric(metric_name,
-                                              &x,
-                                              &mut carbon,
-                                              prefix.clone(),
-                                              ts)
+                        send_histogram_metric(metric_name, &x, &mut carbon, prefix.clone(), ts)
                     }
                 };
                 // if an error happens, just stop and wait for next loop.
@@ -309,6 +323,8 @@ fn report_to_carbon_continuously(prefix: String,
         }
         Ok(())
     })
+
+
 }
 
 
@@ -339,10 +355,10 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-            .max_value(100)
-            .precision(1)
-            .build()
-            .unwrap();
+                        .max_value(100)
+                        .precision(1)
+                        .build()
+                        .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
@@ -350,6 +366,8 @@ mod test {
         let listener = TcpListener::bind(test_host_and_port).unwrap();
         let mut reporter = CarbonReporter::new("test", test_host_and_port, "asd.asdf", 1000);
         reporter.add("meter1", Metric::Meter(m.clone())).unwrap();
+        reporter.add("meter2", Metric::Meter(m.clone())).unwrap();
+        reporter.remove("meter2").unwrap();
         reporter.add("counter1", Metric::Counter(c.clone())).unwrap();
         reporter.add("gauge1", Metric::Gauge(g.clone())).unwrap();
         reporter.add("histogram", Metric::Histogram(h)).unwrap();
@@ -359,26 +377,29 @@ mod test {
         thread::sleep(Duration::from_secs(2));
         reporter.stop().unwrap().join().unwrap().unwrap();
 
-        let lines:Vec<String> = buffer.lines().map(|l| l.unwrap()).collect();
+        let lines: Vec<String> = buffer.lines().map(|l| l.unwrap()).collect();
         let now = time::get_time();
 
         // graphite protocol is: "prefix.and.value.name <value> <tm is secs>\n"
         for line in &lines {
             let line = line.to_string();
-            let tokens:Vec<&str> = line.split(" ").collect();
+            let tokens: Vec<&str> = line.split(" ").collect();
             assert_eq!(tokens.len(), 3);
 
             assert!(tokens[1].parse::<f64>().is_ok());
 
-            let ts:isize = tokens[2].parse().unwrap();
-            assert!((ts-now.sec as isize).abs() < 10);
+            let ts: isize = tokens[2].parse().unwrap();
+            assert!((ts - now.sec as isize).abs() < 10);
         }
 
-        let metrics_seen:HashSet<String> = lines.iter().map(|x| x.split(" ").next().unwrap().into()).collect();
+        let metrics_seen: HashSet<String> = lines.iter()
+                                                 .map(|x| x.split(" ").next().unwrap().into())
+                                                 .collect();
         assert!(metrics_seen.iter().all(|m| m.starts_with("asd.asdf")));
         assert!(metrics_seen.contains("asd.asdf.gauge1"));
         assert!(metrics_seen.contains("asd.asdf.counter1"));
         assert!(metrics_seen.contains("asd.asdf.meter1.count"));
         assert!(metrics_seen.contains("asd.asdf.histogram.p95"));
+        assert!(!metrics_seen.contains("asd.asdf.meter2.count"));
     }
 }
