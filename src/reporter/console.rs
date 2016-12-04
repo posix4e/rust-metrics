@@ -5,14 +5,14 @@
 // except according to those terms.
 
 use metrics::Metric;
-use reporter::Reporter;
+use reporter::{Reporter, ReporterMsg};
 use std::time::Duration;
 use std::thread;
 use std::sync::mpsc;
 use std::collections::HashMap;
 
 pub struct ConsoleReporter {
-    metrics: mpsc::Sender<Result<(String, Metric, Option<HashMap<String, String>>), &'static str>>,
+    metrics: mpsc::Sender<Result<ReporterMsg, &'static str>>,
     reporter_name: String,
     join_handle: thread::JoinHandle<Result<(), String>>,
 }
@@ -32,7 +32,7 @@ impl Reporter for ConsoleReporter {
                              metric: Metric,
                              labels: Option<HashMap<String, String>>)
                              -> Result<(), String> {
-        match self.metrics.send(Ok((name.into(), metric, labels))) {
+        match self.metrics.send(Ok(ReporterMsg::AddMetric(name.into(), metric, labels))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to send metric reporter{}", x)),
         }
@@ -50,7 +50,7 @@ impl ConsoleReporter {
                 while !stop {
                     for metric in &rx {
                         match metric {
-                            Ok((name, metric, labels)) => {
+                            Ok(ReporterMsg::AddMetric(name, metric, labels)) => {
                                 println!("name: {} labels: {:?}", name, labels);
                                 match metric {
                                     Metric::Meter(ref x) => {
@@ -67,6 +67,10 @@ impl ConsoleReporter {
                                     }
                                 }
                             }
+                            Ok(ReporterMsg::RemoveMetric(name)) => {
+
+                                println!("Remove metric {}", name);
+                            }
                             // Todo log the error somehow
                             Err(e) => {
                                 println!("Stopping reporter because..:{}", e);
@@ -78,6 +82,13 @@ impl ConsoleReporter {
                 }
                 Ok(())
             }),
+        }
+    }
+    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
+        match self.metrics
+                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to remove metric reporter{}", x)),
         }
     }
 }
@@ -104,10 +115,10 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-            .max_value(100)
-            .precision(1)
-            .build()
-            .unwrap();
+                        .max_value(100)
+                        .precision(1)
+                        .build()
+                        .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
@@ -116,6 +127,7 @@ mod test {
         reporter.add("clone", Metric::Counter(c.clone()));
         reporter.add("gauge", Metric::Gauge(g.clone()));
         reporter.add("histo", Metric::Histogram(h));
+        reporter.remove("histo");
         g.set(4);
         reporter.stop().unwrap().join().unwrap().unwrap();
     }

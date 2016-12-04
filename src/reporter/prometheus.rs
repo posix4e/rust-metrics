@@ -202,10 +202,10 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-            .max_value(100)
-            .precision(1)
-            .build()
-            .unwrap();
+                        .max_value(100)
+                        .precision(1)
+                        .build()
+                        .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
