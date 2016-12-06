@@ -1,6 +1,6 @@
 [package]
 name = "prometheus_reporter"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Alex Newman <posix4e@gmail.com>"]
 description = "Prometheus support for rust"
 
