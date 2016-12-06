@@ -117,8 +117,9 @@ impl PrometheusReporter {
 
                     let mut hasher = DefaultHasher::new();
                     metric_name_to_remove.hash(&mut hasher);
-                    cache.remove(&hasher.finish());
-                    counter = counter + 1;
+                    if let Some(_) = cache.remove(&hasher.finish()) {
+                        counter = counter + 1;
+                    }
                 }
                 Ok(counter)
             }
@@ -138,9 +139,14 @@ mod test {
     use std::io::Read;
     use super::*;
 
+    fn a_metric_family_name() -> String {
+       "MetricFamily".to_string()
+    }
+    
+ 
     fn a_metric_family() -> promo_proto::MetricFamily {
         let mut family = promo_proto::MetricFamily::new();
-        family.set_name("MetricFamily".to_string());
+        family.set_name(a_metric_family_name());
         family.set_help("Help".to_string());
         family.set_field_type(promo_proto::MetricType::GAUGE);
 
@@ -186,4 +192,18 @@ mod test {
         println!("{:?} size:{} ", buffer, size_of_buffer);
         assert_eq!(size_of_buffer, 53);
     }
+
+    #[test]
+    fn add_and_remove_metric() {
+        let mut reporter = PrometheusReporter::new("0.0.0.0:8081");
+        thread::sleep(Duration::from_millis(1024));
+        reporter.add(vec![a_metric_family()]);
+        if let Ok(number_removed) = reporter.remove(vec![a_metric_family_name()]) {
+           assert_eq!(number_removed, 1);
+        }
+        if let Ok(number_removed) = reporter.remove(vec![a_metric_family_name()]) {
+           assert_eq!(number_removed, 0);
+        }
+    }
+
 }
