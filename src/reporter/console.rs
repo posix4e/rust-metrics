@@ -37,6 +37,13 @@ impl Reporter for ConsoleReporter {
             Err(x) => Err(format!("Unable to send metric reporter{}", x)),
         }
     }
+    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
+        match self.metrics
+                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to remove metric reporter{}", x)),
+        }
+    }
 }
 
 impl ConsoleReporter {
@@ -82,13 +89,6 @@ impl ConsoleReporter {
                 }
                 Ok(())
             }),
-        }
-    }
-    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
-        match self.metrics
-                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
-            Ok(_) => Ok(()),
-            Err(x) => Err(format!("Unable to remove metric reporter{}", x)),
         }
     }
 }

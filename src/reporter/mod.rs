@@ -42,7 +42,7 @@ pub trait Reporter: Send {
                              labels: Option<HashMap<String, String>>)
                              -> Result<(), String>;
     // This will be added once it is implemented for prometheus
-    // fn remove <S: Into<String>>(&mut self, name: S) -> Result<(), String>;
+    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String>;
 
     fn add<S: Into<String>>(&mut self, name: S, metric: Metric) -> Result<(), String> {
         self.addl(name, metric, None)
