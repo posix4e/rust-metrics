@@ -26,6 +26,8 @@ use lru_cache::LruCache;
 use protobuf::Message;
 use std::sync::{Arc, RwLock};
 use std::thread;
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 
 // http handler storage
 #[derive(Copy, Clone)]
@@ -37,14 +39,11 @@ const CONTENT_TYPE: &'static str = "application/vnd.google.protobuf; \
                                     encoding=delimited";
 
 impl Key for HandlerStorage {
-    type Value = Arc<RwLock<LruCache<i64, promo_proto::MetricFamily>>>;
+    type Value = Arc<RwLock<LruCache<u64, promo_proto::MetricFamily>>>;
 }
 
-fn get_seconds() -> i64 {
-    time::now().to_timespec().sec
-}
 
-fn families_to_u8(metric_families: Vec<(&i64, &promo_proto::MetricFamily)>) -> Vec<u8> {
+fn families_to_u8(metric_families: Vec<(&u64, &promo_proto::MetricFamily)>) -> Vec<u8> {
     let mut buf = Vec::new();
     for (_, family) in metric_families {
         family.write_length_delimited_to_writer(&mut buf).unwrap();
@@ -67,7 +66,7 @@ fn handler(req: &mut Request) -> IronResult<Response> {
 
 // TODO perhaps we autodiscover the host and port
 pub struct PrometheusReporter {
-    cache: Arc<RwLock<LruCache<i64, promo_proto::MetricFamily>>>
+    cache: Arc<RwLock<LruCache<u64, promo_proto::MetricFamily>>>
 }
 
 impl PrometheusReporter {
@@ -92,17 +91,39 @@ impl PrometheusReporter {
     }
     // TODO require start before add
     pub fn add(&mut self, metric_families: Vec<promo_proto::MetricFamily>) -> Result<i64, String> {
-        let ts = get_seconds();
+        
         match self.cache.write() {
             Ok(mut cache) => {
                 let mut counter = 0;
                 for metric_family in metric_families {
-                    cache.insert(ts, metric_family);
+
+                    let mut hasher = DefaultHasher::new();
+                    metric_family.get_name().hash(&mut hasher);
+                    cache.insert(hasher.finish(), metric_family);
                     counter = counter + 1;
                 }
                 Ok(counter)
             }
             Err(y) => Err(format!("Unable to add {}", y)),
+        }
+    }
+
+    pub fn remove(&mut self, metrics_to_remove: Vec<String>) -> Result<i64, String> {
+        let mut hasher = DefaultHasher::new();
+        match self.cache.write() {
+            Ok(mut cache) => {
+                let mut counter = 0;
+                for metric_name_to_remove in metrics_to_remove {
+
+                    let mut hasher = DefaultHasher::new();
+                    metric_name_to_remove.hash(&mut hasher);
+                    if let Some(_) = cache.remove(&hasher.finish()) {
+                        counter = counter + 1;
+                    }
+                }
+                Ok(counter)
+            }
+            Err(y) => Err(format!("Unable to remove {}", y)),
         }
     }
 }
@@ -118,9 +139,14 @@ mod test {
     use std::io::Read;
     use super::*;
 
+    fn a_metric_family_name() -> String {
+       "MetricFamily".to_string()
+    }
+    
+ 
     fn a_metric_family() -> promo_proto::MetricFamily {
         let mut family = promo_proto::MetricFamily::new();
-        family.set_name("MetricFamily".to_string());
+        family.set_name(a_metric_family_name());
         family.set_help("Help".to_string());
         family.set_field_type(promo_proto::MetricType::GAUGE);
 
@@ -166,4 +192,18 @@ mod test {
         println!("{:?} size:{} ", buffer, size_of_buffer);
         assert_eq!(size_of_buffer, 53);
     }
+
+    #[test]
+    fn add_and_remove_metric() {
+        let mut reporter = PrometheusReporter::new("0.0.0.0:8081");
+        thread::sleep(Duration::from_millis(1024));
+        reporter.add(vec![a_metric_family()]);
+        if let Ok(number_removed) = reporter.remove(vec![a_metric_family_name()]) {
+           assert_eq!(number_removed, 1);
+        }
+        if let Ok(number_removed) = reporter.remove(vec![a_metric_family_name()]) {
+           assert_eq!(number_removed, 0);
+        }
+    }
+
 }
