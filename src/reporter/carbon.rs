@@ -91,6 +91,13 @@ impl Reporter for CarbonReporter {
             Err(x) => Err(format!("Unable to send metric reporter{}", x)),
         }
     }
+    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
+        match self.metrics
+                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to remove metric {}", x)),
+        }
+    }
 }
 
 fn prefix(metric_line: String, prefix_str: &str) -> String {
@@ -239,14 +246,6 @@ impl CarbonReporter {
             metrics: tx,
             reporter_name: rn.clone(),
             join_handle: report_to_carbon_continuously(pr, hp, aggregation_timer, rx),
-        }
-    }
-
-    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
-        match self.metrics
-                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
-            Ok(_) => Ok(()),
-            Err(x) => Err(format!("Unable to remove metric {}", x)),
         }
     }
 }

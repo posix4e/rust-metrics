@@ -1,6 +1,6 @@
 [package]
 name = "metrics"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Endre Karlson <endre.karlson@gmail.com>", "Alex Newman <posix4e@gmail.com>"]
 description = "Coda Hale style metrics for rust"
 
@@ -18,7 +18,7 @@ prometheus = [ "prometheus_reporter", "protobuf" ]
 time = "0.1.35"
 histogram =  "0.6.1"
 log = "0.3.6"
-prometheus_reporter = { version = "0.0.1" , optional = true }
+prometheus_reporter = { version = "0.0.2" , optional = true }
 protobuf = { version="1.0.23", optional = true }
 
 [dev-dependencies]

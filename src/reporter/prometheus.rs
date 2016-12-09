@@ -18,7 +18,7 @@ use metrics::Metric;
 use time;
 use std::collections::HashMap;
 use std::sync::mpsc;
-use reporter::Reporter;
+use reporter::{Reporter, ReporterMsg};
 use self::protobuf::repeated::RepeatedField;
 
 struct PrometheusMetricEntry {
@@ -31,7 +31,7 @@ struct PrometheusMetricEntry {
 //
 pub struct PrometheusReporter {
     reporter_name: &'static str,
-    tx: mpsc::Sender<Result<PrometheusMetricEntry, &'static str>>,
+    tx: mpsc::Sender<Result<ReporterMsg, &'static str>>,
     join_handle: thread::JoinHandle<Result<(), String>>,
 }
 impl Reporter for PrometheusReporter {
@@ -51,13 +51,17 @@ impl Reporter for PrometheusReporter {
                              -> Result<(), String> {
         // TODO return error
         let ref mut tx = &self.tx;
-        match tx.send(Ok(PrometheusMetricEntry {
-            name: name.into(),
-            metric: metric,
-            labels: labels.unwrap_or(HashMap::new()),
-        })) {
+        match tx.send(Ok(ReporterMsg::AddMetric(name.into(), metric, labels))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to stop reporter: {}", x)),
+        }
+    }
+
+    fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
+        match self.tx
+                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            Ok(_) => Ok(()),
+            Err(x) => Err(format!("Unable to remove metric {}", x)),
         }
     }
 }
@@ -75,8 +79,9 @@ impl PrometheusReporter {
                     match collect_to_send(&rx) {
                         // Unwraping is always dangerouns. In this case our prometheus reporter is
                         // overwhelmed by metrics
-                        Ok(metrics) => {
-                            try!(prometheus_reporter.add(metrics));
+                        Ok((metrics_to_add, metrics_to_remove)) => {
+                            try!(prometheus_reporter.add(metrics_to_add));
+                            try!(prometheus_reporter.remove(metrics_to_remove));
                         }
                         Err(_) => stop = true,
                     }
@@ -137,19 +142,31 @@ fn make_metric(metric: &Metric,
     }
 }
 
-fn collect_to_send(metric_entries: &mpsc::Receiver<Result<PrometheusMetricEntry, &'static str>>)
-                   -> Result<Vec<promo_proto::MetricFamily>, &'static str> {
-    let mut entries_group = HashMap::<String, Vec<PrometheusMetricEntry>>::new();
-
+fn collect_to_send(metric_msgs: &mpsc::Receiver<Result<ReporterMsg, &'static str>>)
+                   -> Result<(Vec<promo_proto::MetricFamily>, Vec<String>), &'static str> {
+    let mut add_entries_group = HashMap::<String, Vec<PrometheusMetricEntry>>::new();
+    let mut remove_entries = Vec::<String>::new();
     // Group them by name TODO we should include tags and types in the grouping
-    for _entry in metric_entries {
-        let entry = try!(_entry);
-        let name = entry.name.clone();
-        let mut entries = entries_group.remove(&name).unwrap_or(vec![]);
-        entries.push(entry);
-        entries_group.insert(name, entries);
+    for msg in metric_msgs {
+        match msg {
+            Ok(ReporterMsg::AddMetric(name, metric, labels)) => {
+                let entry = PrometheusMetricEntry {
+                    name: name,
+                    metric: metric,
+                    labels: labels.unwrap_or(HashMap::new()),
+                };
+                let name = entry.name.clone();
+                let mut entries = add_entries_group.remove(&name).unwrap_or(vec![]);
+                entries.push(entry);
+                add_entries_group.insert(name, entries);
+            }
+            Ok(ReporterMsg::RemoveMetric(name)) => {
+                remove_entries.push(name);
+            }
+            Err(x) => return Err(x),
+        }
     }
-    Ok(metric_entries_to_family(entries_group))
+    Ok((metric_entries_to_family(add_entries_group), remove_entries))
 
 }
 

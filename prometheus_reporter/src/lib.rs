@@ -109,7 +109,6 @@ impl PrometheusReporter {
     }
 
     pub fn remove(&mut self, metrics_to_remove: Vec<String>) -> Result<i64, String> {
-        let mut hasher = DefaultHasher::new();
         match self.cache.write() {
             Ok(mut cache) => {
                 let mut counter = 0;
