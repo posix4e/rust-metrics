@@ -15,13 +15,13 @@ license = "MIT/Apache-2.0"
 prometheus = [ "prometheus_reporter", "protobuf" ]
 
 [dependencies]
-time = "0.1.35"
-histogram =  "0.6.1"
+time = "0.1.36"
+histogram =  "0.6.4"
 log = "0.3.6"
 prometheus_reporter = { version = "0.0.2" , optional = true }
-protobuf = { version="1.0.23", optional = true }
+protobuf = { version="1.2.2", optional = true }
 
 [dev-dependencies]
 # Our example is a webserver hence iron and hyper
-iron = { version="0.3.0"}
-hyper =  { version="0.9.9" }
+iron = { version="0.5.1"}
+hyper =  { version="0.10.5" }
