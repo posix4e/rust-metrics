@@ -113,7 +113,13 @@ impl StdMeter {
         }
 
         let diff = get_time() - self.start;
-        s.mean = s.count as f64 / diff.num_seconds() as f64;
+        let num_secs = diff.num_seconds();
+        if num_secs == 0 {
+            s.mean = 0.
+        } else {
+            s.mean = s.count as f64 / num_secs as f64;
+        }
+
     }
 
     pub fn new() -> Arc<Self> {

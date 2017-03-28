@@ -28,10 +28,10 @@ fn main() {
         h.increment_by(1, 1).unwrap();
 
         let mut reporter = ConsoleReporter::new("test",100);
-        reporter.add("meter",Metric::Meter(m.clone()));
-        reporter.add("counter",Metric::Counter(c.clone()));
-        reporter.add("guage",Metric::Gauge(g.clone()));
-        reporter.add("histo",Metric::Histogram(h));
+        let _ = reporter.add("meter",Metric::Meter(m.clone()));
+        let _ = reporter.add("counter",Metric::Counter(c.clone()));
+        let _ = reporter.add("guage",Metric::Gauge(g.clone()));
+        let _ = reporter.add("histo",Metric::Histogram(h));
         loop {
             c.inc()
         }
