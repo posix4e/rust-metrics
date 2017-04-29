@@ -123,7 +123,13 @@ impl StdMeter {
     }
 
     pub fn new() -> Arc<Self> {
-        Arc::new(StdMeter {
+        Arc::new(Self::default())
+    }
+}
+
+impl Default for StdMeter {
+    fn default() -> Self {
+        StdMeter {
             data: Mutex::new(StdMeterData {
                 count: 0,
                 rates: [0.0, 0.0, 0.0],
@@ -131,7 +137,7 @@ impl StdMeter {
                 ewma: [EWMA::new(1.0), EWMA::new(5.0), EWMA::new(15.0)],
             }),
             start: get_time(),
-        })
+        }
     }
 }
 

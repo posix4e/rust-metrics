@@ -71,7 +71,13 @@ impl Gauge for StdGauge {
 impl StdGauge {
     /// Create a new `StdGauge`.
     pub fn new() -> Arc<Self> {
-        Arc::new(StdGauge { value: AtomicIsize::new(0) })
+        Arc::new(Self::default())
+    }
+}
+
+impl Default for StdGauge {
+    fn default() -> Self {
+        StdGauge { value: AtomicIsize::new(0) }
     }
 }
 
