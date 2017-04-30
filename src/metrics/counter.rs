@@ -56,7 +56,13 @@ impl Counter for StdCounter {
 impl StdCounter {
     /// Create a new `StdCounter`.
     pub fn new() -> Arc<Self> {
-        Arc::new(StdCounter { value: AtomicUsize::new(0) })
+        Arc::new(Self::default())
+    }
+}
+
+impl Default for StdCounter {
+    fn default() -> Self {
+        StdCounter { value: AtomicUsize::new(0) }
     }
 }
 
