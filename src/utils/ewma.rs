@@ -4,8 +4,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+/// The rate in seconds at which `EWMA::tick` should be called.
+pub const TICK_RATE_SECS: u64 = 5;
+const NANOS_PER_SEC: u64 = 1_000_000_000;
 
 /// An exponentially weighted moving average.
 #[allow(missing_docs)]
@@ -13,7 +16,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 pub struct EWMA {
     uncounted: AtomicUsize, // This tracks uncounted events
     alpha: f64,
-    rate: Mutex<f64>,
+    rate: f64,
     init: bool,
 }
 
@@ -32,9 +35,7 @@ impl EWMASnapshot {
 #[allow(missing_docs)]
 impl EWMA {
     pub fn rate(&self) -> f64 {
-        let r = self.rate.lock().unwrap();
-
-        *r * (1.0e9)
+        self.rate * (NANOS_PER_SEC as f64)
     }
 
     pub fn snapshot(&self) -> EWMASnapshot {
@@ -42,18 +43,14 @@ impl EWMA {
     }
 
     pub fn tick(&mut self) {
-        let counter: usize = self.uncounted.load(Ordering::SeqCst);
-
-        self.uncounted.fetch_sub(counter, Ordering::SeqCst); // Broken atm
-
-        let mut rate = self.rate.lock().unwrap();
-        let i_rate = (counter as f64) / (5e9);
+        let counter = self.uncounted.swap(0, Ordering::SeqCst);
+        let i_rate = (counter as f64) / (TICK_RATE_SECS * NANOS_PER_SEC) as f64;
 
         if self.init {
-            *rate += self.alpha * (i_rate - *rate);
+            self.rate += self.alpha * (i_rate - self.rate);
         } else {
             self.init = true;
-            *rate = i_rate;
+            self.rate = i_rate;
         }
     }
 
@@ -66,14 +63,14 @@ impl EWMA {
         EWMA {
             uncounted: AtomicUsize::new(0),
             alpha: alpha,
-            rate: Mutex::new(0.0),
+            rate: 0.0,
             init: false,
         }
     }
 
     /// constructs a new EWMA for a n-minute moving average.
-    pub fn new(rate: f64) -> Self {
-        let i = -5.0 / 60.0 / rate;
+    pub fn new(n: f64) -> Self {
+        let i = -(TICK_RATE_SECS as f64) / 60.0 / n;
         EWMA::new_by_alpha(1.0 - i.exp())
     }
 }
