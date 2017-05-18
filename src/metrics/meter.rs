@@ -6,10 +6,11 @@
 
 #![allow(missing_docs)]
 
-use std::sync::{Arc, Mutex, MutexGuard};
-use time::{get_time, Timespec};
-use utils::EWMA;
+use std::sync::{Arc, Mutex};
+use std::time::{Instant, Duration};
+use utils::{EWMA, TICK_RATE_SECS};
 
+const NANOS_PER_SEC: u64 = 1_000_000_000;
 const WINDOW: [f64; 3] = [1.0, 5.0, 15.0];
 
 // A MeterSnapshot
@@ -23,16 +24,15 @@ pub struct MeterSnapshot {
 #[derive(Debug)]
 struct StdMeterData {
     count: i64,
-    rates: [f64; 3],
-    mean: f64,
     ewma: [EWMA; 3],
+    next_tick: Instant,
 }
 
 // A StdMeter struct
 #[derive(Debug)]
 pub struct StdMeter {
     data: Mutex<StdMeterData>,
-    start: Timespec,
+    start: Instant,
 }
 
 // A Meter trait
@@ -52,51 +52,47 @@ pub trait Meter: Send + Sync {
 
 impl Meter for StdMeter {
     fn snapshot(&self) -> MeterSnapshot {
-        let s = self.data.lock().unwrap();
+        let mut s = self.data.lock().unwrap();
+        self.tick_inner(&mut s);
 
         MeterSnapshot {
             count: s.count,
-            rates: s.rates,
-            mean: s.mean,
+            rates: [s.ewma[0].rate(), s.ewma[1].rate(), s.ewma[2].rate()],
+            mean: self.mean_inner(&s),
         }
     }
 
     fn mark(&self, n: i64) {
         let mut s = self.data.lock().unwrap();
+        self.tick_inner(&mut s);
 
         s.count += n;
 
         for i in 0..WINDOW.len() {
             s.ewma[i].update(n as usize);
         }
-
-        self.update_data(s);
     }
 
     fn tick(&self) {
         let mut s = self.data.lock().unwrap();
-
-        for i in 0..WINDOW.len() {
-            s.ewma[i].tick();
-        }
-
-        self.update_data(s);
+        self.tick_inner(&mut s);
     }
 
     /// Return the given EWMA for a rate like 1, 5, 15 minutes
     fn rate(&self, rate: f64) -> f64 {
-        let s = self.data.lock().unwrap();
+        let mut s = self.data.lock().unwrap();
+        self.tick_inner(&mut s);
 
         if let Some(pos) = WINDOW.iter().position(|w| *w == rate) {
-            return s.rates[pos];
+            return s.ewma[pos].rate();
         }
         0.0
     }
+
     /// Return the mean rate
     fn mean(&self) -> f64 {
         let s = self.data.lock().unwrap();
-
-        s.mean
+        self.mean_inner(&s)
     }
 
     fn count(&self) -> i64 {
@@ -107,36 +103,42 @@ impl Meter for StdMeter {
 }
 
 impl StdMeter {
-    fn update_data(&self, mut s: MutexGuard<StdMeterData>) {
-        for i in 0..WINDOW.len() {
-            s.rates[i] = s.ewma[i].rate();
-        }
-
-        let diff = get_time() - self.start;
-        let num_secs = diff.num_seconds();
-        if num_secs == 0 {
-            s.mean = 0.
-        } else {
-            s.mean = s.count as f64 / num_secs as f64;
-        }
-
-    }
-
     pub fn new() -> Arc<Self> {
         Arc::new(Self::default())
+    }
+
+    fn mean_inner(&self, s: &StdMeterData) -> f64 {
+        if s.count == 0 {
+            0.
+        } else {
+            let dur = self.start.elapsed();
+            let nanos = dur.as_secs() * NANOS_PER_SEC + dur.subsec_nanos() as u64;
+            s.count as f64 / nanos as f64 * NANOS_PER_SEC as f64
+        }
+    }
+
+    fn tick_inner(&self, s: &mut StdMeterData) {
+        let now = Instant::now();
+
+        while s.next_tick <= now {
+            for ewma in &mut s.ewma {
+                ewma.tick();
+            }
+            s.next_tick += Duration::from_secs(TICK_RATE_SECS);
+        }
     }
 }
 
 impl Default for StdMeter {
     fn default() -> Self {
+        let now = Instant::now();
         StdMeter {
             data: Mutex::new(StdMeterData {
                 count: 0,
-                rates: [0.0, 0.0, 0.0],
-                mean: 0.0,
                 ewma: [EWMA::new(1.0), EWMA::new(5.0), EWMA::new(15.0)],
+                next_tick: now + Duration::from_secs(TICK_RATE_SECS),
             }),
-            start: get_time(),
+            start: now,
         }
     }
 }

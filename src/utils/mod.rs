@@ -8,4 +8,4 @@
 
 mod ewma;
 
-pub use self::ewma::EWMA;
+pub use self::ewma::{EWMA, TICK_RATE_SECS};
