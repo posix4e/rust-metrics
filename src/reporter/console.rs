@@ -39,7 +39,7 @@ impl Reporter for ConsoleReporter {
     }
     fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
         match self.metrics
-                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to remove metric reporter{}", x)),
         }
@@ -113,10 +113,10 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-                        .max_value(100)
-                        .precision(1)
-                        .build()
-                        .unwrap();
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
