@@ -47,10 +47,10 @@ fn main() {
     let labels = Some(_labels);
     let mut reporter =
         PrometheusReporter::new("test", "0.0.0.0:8080", 1024);
-    reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone());
-    reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone());
-    reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone());
-    reporter.addl("histogram", Metric::Histogram(h), labels.clone());
+    reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone()).unwrap();
+    reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone()).unwrap();
+    reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone()).unwrap();
+    reporter.addl("histogram", Metric::Histogram(h), labels.clone()).unwrap();
     Iron::new(|_: &mut Request| Ok(Response::with(status::NotFound)))
         .http("0.0.0.0:3000")
         .unwrap();

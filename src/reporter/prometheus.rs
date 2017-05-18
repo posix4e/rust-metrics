@@ -228,10 +228,10 @@ mod test {
 
         let mut reporter = PrometheusReporter::new("test", "0.0.0.0:80", 1024);
         let labels = Some(HashMap::new());
-        reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone());
-        reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone());
-        reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone());
-        reporter.addl("histogram", Metric::Histogram(h), labels);
+        reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone()).unwrap();
+        reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone()).unwrap();
+        reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone()).unwrap();
+        reporter.addl("histogram", Metric::Histogram(h), labels).unwrap();
         reporter.stop().unwrap().join().unwrap().unwrap();
     }
 }
