@@ -58,11 +58,8 @@ impl CarbonStream {
             try!(self.connect());
         }
         if let Some(ref mut stream) = self.graphite_stream {
-            let carbon_command = format!("{} {} {}\n",
-                                         metric_path.into(),
-                                         value.into(),
-                                         timespec.sec)
-                                     .into_bytes();
+            let carbon_command =
+                format!("{} {} {}\n", metric_path.into(), value.into(), timespec.sec).into_bytes();
             try!(stream.write_all(&carbon_command));
         }
         Ok(())
@@ -86,14 +83,14 @@ impl Reporter for CarbonReporter {
                              -> Result<(), String> {
         // Todo maybe do something about the labels
         match self.metrics
-                  .send(Ok(ReporterMsg::AddMetric(name.into(), metric, None))) {
+            .send(Ok(ReporterMsg::AddMetric(name.into(), metric, None))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to send metric reporter{}", x)),
         }
     }
     fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
         match self.metrics
-                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to remove metric {}", x)),
         }
@@ -354,10 +351,10 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-                        .max_value(100)
-                        .precision(1)
-                        .build()
-                        .unwrap();
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
@@ -392,8 +389,8 @@ mod test {
         }
 
         let metrics_seen: HashSet<String> = lines.iter()
-                                                 .map(|x| x.split(" ").next().unwrap().into())
-                                                 .collect();
+            .map(|x| x.split(" ").next().unwrap().into())
+            .collect();
         assert!(metrics_seen.iter().all(|m| m.starts_with("asd.asdf")));
         assert!(metrics_seen.contains("asd.asdf.gauge1"));
         assert!(metrics_seen.contains("asd.asdf.counter1"));

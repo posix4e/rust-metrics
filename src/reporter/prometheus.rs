@@ -59,7 +59,7 @@ impl Reporter for PrometheusReporter {
 
     fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
         match self.tx
-                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to remove metric {}", x)),
         }
@@ -219,19 +219,19 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-                        .max_value(100)
-                        .precision(1)
-                        .build()
-                        .unwrap();
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
         let mut reporter = PrometheusReporter::new("test", "0.0.0.0:80", 1024);
         let labels = Some(HashMap::new());
-        reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone());
-        reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone());
-        reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone());
-        reporter.addl("histogram", Metric::Histogram(h), labels);
+        reporter.addl("meter1", Metric::Meter(m.clone()), labels.clone()).unwrap();
+        reporter.addl("counter1", Metric::Counter(c.clone()), labels.clone()).unwrap();
+        reporter.addl("gauge1", Metric::Gauge(g.clone()), labels.clone()).unwrap();
+        reporter.addl("histogram", Metric::Histogram(h), labels).unwrap();
         reporter.stop().unwrap().join().unwrap().unwrap();
     }
 }

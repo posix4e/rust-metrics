@@ -39,7 +39,7 @@ impl Reporter for ConsoleReporter {
     }
     fn remove<S: Into<String>>(&mut self, name: S) -> Result<(), String> {
         match self.metrics
-                  .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
+            .send(Ok(ReporterMsg::RemoveMetric(name.into()))) {
             Ok(_) => Ok(()),
             Err(x) => Err(format!("Unable to remove metric reporter{}", x)),
         }
@@ -98,8 +98,6 @@ mod test {
 
     use histogram::Histogram;
     use metrics::{Counter, Gauge, Meter, Metric, StdCounter, StdGauge, StdMeter};
-    use std::thread;
-    use std::time::Duration;
     use super::ConsoleReporter;
     use reporter::Reporter;
 
@@ -115,19 +113,19 @@ mod test {
         g.set(2);
 
         let mut h = Histogram::configure()
-                        .max_value(100)
-                        .precision(1)
-                        .build()
-                        .unwrap();
+            .max_value(100)
+            .precision(1)
+            .build()
+            .unwrap();
 
         h.increment_by(1, 1).unwrap();
 
         let mut reporter = ConsoleReporter::new("test", 1);
-        reporter.add("meter", Metric::Meter(m.clone()));
-        reporter.add("clone", Metric::Counter(c.clone()));
-        reporter.add("gauge", Metric::Gauge(g.clone()));
-        reporter.add("histo", Metric::Histogram(h));
-        reporter.remove("histo");
+        reporter.add("meter", Metric::Meter(m.clone())).unwrap();
+        reporter.add("clone", Metric::Counter(c.clone())).unwrap();
+        reporter.add("gauge", Metric::Gauge(g.clone())).unwrap();
+        reporter.add("histo", Metric::Histogram(h)).unwrap();
+        reporter.remove("histo").unwrap();
         g.set(4);
         reporter.stop().unwrap().join().unwrap().unwrap();
     }
