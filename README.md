@@ -1,5 +1,8 @@
-#  This project is complete. We are now merging https://github.com/brayniac/tic
-
+#  This project is complete. We are now merging with https://github.com/brayniac/tic. The goals are simple
+ * Keep it fast
+ * Good enough for tokio metrics and/or linkerd-tcp to use as a metrics library
+ * You stay the main library owner I can help with different reporting types and integration in libraries
+ 
 # rust-metrics
 [![Linux Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
 [![Kanban](https://img.shields.io/github/issues/posix4e/rust-metrics.svg?label=HuBoard)](https://huboard.com/posix4e/rust-metrics#/?repo=[%22huboard%22])
