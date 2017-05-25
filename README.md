@@ -1,7 +1,4 @@
 #  This project is complete. New development will be aimed  at https://github.com/brayniac/tic. We will only be taking fixes going forward.
- * Keep it fast
- * Good enough for tokio metrics and/or linkerd-tcp to use as a metrics library
- * You stay the main library owner I can help with different reporting types and integration in libraries
  
 # rust-metrics
 [![Linux Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
