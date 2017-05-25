@@ -1,4 +1,4 @@
-#  This project is complete. We are now merging with https://github.com/brayniac/tic. The goals are simple
+#  This project is complete. New development will be aimed  at https://github.com/brayniac/tic. We will only be taking fixes going forward.
  * Keep it fast
  * Good enough for tokio metrics and/or linkerd-tcp to use as a metrics library
  * You stay the main library owner I can help with different reporting types and integration in libraries
