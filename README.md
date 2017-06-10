@@ -1,4 +1,4 @@
-#  This project is complete. New development will be aimed  at https://github.com/brayniac/tic. We will only be taking fixes going forward.
+#  This project is stable. New features will be aimed  at https://github.com/brayniac/tic. We will only be taking fixes going forward.
  
 # rust-metrics
 [![Linux Status](https://travis-ci.org/posix4e/rust-metrics.svg?branch=master)](https://travis-ci.org/posix4e/rust-metrics)
@@ -17,7 +17,7 @@ Contact us on #rust-metrics on Mozilla IRC.
 ```rust
 ...
         let m = StdMeter::new();
-        m.mark(100);
+        m.mark(
 
         let c = StdCounter::new();
         c.inc();
