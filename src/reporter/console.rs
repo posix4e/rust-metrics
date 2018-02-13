@@ -23,10 +23,7 @@ impl Reporter for ConsoleReporter {
     }
     fn stop(self) -> Result<thread::JoinHandle<Result<(), String>>, String> {
         match self.metrics.send(Err("stop")) {
-            Ok(_) => {
-                println!("stopped");
-                Ok(self.join_handle)
-            },
+            Ok(_) => Ok(self.join_handle),
             Err(x) => Err(format!("Unable to stop reporter: {}", x)),
         }
     }
