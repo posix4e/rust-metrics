@@ -23,7 +23,10 @@ impl Reporter for ConsoleReporter {
     }
     fn stop(self) -> Result<thread::JoinHandle<Result<(), String>>, String> {
         match self.metrics.send(Err("stop")) {
-            Ok(_) => Ok(self.join_handle),
+            Ok(_) => {
+                println!("stopped");
+                Ok(self.join_handle)
+            },
             Err(x) => Err(format!("Unable to stop reporter: {}", x)),
         }
     }
@@ -49,43 +52,46 @@ impl Reporter for ConsoleReporter {
 impl ConsoleReporter {
     pub fn new<S: Into<String>>(reporter_name: S, delay_ms: u64) -> Self {
         let (tx, rx) = mpsc::channel();
+        let txc = tx.clone();
         ConsoleReporter {
             metrics: tx,
             reporter_name: reporter_name.into(),
             join_handle: thread::spawn(move || {
-                let mut stop = false;
-                while !stop {
-                    for metric in &rx {
-                        match metric {
-                            Ok(ReporterMsg::AddMetric(name, metric, labels)) => {
-                                println!("name: {} labels: {:?}", name, labels);
-                                match metric {
-                                    Metric::Meter(ref x) => {
-                                        println!("{:?}", x.snapshot());
-                                    }
-                                    Metric::Gauge(ref x) => {
-                                        println!("{:?}", x.snapshot());
-                                    }
-                                    Metric::Counter(ref x) => {
-                                        println!("{:?}", x.snapshot());
-                                    }
-                                    Metric::Histogram(ref x) => {
-                                        println!("histogram{:?}", x);
-                                    }
+                for metric in &rx {
+                    match metric {
+                        Ok(ReporterMsg::AddMetric(name, metric_value, labels)) => {
+                            println!("name: {} labels: {:?}", name, labels);
+
+                            match metric_value {
+                                Metric::Meter(ref x) => {
+                                    println!("{:?}", x.snapshot());
+                                }
+                                Metric::Gauge(ref x) => {
+                                    println!("{:?}", x.snapshot());
+                                }
+                                Metric::Counter(ref x) => {
+                                    println!("{:?}", x.snapshot());
+                                }
+                                Metric::Histogram(ref x) => {
+                                    println!("histogram{:?}", x);
                                 }
                             }
-                            Ok(ReporterMsg::RemoveMetric(name)) => {
 
-                                println!("Remove metric {}", name);
-                            }
-                            // Todo log the error somehow
-                            Err(e) => {
-                                println!("Stopping reporter because..:{}", e);
-                                stop = true;
+                            let message_copy = ReporterMsg::AddMetric(name, metric_value, labels);
+                            if let Err(x) = txc.send(Ok(message_copy)) {
+                                format!("Unable to forward metric {}", x);
                             }
                         }
-                        thread::sleep(Duration::from_millis(delay_ms));
+                        Ok(ReporterMsg::RemoveMetric(name)) => {
+                            println!("Remove metric {}", name);
+                        }
+                        // Todo log the error somehow
+                        Err(e) => {
+                            println!("Stopping reporter because..:{}", e);
+                            break;
+                        }
                     }
+                    thread::sleep(Duration::from_millis(delay_ms));
                 }
                 Ok(())
             }),
