@@ -4,7 +4,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-// PrometheusReporter aggregates metrics into metricsfamilies and passes them every second to the
+// PrometheusReporter aggregates metrics into metric families and passes them every second to the
 // attached prometheus reporter at a regular basis.
 
 extern crate prometheus_reporter;
@@ -77,7 +77,7 @@ impl PrometheusReporter {
                 let mut prometheus_reporter = Pr::new(host_and_port);
                 while !stop {
                     match collect_to_send(&rx) {
-                        // Unwraping is always dangerouns. In this case our prometheus reporter is
+                        // Unwrapping is always dangerous. In this case our prometheus reporter is
                         // overwhelmed by metrics
                         Ok((metrics_to_add, metrics_to_remove)) => {
                             try!(prometheus_reporter.add(metrics_to_add));
